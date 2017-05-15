@@ -115,7 +115,7 @@ hh_search_dbs = '{}'.format(' '.join(args.hhsearchdatabase))
 # Printing the header of the program 
 print "This is Virannot ", version
 print "Written by Enrique Gonzalez Tortuero & Vimalkumar Velayudhan"
-print "Homepage is NOT DONE YET"
+print "Homepage is https://github.com/EGTortuero/virannot"
 print "Local time: ", strftime("%a, %d %b %Y %H:%M:%S")
 print "\n\n"
 
