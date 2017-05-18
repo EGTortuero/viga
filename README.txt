@@ -23,8 +23,15 @@ Before using this script, the following Python modules and programs should be in
 	- Tandem Repeats Finder (TRF; Benson 1999): it is used to predict the tandem repeats in your contig. This program is freely available at https://tandem.bu.edu/trf/trf.html under a custom licence.
 	- Inverted Repeats Finder (IRF; Warburton et al. 2004): it is used to predict the inverted repeats in your contig. This program is freely available at https://tandem.bu.edu/irf/irf.download.html under a custom licence.
 
-Although you can install the program manually, we recommend the use of conda (https://github.com/conda/conda) to create an environment for virannot. In this case, you will have installed the program and all the dependencies:
-	conda env create -f conda-environment.yaml
+Although you can install the programs manually, we strongly recommend the use of the Docker image to create an environment for virannot. The link to the Docker image is:
+	https://github.com/vimalkvn/sysadminbio/tree/master/docker-images/virannot
+
+However, you will need to download the databases for BLAST and HHSUITE:
+
+BLAST: https://ftp.ncbi.nlm.nih.gov/blast/db/
+HHSUITE: http://wwwuser.gwdg.de/~compbiol/data/hhsuite/databases/hhsuite_dbs/
+
+Note that this bioinformatic pipeline only takes protein databases (i.e. "nr", "swissprot"...)!
 
 PARAMETERS:
 
