@@ -373,6 +373,7 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 		keylist = information_proteins_hhsuite.keys()
 		keylist.sort()
 		for keyB in keylist:
+			keyB = keyB.replace(".hhr","")
 			try:
 				print >>tablefile, "\t".join([equivalence[keyB], str(tempprotsdict[equivalence[keyB]]['begin']), str(tempprotsdict[equivalence[keyB]]['end']), str(tempprotsdict[equivalence[keyB]]['strand']), str(tempprotsdict[equivalence[keyB]]['length']), str(tempprotsdict[equivalence[keyB]]['isoelectricpoint']), str(tempprotsdict[equivalence[keyB]]['molweightkda']), str(tempprotsdict[equivalence[keyB]]['instability']), information_proteins_blast[equivalence[keyB]]['sseqid'], information_proteins_blast[equivalence[keyB]]['descr'], str(information_proteins_blast[equivalence[keyB]]['evalue']), str(information_proteins_blast[equivalence[keyB]]['pident']), str(information_proteins_blast[equivalence[keyB]]['pcover']), information_proteins_hhsuite[keyB]['name'], information_proteins_hhsuite[keyB]['descr'], str(information_proteins_hhsuite[keyB]['prob']), str(information_proteins_hhsuite[keyB]['evalue']), str(information_proteins_hhsuite[keyB]['pident']), str(information_proteins_hhsuite[keyB]['pcover'])])
 			except KeyError:
@@ -390,6 +391,7 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 	keylist.sort()
 	Hypotheticalpat = re.compile(r'([H|h]ypothetical|[U|u]ncharacteri[z|s]ed) protein')
 	for keyB in keylist:
+		keyB = keyB.replace(".hhr","")
 		singleprot = {}
 		singleprot['name'] = equivalence[keyB]
 		if (equivalence[keyB] in information_proteins_blast) and (keyB in information_proteins_hhsuite):
