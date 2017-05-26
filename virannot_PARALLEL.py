@@ -266,6 +266,8 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 					finalblastcsv.write(line)
 
 	os.remove("commands.sh")
+	for fname in listblastcsv:
+		os.remove(fname)
 
 	# Parsing the results from BLAST
 	with open("temp_blast.csv", "rU") as blastresults:
