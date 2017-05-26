@@ -15,6 +15,7 @@ Before using this script, the following Python modules and programs should be in
 	- Biopython (Bio module; Cock et al. 2009)
 
 * Programs:
+	- GNU Parallel (Tange 2011): it is used only in the PARALLEL version. The program is publicly available at https://www.gnu.org/software/parallel/ under the GPLv3 licence.
 	- LASTZ (Harris 2007): it is used to predict the circularity of the contigs. The program is publicly available at https://github.com/lastz/lastz under the MIT licence.
 	- Prodigal (Hyatt et al. 2010): it is used to predict the ORFs. When the contig is smaller than 20,000 bp, MetaProdigal (Hyatt et al. 2012) is automatically activated instead of normal Prodigal. This program is publicly available at https://github.com/hyattpd/prodigal/releases/ under the GPLv3 licence.
 	- BLAST+ (Camacho et al. 2008): it is used to predict the function of the predicted proteins according to homology. This suite is publicly available at ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/ under the GPLv2 licence. Databases are available at ftp://ftp.ncbi.nlm.nih.gov/blast/db/
@@ -79,18 +80,19 @@ The program has the following two kind of arguments:
 
 REFERENCES:
 
-	- Benson G. (2008) "Tandem repeats finder: a program to analyze DNA sequences." Nucleic Acids Research 27, 573–80.
-	- Camacho C., Coulouris G., Avagyan V., Ma N., Papadopoulos J., Bealer K., Madden T.L. (2008) "BLAST+: architecture and applications." BMC Bioinformatics 10: 421.
-	- Fidler D.R., Murphy S.E., Courtis K., Antonodiou P., El-Tohamy R., Ient J., Levine T.P. (2016) Using HHsearch to tackle proteins of unknown function: a pilot study with PH domains. Traffic 17: 1214–26.
-	- Fozo E.M., Makarova K.S., Shabalina S.A., Yutin N., Koonin E.V., Storz G. (2010) Abundance of type I toxin-antitoxin systems in bacteria: searches for new candidates and discovery of novel families. Nucleic Acids Research 38: 3743-59.
-	- Harris R.S. (2007) Improved pairwise alignment of genomic DNA. Ph.D. Thesis, The Pennsylvania State University. 
-	- Hildebrand A., Remmert A., Biegert A., Söding J. (2009) Fast and accurate automatic structure prediction with HHpred. Proteins 77: 128-32.
-	- Hyatt D., Chen G.L., Locascio P.F., Land M.L., Larimer F.W., Hauser L.J. (2010) Prodigal: prokaryotic gene recognition and translation initiation site identification. BMC Bioinformatics 11: 119.
-	- Hyatt D, Locascio P.F., Hauser L.J., Uberbacher E.C. (2012) Gene and translation initiation site prediction in metagenomic sequences. Bioinformatics 28: 2223-30.
-	- Laslett D., Canback, B. (2004) ARAGORN, a program to detect tRNA genes and tmRNA genes in nucleotide sequences. Nucleic Acids Research 32, 11–16.
-	- Remmert M., Biegert A., Hauser A., Söding J. (2011) HHblits: Lightning-fast iterative protein sequence searching by HMM-HMM alignment. Nature Methods 9: 173-5. 
-	- Söding J. (2005) Protein homology detection by HMM-HMM comparison. Bioinformatics 21: 951-60.
-	- Warburton P.E., Giordano J., Cheung F., Gelfand Y., Benson G. (2004) Inverted repeat structure of the human genome: The X-chromosome contains a preponderance of large, highly homologous inverted repeats that contain testes genes. Genome Research 14: 1861-9.
+	- Benson G (2008) "Tandem repeats finder: a program to analyze DNA sequences." Nucleic Acids Research 27, 573–80.
+	- Camacho C, Coulouris G, Avagyan V, Ma N, Papadopoulos J, Bealer K, Madden TL (2008) "BLAST+: architecture and applications." BMC Bioinformatics 10: 421.
+	- Fidler DR, Murphy SE, Courtis K, Antonodiou P, El-Tohamy R, Ient J, Levine TP (2016) Using HHsearch to tackle proteins of unknown function: a pilot study with PH domains. Traffic 17: 1214–26.
+	- Fozo EM, Makarova KS, Shabalina SA, Yutin N, Koonin EV, Storz G (2010) Abundance of type I toxin-antitoxin systems in bacteria: searches for new candidates and discovery of novel families. Nucleic Acids Research 38: 3743-59.
+	- Harris RS (2007) Improved pairwise alignment of genomic DNA. Ph.D. Thesis, The Pennsylvania State University. 
+	- Hildebrand A, Remmert A, Biegert A, Söding J (2009) Fast and accurate automatic structure prediction with HHpred. Proteins 77: 128-32.
+	- Hyatt D, Chen GL, Locascio PF, Land ML, Larimer FW, Hauser LJ (2010) Prodigal: prokaryotic gene recognition and translation initiation site identification. BMC Bioinformatics 11: 119.
+	- Hyatt D, Locascio PF, Hauser LJ, Uberbacher EC (2012) Gene and translation initiation site prediction in metagenomic sequences. Bioinformatics 28: 2223-30.
+	- Laslett D, Canback B (2004) ARAGORN, a program to detect tRNA genes and tmRNA genes in nucleotide sequences. Nucleic Acids Research 32, 11–16.
+	- Remmert M, Biegert A, Hauser A, Söding J (2011) HHblits: Lightning-fast iterative protein sequence searching by HMM-HMM alignment. Nature Methods 9: 173-5. 
+	- Söding J (2005) Protein homology detection by HMM-HMM comparison. Bioinformatics 21: 951-60.
+	- Tange O (2011) GNU Parallel - The Command-Line Power Tool. ;login: The USENIX Magazine 36:42-7.
+	- Warburton PE, Giordano J, Cheung F, Gelfand Y, Benson G (2004) Inverted repeat structure of the human genome: The X-chromosome contains a preponderance of large, highly homologous inverted repeats that contain testes genes. Genome Research 14: 1861-9.
 
 HISTORY: 
 
