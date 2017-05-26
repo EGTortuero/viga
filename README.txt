@@ -1,8 +1,8 @@
-NAME: virannot (virannot.py)
+NAME: VirAnnot (virannot.py)
 
 AUTHOR: Enrique Gonzalez-Tortuero <enrique.gonzaleztortuero@ucc.ie>
 
-DESCRIPTION: virannot is a script written in Python 2.7 that annotates viral 
+DESCRIPTION: VirAnnot is a script written in Python 2.7 that annotates viral 
 genomes automatically (using a de novo algorithm) and predict the function of
 their proteins using BLAST and HHSEARCH/HHPRED.
 
