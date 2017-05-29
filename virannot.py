@@ -271,7 +271,7 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 				with open(fname) as infile:
 					for line in infile:
 						finalblastcsv.write(line)
-#		os.remove("commands.sh")
+		os.remove("commands.sh")
 		for fname in listblastcsv:
 			os.remove(fname)
 	print "Done. BLASTp was done to predict the genes by homology\n"
@@ -344,8 +344,8 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 		subprocess.call(['parallel', '-j', str(args.ncpus)], stdin=open('commandsB.sh'))
 		print "Running parallel HHpred"		
 		subprocess.call(['parallel', '-j', str(args.ncpus)], stdin=open('commandsC.sh'))
-		#os.remove("commandsB.sh")
-		#os.remove("commandsC.sh")
+		os.remove("commandsB.sh")
+		os.remove("commandsC.sh")
 		for j in sorted(glob.glob("*a3m")):
 			os.remove(j)
 	print "Done. HHpred was done to predict the function of the genes by HMM-HMM comparisons\n\n"
