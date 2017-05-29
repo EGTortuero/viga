@@ -33,5 +33,5 @@ When using this program, you must to cite their use:
 
 HISTORY OF THE SOURCE CODE:
 
-v 0.2.0 - Added parallelization of BLAST and HHSUITE. To do that, GNU Parallel (Tange 2011) is required. To disable this option, run the program with the "--noparallel" option.
-v 0.1.0 - Original version of the program.
+* v 0.2.0 - Added parallelization of BLAST and HHSUITE. To do that, GNU Parallel (Tange 2011) is required. To disable this option, run the program with the "--noparallel" option.
+* v 0.1.0 - Original version of the program.
