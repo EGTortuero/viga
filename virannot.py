@@ -66,7 +66,7 @@ def stringSplitByNumbers(x):
 	return [int(y) if y.isdigit() else y for y in l]
 
 # Defining the program version
-version = "0.1.0"
+version = "0.2.0"
 
 # Processing the parameters
 parser = argparse.ArgumentParser(description='Virannot is a automatic de novo viral genome annotator.')
@@ -110,10 +110,10 @@ root_output = args.rootoutput
 if not root_output:
     root_output = '{}_annotated'.format(os.path.splitext(args.inputfile)[0])
 
-hh_search_dbs = '{}'.format(' '.join(args.hhsearchdatabase))
+hh_search_dbs = '{!r}'.format(' '.join(args.hhsearchdatabase))
 
 # Printing the header of the program 
-print "This is Virannot ", version
+print "This is VirAnnot ", version
 print "Written by Enrique Gonzalez Tortuero & Vimalkumar Velayudhan"
 print "Homepage is NOT DONE YET"
 print "Local time: ", strftime("%a, %d %b %Y %H:%M:%S")
@@ -254,15 +254,16 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 			for j in sorted(glob.glob("SEQ_*.faa")):
 				jout = "%s.blast.csv" % j
 				if args.blastexh==True:
-					print "Running parallel BLAST to predict the genes according to homology inference in %s using exhaustive mode (see Fozo et al. (2010) Nucleic Acids Res for details)" % j
+					print "Creating file to run parallel BLAST: adding %s using exhaustive mode  (see Fozo et al. (2010) Nucleic Acids Res for details)" % j
 					line = ['blastp', '-query', j, '-db', args.blastdatabase, '-evalue', str(args.blastevalue), '-outfmt', '"6 qseqid sseqid pident length qlen slen qstart qend evalue bitscore stitle"', '-out', jout, '-max_target_seqs', '10', '-word_size', '2', '-gapopen', '8', '-gapextend', '2', '-matrix', '"PAM70"', '-comp_based_stats', '"0"', '\n']
 					line2write = ' '.join(line)
 					commands.write(line2write)
 				else:
-					print "Running parallel BLAST to predict the genes according to homology inference in %s using default parameters" % j
+					print "Creating file to run parallel BLAST: adding %s using default parameters" % j
 					line = ['blastp', '-query', j, '-db', args.blastdatabase, '-evalue', str(args.blastevalue), '-outfmt', '"6 qseqid sseqid pident length qlen slen qstart qend evalue bitscore stitle"', '-out', jout, '-max_target_seqs', '10', '\n']
 					line2write = ' '.join(line)
 					commands.write(line2write)
+		print "Running parallel BLAST"
 		subprocess.call(['parallel', '-j', str(args.ncpus)], stdin=open('commands.sh'))
 		listblastcsv = sorted(glob.glob('SEQ_*.csv'))
 		with open('temp_blast.csv', 'w') as finalblastcsv:
@@ -270,7 +271,7 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 				with open(fname) as infile:
 					for line in infile:
 						finalblastcsv.write(line)
-		os.remove("commands.sh")
+#		os.remove("commands.sh")
 		for fname in listblastcsv:
 			os.remove(fname)
 	print "Done. BLASTp was done to predict the genes by homology\n"
@@ -300,50 +301,51 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 					information_proteins_blast[row['qseqid']] = infoprot_blast
 	
 	## Predicting the function of the proteins based on HMM-HMM comparisons using HH-SUITE
-	for singleprot in sorted(glob.glob("SEQ_*.faa")):
-		hhtempout = "%s.a3m" % singleprot
-		hhout = "%s.hhr" % singleprot
-		if args.noparallel==True:
-			if args.hhsearchexh==True:
-				print "Running HHblits to predict the proteins according to HMM-HMM comparisons in %s using exhaustive mode (see Fidler et al. (2016) Traffic for details)." % singleprot
-				subprocess.call(['hhblits', '-i', singleprot, '-d', args.hhblitsdatabase, '-o' , '/dev/null', '-oa3m', hhtempout, '-n', '8', '-e', '0.001', '-E', '0.01', '-maxfilt', str(args.maxfilt), '-neffmax', str(args.neffmax), '-v', "0", "-cpu", str(args.ncpus)])
-				print "Done. HHblits was done to predict the function of the genes by HMM-HMM comparisons\n\n"
-				print "Running HHpred to predict the proteins according to HMM-HMM comparisons in %s using exhaustive mode (see Fidler et al. (2016) Traffic for details)." % singleprot
-				subprocess.call(['hhsearch', '-i', hhtempout, '-d', hh_search_dbs, '-o', hhout, '-mac', '-e', '0.01', '-v', "0", "-cpu", str(args.ncpus)])
+
+	with open("commandsB.sh", "w") as commandsB, open("commandsC.sh", "w") as commandsC:
+		for singleprot in sorted(glob.glob("SEQ_*.faa")):
+			hhtempout = "%s.a3m" % singleprot
+			hhout = "%s.hhr" % singleprot
+			if args.noparallel==True:
+				if args.hhsearchexh==True:
+					print "Running HHblits to predict the proteins according to HMM-HMM comparisons in %s using exhaustive mode (see Fidler et al. (2016) Traffic for details)." % singleprot
+					subprocess.call(['hhblits', '-i', singleprot, '-d', args.hhblitsdatabase, '-o' , '/dev/null', '-oa3m', hhtempout, '-n', '8', '-e', '0.001', '-E', '0.01', '-maxfilt', str(args.maxfilt), '-neffmax', str(args.neffmax), '-v', "0", "-cpu", str(args.ncpus)])
+					print "Done. HHblits was done to predict the function of the genes by HMM-HMM comparisons\n\n"
+					print "Running HHpred to predict the proteins according to HMM-HMM comparisons in %s using exhaustive mode (see Fidler et al. (2016) Traffic for details)." % singleprot
+					subprocess.call(['hhsearch', '-i', hhtempout, '-d', hh_search_dbs, '-o', hhout, '-mac', '-e', '0.01', '-v', "0", "-cpu", str(args.ncpus)])
+				else:
+					print "Running HHblits to predict the proteins according to HMM-HMM comparisons in %s using default parameters." % singleprot
+					subprocess.call(['hhblits', '-i', singleprot, '-d', args.hhblitsdatabase, '-o' , '/dev/null', '-oa3m', hhtempout, '-n', '3', '-E', '0.5', '-maxfilt', str(args.maxfilt), '-neffmax', str(args.neffmax), '-v', "0", "-cpu", str(args.ncpus)])
+					print "Done. HHblits was done to predict the function of the genes by HMM-HMM comparisons\n\n"
+					print "Running HHpred to predict the proteins according to HMM-HMM comparisons in %s using default parameters." % singleprot
+					subprocess.call(['hhsearch', '-i', hhtempout, '-d', hh_search_dbs, '-o', hhout, '-v', "0", "-cpu", str(args.ncpus)])
 			else:
-				print "Running HHblits to predict the proteins according to HMM-HMM comparisons in %s using default parameters." % singleprot
-				subprocess.call(['hhblits', '-i', singleprot, '-d', args.hhblitsdatabase, '-o' , '/dev/null', '-oa3m', hhtempout, '-n', '3', '-E', '0.5', '-maxfilt', str(args.maxfilt), '-neffmax', str(args.neffmax), '-v', "0", "-cpu", str(args.ncpus)])
-				print "Done. HHblits was done to predict the function of the genes by HMM-HMM comparisons\n\n"
-				print "Running HHpred to predict the proteins according to HMM-HMM comparisons in %s using default parameters." % singleprot
-				subprocess.call(['hhsearch', '-i', hhtempout, '-d', hh_search_dbs, '-o', hhout, '-v', "0", "-cpu", str(args.ncpus)])
-	else:
-		with open("commandsB.sh", "w") as commandsB:
-			if args.hhsearchexh==True:
-				print "Running HHblits to predict the proteins according to HMM-HMM comparisons in %s using exhaustive mode (see Fidler et al. (2016) Traffic for details)." % singleprot
-				lineB = ['hhblits', '-i', singleprot, '-d', args.hhblitsdatabase, '-o' , '/dev/null', '-oa3m', hhtempout, '-n', '8', '-e', '0.001', '-E', '0.01', '-maxfilt', str(args.maxfilt), '-neffmax', str(args.neffmax), '-v', "0", '\n']
-				line2writeB = ' '.join(lineB)
-				commandsB.write(line2writeB)
-			else:
-				print "Running HHblits to predict the proteins according to HMM-HMM comparisons in %s using default parameters." % singleprot
-				lineB = ['hhblits', '-i', singleprot, '-d', args.hhblitsdatabase, '-o' , '/dev/null', '-oa3m', hhtempout, '-n', '3', '-E', '0.5', '-maxfilt', str(args.maxfilt), '-neffmax', str(args.neffmax), '-v', "0", '\n']
-				line2writeB = ' '.join(lineB)
-				commandsB.write(line2writeB)
+				if args.hhsearchexh==True:
+					print "Creating file to run parallel HHblits: adding %s using exhaustive mode (see Fidler et al. (2016) Traffic for details)." % singleprot
+					lineB = ['hhblits', '-i', singleprot, '-d', args.hhblitsdatabase, '-o' , '/dev/null', '-oa3m', hhtempout, '-n', '8', '-e', '0.001', '-E', '0.01', '-maxfilt', str(args.maxfilt), '-neffmax', str(args.neffmax), '-v', "0", '\n']
+					line2writeB = ' '.join(lineB)
+					commandsB.write(line2writeB)
+					print "Creating file to run parallel HHpred: adding %s using exhaustive mode (see Fidler et al. (2016) Traffic for details)." % singleprot
+					lineC = ['hhsearch', '-i', hhtempout, '-d', hh_search_dbs, '-o', hhout, '-mac', '-e', '0.01', '-v', "0", '\n']
+					line2writeC = ' '.join(lineC)
+					commandsC.write(line2writeC)
+				else:
+					print "Creating file to run parallel HHblits: adding %s using default parameters." % singleprot
+					lineB = ['hhblits', '-i', singleprot, '-d', args.hhblitsdatabase, '-o' , '/dev/null', '-oa3m', hhtempout, '-n', '3', '-E', '0.5', '-maxfilt', str(args.maxfilt), '-neffmax', str(args.neffmax), '-v', "0", '\n']
+					line2writeB = ' '.join(lineB)
+					commandsB.write(line2writeB)
+					print "Creating file to run parallel HHpred: adding %s using default parameters." % singleprot
+					lineC = ['hhsearch', '-i', hhtempout, '-d', hh_search_dbs, '-o', hhout, '-v', "0", '\n']
+					line2writeC = ' '.join(lineC)
+					commandsC.write(line2writeC)
+
+	if args.noparallel==False:
+		print "Running parallel HHblits"
 		subprocess.call(['parallel', '-j', str(args.ncpus)], stdin=open('commandsB.sh'))
-		print "Done. HHblits was done to predict the function of the genes by HMM-HMM comparisons\n\n"
-		with open("commandsC.sh", "w") as commandsC:
-			if args.hhsearchexh==True:
-				print "Running HHpred to predict the proteins according to HMM-HMM comparisons in %s using exhaustive mode (see Fidler et al. (2016) Traffic for details)." % singleprot
-				lineC = ['hhsearch', '-i', hhtempout, '-d', hh_search_dbs, '-o', hhout, '-mac', '-e', '0.01', '-v', "0", '\n']
-				line2writeC = ' '.join(lineC)
-				commandsC.write(line2writeC)
-			else:
-				print "Running HHpred to predict the proteins according to HMM-HMM comparisons in %s using default parameters." % singleprot
-				lineC = ['hhsearch', '-i', hhtempout, '-d', hh_search_dbs, '-o', hhout, '-v', "0", '\n']
-				line2writeC = ' '.join(lineC)
-				commandsC.write(line2writeC)
+		print "Running parallel HHpred"		
 		subprocess.call(['parallel', '-j', str(args.ncpus)], stdin=open('commandsC.sh'))
-		os.remove("commandsB.sh")
-		os.remove("commandsC.sh")
+		#os.remove("commandsB.sh")
+		#os.remove("commandsC.sh")
 		for j in sorted(glob.glob("*a3m")):
 			os.remove(j)
 	print "Done. HHpred was done to predict the function of the genes by HMM-HMM comparisons\n\n"
