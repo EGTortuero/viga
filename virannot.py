@@ -242,7 +242,7 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 			count = SeqIO.write(batch, handle, "fasta")
 			equivalence[seq_index] = batch[0].id
 
-	if args.noparallel==False:
+	if args.noparallel==True:
 		if args.blastexh==True:
 			print "Running BLAST to predict the genes according to homology inference in %s using exhaustive mode (see Fozo et al. (2010) Nucleic Acids Res for details)" % newfile
 			subprocess.call(['blastp', '-query', "temp.faa", '-db', args.blastdatabase, '-evalue', str(args.blastevalue), '-outfmt', '6 "qseqid sseqid pident length qlen slen qstart qend evalue bitscore stitle', '-out', 'temp_blast.csv', '-max_target_seqs', '10', '-word_size', '2', '-gapopen', '8', '-gapextend', '2', '-matrix', '"PAM70"', '-comp_based_stats', '"0"', "-num_threads", str(args.ncpus)])
@@ -303,7 +303,7 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 	for singleprot in sorted(glob.glob("SEQ_*.faa")):
 		hhtempout = "%s.a3m" % singleprot
 		hhout = "%s.hhr" % singleprot
-		if args.noparallel==False:
+		if args.noparallel==True:
 			if args.hhsearchexh==True:
 				print "Running HHblits to predict the proteins according to HMM-HMM comparisons in %s using exhaustive mode (see Fidler et al. (2016) Traffic for details)." % singleprot
 				subprocess.call(['hhblits', '-i', singleprot, '-d', args.hhblitsdatabase, '-o' , '/dev/null', '-oa3m', hhtempout, '-n', '8', '-e', '0.001', '-E', '0.01', '-maxfilt', str(args.maxfilt), '-neffmax', str(args.neffmax), '-v', "0", "-cpu", str(args.ncpus)])
