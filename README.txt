@@ -15,7 +15,7 @@ Before using this script, the following Python modules and programs should be in
 	- Biopython (Bio module; Cock et al. 2009)
 
 * Programs:
-	- GNU Parallel (Tange 2011): it is used only in the PARALLEL version. The program is publicly available at https://www.gnu.org/software/parallel/ under the GPLv3 licence.
+	- GNU Parallel (Tange 2011): it is used to parallelize BLAST and HHSUITE. The program is publicly available at https://www.gnu.org/software/parallel/ under the GPLv3 licence.
 	- LASTZ (Harris 2007): it is used to predict the circularity of the contigs. The program is publicly available at https://github.com/lastz/lastz under the MIT licence.
 	- Prodigal (Hyatt et al. 2010): it is used to predict the ORFs. When the contig is smaller than 20,000 bp, MetaProdigal (Hyatt et al. 2012) is automatically activated instead of normal Prodigal. This program is publicly available at https://github.com/hyattpd/prodigal/releases/ under the GPLv3 licence.
 	- BLAST+ (Camacho et al. 2008): it is used to predict the function of the predicted proteins according to homology. This suite is publicly available at ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/ under the GPLv2 licence. Databases are available at ftp://ftp.ncbi.nlm.nih.gov/blast/db/
@@ -54,7 +54,8 @@ The program has the following two kind of arguments:
 --out OUTPUTNAME					Name of the outputs files without extensions, as the program will add them automatically. By default, the program will use the input name as the output.
 --locus STRING						Name of the contigs. If the input is a multiFASTA file, please put a general name as the program will add the number of the contig at the end of the name. By default, the name of the contigs will be "LOC".
 --threads INT						Number of threads/CPUs. By default, the program will use 1 CPU.
---gff 									Printing the output as a General Feature Format (GFF) version 3. It is a flat table file with contains 9 columns of data (see http://www.ensembl.org/info/website/upload/gff3.html for more information). By default, the program will not print the GFF3 file (--gff False).
+--noparallel						Using multithreading BLAST and HHPRED instead of using parallel BLAST and HHPRED. Only recommendable when GNU Parallel is not installed. By default, this option is disabled.
+--gff 							Printing the output as a General Feature Format (GFF) version 3. It is a flat table file with contains 9 columns of data (see http://www.ensembl.org/info/website/upload/gff3.html for more information). By default, the program will not print the GFF3 file (--gff False).
 --blastevalue FLOAT					BLAST e-value threshold. By default, the threshold will be 1e-05.
 --hhsuiteevalue FLOAT					HHSUITE e-value threshold. By default, the threshold is 1e-03.
 --typedata CON|VRL|PHG					GenBank Division: One of the following codes:
