@@ -336,7 +336,6 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 					commandsB.write(line2writeB)
 					print "Creating file to run parallel HHpred: adding %s using default parameters." % singleprot
 					lineC = ['hhsearch', '-i', hhtempout, '-d', '{!r}'.format(hh_search_dbs), '-o', hhout, '-v', "0", '\n']
-					print('lineC', lineC)
 					line2writeC = ' '.join(lineC)
 					commandsC.write(line2writeC)
 
