@@ -60,13 +60,18 @@ def batch_iterator(iterator, batch_size):
 def cmd_exists(cmd):
 	return subprocess.call("type " + cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE) == 0
 
+def find(name, path):
+	for root, dirs, files in os.walk(path):
+		if name in files:
+			return os.path.join(root, name)
+
 def stringSplitByNumbers(x):
 	r = re.compile('(\d+)')
 	l = r.split(x)
 	return [int(y) if y.isdigit() else y for y in l]
 
 # Defining the program version
-version = "0.2.0"
+version = "0.3.0"
 
 # Processing the parameters
 parser = argparse.ArgumentParser(description='Virannot is a automatic de novo viral genome annotator.')
@@ -113,13 +118,15 @@ if not root_output:
 hh_search_dbs = '{}'.format(' '.join(args.hhsearchdatabase))
 
 # Printing the header of the program 
-print "This is VirAnnot ", version
+print "This is VirAnnot", version
 print "Written by Enrique Gonzalez Tortuero & Vimalkumar Velayudhan"
 print "Homepage is https://github.com/EGTortuero/virannot"
 print "Local time: ", strftime("%a, %d %b %Y %H:%M:%S")
 print "\n\n"
 
 # checking the presence of the programs in the system
+rnammerpath = find("rnammer", "/")
+
 if not cmd_exists("lastz")==True:
 	sys.exit("You must install LASTZ before using this script")
 elif not cmd_exists("prodigal")==True:
@@ -130,12 +137,15 @@ elif not cmd_exists("blastp")==True:
 	sys.exit("You must install BLAST before using this script")
 elif not cmd_exists("hhblits")==True and not cmd_exists("hhsearch")==True:
 	sys.exit("You must install HHsuite before using this script")
+elif rnammerpath == "":
+	sys.exit("You must install RNAmmer 1.2 before using this script")
 elif not cmd_exists("aragorn")==True:
 	sys.exit("You must install ARAGORN before using this script")
 elif not cmd_exists("trf")==True:
 	sys.exit("You must install Tandem Repeats Finder before using this script")
 elif not cmd_exists("irf")==True:
 	sys.exit("You must install Inverted Repeats Finder before using this script")
+
 print "\nData type is {0} and GenBank translation table no is {1}\n".format(args.typedata, args.gcode)
 
 # Correcting the original file (long headers problem + multiple FASTA files)
@@ -207,9 +217,33 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 					SeqIO.write(Newseq, correctedcircular, "fasta")
 				os.rename("temp.fasta", newfile)
 		print "Done. LASTZ predicted that the contig is %s\n" % genomeshape['genomeshape']
-	
+
+	# Predicting the rRNA sequences
+	print "Running RNAmmer 1.2 to predict rRNA-like sequences in %s" % newfile
+	with open(newfile, "rU") as targetfasta:
+	    subprocess.call(["perl", str(rnammerpath), "-S", "bac,arc,euk", "-m", "lsu,ssu,tsu", "-gff", "rrnafile.gff"], stdin=targetfasta)
+	print "DONE. RNAmmer 1.2 was done to predict rRNA sequences\n\n"
+
+	#Storing rRNA information in memory
+	with open("rrnafile.gff", "rU") as rrnafile:
+		rRNAdict = {}
+		for line in rrnafile:
+			indrRNA = {}
+			if not line.startswith("#"):
+				rRNA_information = line.split("\t")
+				indrRNA['begin'] = int(rRNA_information[3])
+				indrRNA['end'] = int(rRNA_information[4])
+				if rRNA_information[6] == "+":
+					indrRNA['strand'] = 1
+				else:
+					indrRNA['strand'] = -1
+				indrRNA['product'] = rRNA_information[8]
+				print "WARNING: %s harbours a %s from %i to %i" % (newfile, indrRNA['product'], indrRNA['begin'], indrRNA['end']) # In theory, viruses don't harbour rRNA genes!
+				keyname = "%i_%i_%s" % (indrRNA['begin'], indrRNA['end'], indrRNA['product'])
+				rRNAdict[keyname] = indrRNA
+
 	# Predicting genes using PRODIGAL
-	print "Running Prodigal to predict the genes in %s" % newfile
+	print "\nRunning Prodigal to predict the genes in %s" % newfile
 	for record in SeqIO.parse(newfile, "fasta"):
 		length_contig = len(record.seq)
 		if (length_contig >= 100000):
@@ -301,7 +335,6 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 					information_proteins_blast[row['qseqid']] = infoprot_blast
 	
 	## Predicting the function of the proteins based on HMM-HMM comparisons using HH-SUITE
-
 	with open("commandsB.sh", "w") as commandsB, open("commandsC.sh", "w") as commandsC:
 		for singleprot in sorted(glob.glob("SEQ_*.faa")):
 			hhtempout = "%s.a3m" % singleprot
@@ -562,10 +595,10 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 			try:
 				patT = re.compile('^(\d+)\s(\d+)\s\d+\s\d+\.\d+\s')
 				start, end = re.match(patT, line).groups()
-				combinedinfo = "%s_%s" % (str(start), str(end))
 			except AttributeError:
 				continue
 			else:
+				combinedinfo = "%s_%s" % (str(start), str(end))
 				information_tandem_repeat['start'] = start
 				information_tandem_repeat['end'] = end
 			information_TRF[combinedinfo] = information_tandem_repeat
@@ -577,10 +610,10 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 			try:
 				patI = re.compile('^(\d+)\s(\d+)\s\d+\s\d+\s\d+')
 				start, end = re.match(patI, line).groups()
-				combinedinfo = "%s_%s" % (str(start), str(end))
 			except AttributeError:
 				continue
 			else:
+				combinedinfo = "%s_%s" % (str(start), str(end))
 				information_inverted_repeat['start'] = start
 				information_inverted_repeat['end'] = end
 			information_IRF[combinedinfo] = information_inverted_repeat
@@ -604,6 +637,16 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 				feature_qualifiers = OrderedDict(qualifiers)
 				new_data_cds = SeqFeature.SeqFeature(feature_location, type = "CDS", strand = protsdict[protein]['strand'], qualifiers = feature_qualifiers)
 				whole_sequence.features.append(new_data_cds)
+			for rRNA in sorted(rRNAdict, key = stringSplitByNumbers):
+				start_pos = SeqFeature.ExactPosition(rRNAdict[rRNA]['begin'])
+				end_pos = SeqFeature.ExactPosition(rRNAdict[rRNA]['end'])
+				feature_location = SeqFeature.FeatureLocation(start_pos, end_pos, strand=rRNAdict[rRNA]['strand'])
+				new_data_gene = SeqFeature.SeqFeature(feature_location, type = "gene", strand = rRNAdict[rRNA]['strand'])
+				whole_sequence.features.append(new_data_gene)
+				qualifiers = [('product', rRNAdict[rRNA]['product'])]
+				feature_qualifiers = OrderedDict(qualifiers)
+				new_data_rRNA = SeqFeature.SeqFeature(feature_location, type = "rRNA", strand = rRNAdict[rRNA]['strand'], qualifiers = feature_qualifiers)
+				whole_sequence.features.append(new_data_rRNA)
 			for tRNA in sorted(tRNAdict, key = stringSplitByNumbers):
 				start_pos = SeqFeature.ExactPosition(tRNAdict[tRNA]['begin'])
 				end_pos = SeqFeature.ExactPosition(tRNAdict[tRNA]['end'])
@@ -643,6 +686,7 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 	os.remove("temp.faa")
 	os.remove("temp_blast.csv")
 	os.remove("trnafile.fasta")
+	os.remove("rrnafile.gff")
 	os.remove("trf_temp.dat")
 	os.remove("irf_temp.dat")
 	for f in glob.glob("SEQ*"):
