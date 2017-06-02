@@ -21,6 +21,7 @@ Before using this script, the following Python modules and programs should be in
 	- BLAST+ (Camacho et al. 2008): it is used to predict the function of the predicted proteins according to homology. This suite is publicly available at ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/ under the GPLv2 licence. Databases are available at ftp://ftp.ncbi.nlm.nih.gov/blast/db/
 	- HHSUITE (Söding 2005): it is used to predict the function of the predicted proteins according to Hidden Markov Model-Hidden Markov Model (HMM-HMM) comparisons. First, the sequences are aligned against reference databases using HHblits (Remmert et al. 2011) and, then, the resulting multiple sequence alignment is converted into a HMM and compared with known HMM databases using HHsearch/HHpred (Hildebrand et al. 2009). This suite is publicly available at https://github.com/soedinglab/hh-suite under the GPLv3 licence. Databases are available at http://wwwuser.gwdg.de/~compbiol/data/hhsuite/databases/hhsuite_dbs/
 	- ARAGORN (Laslett and Canback 2004): it is used to predict tRNA sequences in the contig. This program is publicly available at http://mbio-serv2.mbioekol.lu.se/ARAGORN/ under the GPLv2 licence.
+	- RNAmmer 1.2 (Lagesen et al. 2007): it is used to predict rRNA sequences in the contig. If these kind of sequences is detected, the program prints a warning statement because a viral sequence do not harbour ribosomal genes. This program is freely available for academic purposes upon request in http://www.cbs.dtu.dk/services/RNAmmer/.
 	- Tandem Repeats Finder (TRF; Benson 1999): it is used to predict the tandem repeats in your contig. This program is freely available at https://tandem.bu.edu/trf/trf.html under a custom licence.
 	- Inverted Repeats Finder (IRF; Warburton et al. 2004): it is used to predict the inverted repeats in your contig. This program is freely available at https://tandem.bu.edu/irf/irf.download.html under a custom licence.
 
@@ -89,6 +90,7 @@ REFERENCES:
 	- Hildebrand A, Remmert A, Biegert A, Söding J (2009) Fast and accurate automatic structure prediction with HHpred. Proteins 77: 128-32.
 	- Hyatt D, Chen GL, Locascio PF, Land ML, Larimer FW, Hauser LJ (2010) Prodigal: prokaryotic gene recognition and translation initiation site identification. BMC Bioinformatics 11: 119.
 	- Hyatt D, Locascio PF, Hauser LJ, Uberbacher EC (2012) Gene and translation initiation site prediction in metagenomic sequences. Bioinformatics 28: 2223-30.
+	- Lagesen K, Hallin PF, Rødland E, Stærfeldt HH, Rognes T Ussery DW (2007) RNammer: consistent annotation of rRNA genes in genomic sequences. Nucleic Acids Research 35, 3100-8.
 	- Laslett D, Canback B (2004) ARAGORN, a program to detect tRNA genes and tmRNA genes in nucleotide sequences. Nucleic Acids Research 32, 11–16.
 	- Remmert M, Biegert A, Hauser A, Söding J (2011) HHblits: Lightning-fast iterative protein sequence searching by HMM-HMM alignment. Nature Methods 9: 173-5. 
 	- Söding J (2005) Protein homology detection by HMM-HMM comparison. Bioinformatics 21: 951-60.
@@ -97,5 +99,6 @@ REFERENCES:
 
 HISTORY: 
 
+v 0.3.0 - Implemented RNAmmer v 1.2 to predict rRNA in the contigs. If such program is able to predict ribosomal genes, a warning is printed (as viral sequences do not have ribosomal genes).
 v 0.2.0 - Added parallelization of BLAST and HHSUITE. To do that, GNU Parallel (Tange 2011) is required. To disable this option, run the program with the "--noparallel" option.
 v 0.1.0 - Original version of the program.
