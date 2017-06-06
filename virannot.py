@@ -75,7 +75,7 @@ def stringSplitByNumbers(x):
 	return [int(y) if y.isdigit() else y for y in l]
 
 # Defining the program version
-version = "0.3.0"
+version = "0.4.0"
 
 # Processing the parameters
 parser = argparse.ArgumentParser(description='Virannot is a automatic de novo viral genome annotator.')
@@ -83,7 +83,8 @@ basic_group = parser.add_argument_group('Basic options for virannot [REQUIRED]')
 
 basic_group.add_argument("--input", dest="inputfile", type=str, required=True, help='Input file as a FASTA file', metavar="FASTAFILE")
 basic_group.add_argument("--blastdb", dest="blastdatabase", type=str, required=True, help='BLAST Database that will be used for the protein function prediction. The database must be an amino acid one, not  nucleotidic', metavar="BLASTDB")
-basic_group.add_argument("--hhblitsdb", dest="hhblitsdatabase", type=str, required=True, help='HHBLITS Database that will be used for the first step of the protein function prediction.In this case, HHBLITSDB should be in the format "/full/path/to/db1/db1 (without the extension _a3m_db)"', metavar="HHBLITSDB")
+basic_group.add_argument("--rfamdb", dest="rfamdatabase", type=str, required=True, help='RFAM Database that will be used for the ribosomal RNA prediction.', metavar="RFAMDB")
+basic_group.add_argument("--hhblitsdb", dest="hhblitsdatabase", type=str, required=True, help='HHBLITS Database that will be used for the first step of the protein function prediction. In this case, HHBLITSDB should be in the format "/full/path/to/db1/db1 (without the extension _a3m_db)"', metavar="HHBLITSDB")
 basic_group.add_argument("--hhsearchdb", dest="hhsearchdatabase", nargs='+', type=str, required=True, help='HHSEARCH Database(s) that will be used for the second step of the protein function prediction. You can use more than a single database for the analysis. In this case, HHSEARCHDB should be in the format -d3 /full/path/to/db1/db1_hhm_db /full/path/to/db2/db2_hhm_db', metavar="HHSEARCHDB")
 basic_group.add_argument("--modifiers", dest="modifiers", type=str, required=True, help='Input file as a plain text file with the modifiers per every FASTA header according to SeqIn (https://www.ncbi.nlm.nih.gov/Sequin/modifiers.html). All modifiers must be written in a single line and are separated by a single space character. No space should be placed besides the = sign. For example: [organism=Serratia marcescens subsp. marcescens] [sub-species=marcescens] [strain=AH0650_Sm1] [topology=linear] [moltype=DNA] [tech=wgs] [gcode=11] [country=Australia] [isolation-source=sputum]. This line will be copied and printed along with the record name as the definition line of every contig sequence.', metavar="TEXTFILE")
 
@@ -129,10 +130,10 @@ eprint("Local time: ", strftime("%a, %d %b %Y %H:%M:%S"))
 eprint("\n\n")
 
 # checking the presence of the programs in the system
-rnammerpath = find("rnammer", "/")
-
 if not cmd_exists("lastz")==True:
 	sys.exit("You must install LASTZ before using this script")
+elif not cmd_exists("cmscan")==True:
+	sys.exit("You must install INFERNAL before using this script")
 elif not cmd_exists("prodigal")==True:
 	sys.exit("You must install prodigal before using this script")
 elif not cmd_exists("parallel")==True and args.noparallel==False:
@@ -141,8 +142,6 @@ elif not cmd_exists("blastp")==True:
 	sys.exit("You must install BLAST before using this script")
 elif not cmd_exists("hhblits")==True and not cmd_exists("hhsearch")==True:
 	sys.exit("You must install HHsuite before using this script")
-elif rnammerpath == "":
-	sys.exit("You must install RNAmmer 1.2 before using this script")
 elif not cmd_exists("aragorn")==True:
 	sys.exit("You must install ARAGORN before using this script")
 elif not cmd_exists("trf")==True:
@@ -222,29 +221,61 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 				os.rename("temp.fasta", newfile)
 		eprint("LASTZ predicted that %s is %s\n" % (newfile, genomeshape['genomeshape']))
 
-	# Predicting the rRNA sequences (if you do not have any viral sequence!)
-	if args.typedata == "CON":
-		eprint("Running RNAmmer 1.2 to predict rRNA-like sequences in %s" % newfile)
-		with open(newfile, "rU") as targetfasta:
-		    subprocess.call(["perl", str(rnammerpath), "-S", "bac,arc,euk", "-m", "lsu,ssu,tsu", "-gff", "rrnafile.gff"], stdin=targetfasta)
+	# Predicting the rRNA sequences
+	with open(newfile, "rU") as targetfasta, open("/dev/null", "w") as apocalypse:
+		eprint("Running INFERNAL+RFAM to predict rRNA-like sequences in %s" % newfile)
+		subprocess.call(["cmscan", "--rfam", "--cut_ga", "--nohmmonly", "--tblout", "rrnafile.csv", "--cpu", args.ncpus, args.rfamdatabase, newfile], stdout=apocalypse)
 
-		#Storing rRNA information in memory
-		with open("rrnafile.gff", "rU") as rrnafile:
-			rRNAdict = {}
-			for line in rrnafile:
-				indrRNA = {}
-				if not line.startswith("#"):
-					rRNA_information = line.split("\t")
-					indrRNA['begin'] = int(rRNA_information[3])
-					indrRNA['end'] = int(rRNA_information[4])
-					if rRNA_information[6] == "+":
-						indrRNA['strand'] = 1
+	#Storing rRNA information in memory
+	with open("rrnafile.csv", "rU") as rrnafile:
+		namedict = {"SSU_rRNA_archaea": "16s_rRNA", "SSU_rRNA_bacteria": "16s_rRNA", "SSU_rRNA_eukarya": "18s_rRNA", "SSU_rRNA_microsporidia": "16s_rRNA", "LSU_rRNA_archaea": "23s_rRNA", "LSU_rRNA_bacteria": "23s_rRNA", "LSU_rRNA_eukarya": "28s_rRNA", "5S_rRNA": "5s_rRNA"}
+		rRNAdict = {}
+		indSSU = {}
+		indLSU = {}
+		indTSU = {}
+		indSSU['score'] = 0
+		indLSU['score'] = 0
+		indTSU['score'] = 0
+		for line in rrnafile:
+			if not line.startswith("#") and re.match("^((S|L)SU|5S)_rRNA", line):
+				InfoLINE = re.sub("\s+", ",", line)
+				line_splitted = InfoLINE.split(",")
+				keyword = re.sub("\_(archaea|bacteria|eukarya|microsporidia)", "", line_splitted[0])
+				rnalength = int(line_splitted[8])-int(line_splitted[7])
+				newscore = float(line_splitted[14])
+				if line.startswith("SSU_rRNA_") and (newscore >= indSSU['score']):
+					indSSU['product'] = namedict[line_splitted[0]]
+					indSSU['begin'] = int(line_splitted[7])
+					indSSU['end'] = int(line_splitted[8])
+					if line_splitted[9] == "+":
+						indSSU['strand'] = 1
 					else:
-						indrRNA['strand'] = -1
-					indrRNA['product'] = rRNA_information[8]
-					eprint("WARNING: %s harbours a %s from %i to %i" % (newfile, indrRNA['product'], indrRNA['begin'], indrRNA['end'])) # In theory, viruses don't harbour rRNA genes!
-					keyname = "%i_%i_%s" % (indrRNA['begin'], indrRNA['end'], indrRNA['product'])
-					rRNAdict[keyname] = indrRNA
+						indSSU['strand'] = -1			
+					indSSU['score'] = float(line_splitted[14])
+				rRNAdict['SSU'] = indSSU
+				if line.startswith("LSU_rRNA_") and (newscore >= indLSU['score']):
+					indLSU['product'] = namedict[line_splitted[0]]
+					indLSU['begin'] = int(line_splitted[7])
+					indLSU['end'] = int(line_splitted[8])
+					if line_splitted[9] == "+":
+						indLSU['strand'] = 1
+					else:
+						indLSU['strand'] = -1			
+					indLSU['score'] = float(line_splitted[14])
+				rRNAdict['LSU'] = indLSU
+				if line.startswith("5S_rRNA") and (newscore >= indTSU['score']):
+					indTSU['product'] = namedict[line_splitted[0]]
+					indTSU['begin'] = int(line_splitted[7])
+					indTSU['end'] = int(line_splitted[8])
+					if line_splitted[9] == "+":
+						indTSU['strand'] = 1
+					else:
+						indTSU['strand'] = -1			
+					indTSU['score'] = float(line_splitted[14])
+				rRNAdict['TSU'] = indTSU
+
+		for rRNA in rRNAdict:
+			eprint("WARNING: %s harbours a %s from %i to %i" % (newfile, rRNAdict[rRNA]['product'], rRNAdict[rRNA]['begin'], rRNAdict[rRNA]['end'])) # In theory, viruses don't harbour rRNA genes
 
 	# Predicting genes using PRODIGAL
 	eprint("\nRunning Prodigal to predict the genes in %s" % newfile)
@@ -298,7 +329,7 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 					line2write = ' '.join(line)
 					commands.write(line2write)
 				else:
-					eprint("Adding %s to run parallel BLAST using default parameters)" % j)
+					eprint("Adding %s to run parallel BLAST using default parameters" % j)
 					line = ['blastp', '-query', j, '-db', args.blastdatabase, '-evalue', str(args.blastevalue), '-outfmt', '"6 qseqid sseqid pident length qlen slen qstart qend evalue bitscore stitle"', '-out', jout, '-max_target_seqs', '10', '\n']
 					line2write = ' '.join(line)
 					commands.write(line2write)
@@ -693,7 +724,7 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 	os.remove("temp.faa")
 	os.remove("temp_blast.csv")
 	os.remove("trnafile.fasta")
-	os.remove("rrnafile.gff")
+	os.remove("rrnafile.csv")
 	os.remove("trf_temp.dat")
 	os.remove("irf_temp.dat")
 	for f in glob.glob("SEQ*"):
@@ -736,7 +767,6 @@ for temptbl in glob.glob("CONTIG_*.csv"):
 	os.remove(temptbl)
 
 # Preparing sequences for GenBank submission (Original code from Wan Yu's gbk2tbl.py script [https://github.com/wanyuac/BINF_toolkit/blob/master/gbk2tbl.py])
-
 allowed_qualifiers = ['locus_tag', 'gene', 'product', 'pseudo', 'protein_id', 'gene_desc', 'old_locus_tag', 'note', 'inference', 'organism', 'mol_type', 'strain', 'sub_species', 'isolation-source', 'country']
 newfastafile = "%s.fasta" % root_output
 newtablefile = "%s.tbl" % root_output
