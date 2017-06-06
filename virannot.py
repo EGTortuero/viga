@@ -21,6 +21,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # Importing python libraries
+from __future__ import print_function
 import argparse
 import csv
 import fileinput
@@ -59,6 +60,9 @@ def batch_iterator(iterator, batch_size):
 
 def cmd_exists(cmd):
 	return subprocess.call("type " + cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE) == 0
+
+def eprint(*args, **kwargs):
+	print(*args, file=sys.stderr, **kwargs)
 
 def find(name, path):
 	for root, dirs, files in os.walk(path):
@@ -118,11 +122,11 @@ if not root_output:
 hh_search_dbs = '{}'.format(' '.join(args.hhsearchdatabase))
 
 # Printing the header of the program 
-print "This is VirAnnot", version
-print "Written by Enrique Gonzalez Tortuero & Vimalkumar Velayudhan"
-print "Homepage is https://github.com/EGTortuero/virannot"
-print "Local time: ", strftime("%a, %d %b %Y %H:%M:%S")
-print "\n\n"
+eprint("This is VirAnnot %s" % str(version))
+eprint("Written by Enrique Gonzalez Tortuero & Vimalkumar Velayudhan")
+eprint("Homepage is https://github.com/EGTortuero/virannot")
+eprint("Local time: ", strftime("%a, %d %b %Y %H:%M:%S"))
+eprint("\n\n")
 
 # checking the presence of the programs in the system
 rnammerpath = find("rnammer", "/")
@@ -146,7 +150,7 @@ elif not cmd_exists("trf")==True:
 elif not cmd_exists("irf")==True:
 	sys.exit("You must install Inverted Repeats Finder before using this script")
 
-print "\nData type is {0} and GenBank translation table no is {1}\n".format(args.typedata, args.gcode)
+eprint("Data type is {0} and GenBank translation table no is {1}\n".format(args.typedata, args.gcode))
 
 # Correcting the original file (long headers problem + multiple FASTA files)
 record_iter = SeqIO.parse(open(args.inputfile, "rU"),"fasta")
@@ -165,14 +169,14 @@ for i, batch in enumerate(batch_iterator(record_iter, 1)):
 			record.id = "%s_%i" % (args.locus, counter)
 			record.description = record.description
 			counter += 1
-			print "WARNING: The name of the sequence %s was corrected as %s" % (original_name, record.id)
+			eprint("WARNING: The name of the sequence %s was corrected as %s" % (original_name, record.id))
 		SeqIO.write(record, corrected, "fasta")
 	os.remove(filename)
 
 for newfile in sorted(glob.glob("CONTIG_*.fna")):
 
 	# Predicting the shape of the contig (code based on Alex Crits-Christoph's find_circular.py script [https://github.com/alexcritschristoph/VICA/blob/master/find_circular.py])
-	print "Predicting the shape of the contig using LASTZ"
+	eprint("Predicting the shape of the contig using LASTZ")
 	genomeshape = {}
 	with open(newfile, "rU") as targetfasta:
 		Sequence = SeqIO.parse(newfile, "fasta")
@@ -216,34 +220,34 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 					Newseq = SeqRecord(Seq(Corrseq, IUPAC.ambiguous_dna), id = record.id)
 					SeqIO.write(Newseq, correctedcircular, "fasta")
 				os.rename("temp.fasta", newfile)
-		print "Done. LASTZ predicted that the contig is %s\n" % genomeshape['genomeshape']
+		eprint("LASTZ predicted that %s is %s\n" % (newfile, genomeshape['genomeshape']))
 
-	# Predicting the rRNA sequences
-	print "Running RNAmmer 1.2 to predict rRNA-like sequences in %s" % newfile
-	with open(newfile, "rU") as targetfasta:
-	    subprocess.call(["perl", str(rnammerpath), "-S", "bac,arc,euk", "-m", "lsu,ssu,tsu", "-gff", "rrnafile.gff"], stdin=targetfasta)
-	print "DONE. RNAmmer 1.2 was done to predict rRNA sequences\n\n"
+	# Predicting the rRNA sequences (if you do not have any viral sequence!)
+	if args.typedata == "CON":
+		eprint("Running RNAmmer 1.2 to predict rRNA-like sequences in %s" % newfile)
+		with open(newfile, "rU") as targetfasta:
+		    subprocess.call(["perl", str(rnammerpath), "-S", "bac,arc,euk", "-m", "lsu,ssu,tsu", "-gff", "rrnafile.gff"], stdin=targetfasta)
 
-	#Storing rRNA information in memory
-	with open("rrnafile.gff", "rU") as rrnafile:
-		rRNAdict = {}
-		for line in rrnafile:
-			indrRNA = {}
-			if not line.startswith("#"):
-				rRNA_information = line.split("\t")
-				indrRNA['begin'] = int(rRNA_information[3])
-				indrRNA['end'] = int(rRNA_information[4])
-				if rRNA_information[6] == "+":
-					indrRNA['strand'] = 1
-				else:
-					indrRNA['strand'] = -1
-				indrRNA['product'] = rRNA_information[8]
-				print "WARNING: %s harbours a %s from %i to %i" % (newfile, indrRNA['product'], indrRNA['begin'], indrRNA['end']) # In theory, viruses don't harbour rRNA genes!
-				keyname = "%i_%i_%s" % (indrRNA['begin'], indrRNA['end'], indrRNA['product'])
-				rRNAdict[keyname] = indrRNA
+		#Storing rRNA information in memory
+		with open("rrnafile.gff", "rU") as rrnafile:
+			rRNAdict = {}
+			for line in rrnafile:
+				indrRNA = {}
+				if not line.startswith("#"):
+					rRNA_information = line.split("\t")
+					indrRNA['begin'] = int(rRNA_information[3])
+					indrRNA['end'] = int(rRNA_information[4])
+					if rRNA_information[6] == "+":
+						indrRNA['strand'] = 1
+					else:
+						indrRNA['strand'] = -1
+					indrRNA['product'] = rRNA_information[8]
+					eprint("WARNING: %s harbours a %s from %i to %i" % (newfile, indrRNA['product'], indrRNA['begin'], indrRNA['end'])) # In theory, viruses don't harbour rRNA genes!
+					keyname = "%i_%i_%s" % (indrRNA['begin'], indrRNA['end'], indrRNA['product'])
+					rRNAdict[keyname] = indrRNA
 
 	# Predicting genes using PRODIGAL
-	print "\nRunning Prodigal to predict the genes in %s" % newfile
+	eprint("\nRunning Prodigal to predict the genes in %s" % newfile)
 	for record in SeqIO.parse(newfile, "fasta"):
 		length_contig = len(record.seq)
 		if (length_contig >= 100000):
@@ -257,7 +261,7 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 			else:
 				subprocess.call(["prodigal", "-a", "pretemp.faa", "-i", newfile, "-o", "/dev/null", "-p", "meta", "-g", args.gcode, "-q"])
 	num_seqs = len(list(SeqIO.parse("pretemp.faa", "fasta")))
-	print "Done. Prodigal was able to predict %i genes\n" % num_seqs
+	eprint("Prodigal was able to predict %i genes in %s\n" % (num_seqs, newfile))
 	
 	with open("pretemp.faa", "rU") as originalfaa, open("temp.faa", "w") as correctedfaa:
 		sequences = SeqIO.parse(originalfaa, "fasta")
@@ -278,26 +282,27 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 
 	if args.noparallel==True:
 		if args.blastexh==True:
-			print "Running BLAST to predict the genes according to homology inference in %s using exhaustive mode (see Fozo et al. (2010) Nucleic Acids Res for details)" % newfile
+			eprint("Running BLAST to predict the genes according to homology inference in %s using exhaustive mode (see Fozo et al. (2010) Nucleic Acids Res for details)" % newfile)
 			subprocess.call(['blastp', '-query', "temp.faa", '-db', args.blastdatabase, '-evalue', str(args.blastevalue), '-outfmt', '6 qseqid sseqid pident length qlen slen qstart qend evalue bitscore stitle', '-out', 'temp_blast.csv', '-max_target_seqs', '10', '-word_size', '2', '-gapopen', '8', '-gapextend', '2', '-matrix', '"PAM70"', '-comp_based_stats', '"0"', "-num_threads", str(args.ncpus)])
 		else:
-			print "Running BLAST to predict the genes according to homology inference in %s using default parameters" % newfile
+			eprint("Running BLAST to predict the genes according to homology inference in %s using default parameters" % newfile)
 			subprocess.call(['blastp', '-query', "temp.faa", '-db', args.blastdatabase, '-evalue', str(args.blastevalue), '-outfmt', '6 qseqid sseqid pident length qlen slen qstart qend evalue bitscore stitle', '-out', 'temp_blast.csv', '-max_target_seqs', '10', "-num_threads", str(args.ncpus)])
 	else:
+		eprint("Creating file to run parallel BLAST")
 		with open("commands.sh", "w") as commands:
 			for j in sorted(glob.glob("SEQ_*.faa")):
 				jout = "%s.blast.csv" % j
 				if args.blastexh==True:
-					print "Creating file to run parallel BLAST: adding %s using exhaustive mode  (see Fozo et al. (2010) Nucleic Acids Res for details)" % j
+					eprint("Adding %s to run parallel BLAST in exhaustive mode (see Fozo et al. (2010) Nucleic Acids Res for details)" % j)
 					line = ['blastp', '-query', j, '-db', args.blastdatabase, '-evalue', str(args.blastevalue), '-outfmt', '"6 qseqid sseqid pident length qlen slen qstart qend evalue bitscore stitle"', '-out', jout, '-max_target_seqs', '10', '-word_size', '2', '-gapopen', '8', '-gapextend', '2', '-matrix', '"PAM70"', '-comp_based_stats', '"0"', '\n']
 					line2write = ' '.join(line)
 					commands.write(line2write)
 				else:
-					print "Creating file to run parallel BLAST: adding %s using default parameters" % j
+					eprint("Adding %s to run parallel BLAST using default parameters)" % j)
 					line = ['blastp', '-query', j, '-db', args.blastdatabase, '-evalue', str(args.blastevalue), '-outfmt', '"6 qseqid sseqid pident length qlen slen qstart qend evalue bitscore stitle"', '-out', jout, '-max_target_seqs', '10', '\n']
 					line2write = ' '.join(line)
 					commands.write(line2write)
-		print "Running parallel BLAST"
+		eprint("Running parallel BLAST")
 		subprocess.call(['parallel', '-j', str(args.ncpus)], stdin=open('commands.sh'))
 		listblastcsv = sorted(glob.glob('SEQ_*.csv'))
 		with open('temp_blast.csv', 'w') as finalblastcsv:
@@ -308,7 +313,7 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 		os.remove("commands.sh")
 		for fname in listblastcsv:
 			os.remove(fname)
-	print "Done. BLASTp was done to predict the genes by homology\n"
+	eprint("Done. BLASTp was done to predict the genes by homology\n")
 
 	# Parsing the results from BLAST
 	with open("temp_blast.csv", "rU") as blastresults:
@@ -341,47 +346,48 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 			hhout = "%s.hhr" % singleprot
 			if args.noparallel==True:
 				if args.hhsearchexh==True:
-					print "Running HHblits to predict the proteins according to HMM-HMM comparisons in %s using exhaustive mode (see Fidler et al. (2016) Traffic for details)." % singleprot
+					eprint("Running HHblits to predict the proteins according to HMM-HMM comparisons in %s using exhaustive mode (see Fidler et al. (2016) Traffic for details)." % singleprot)
 					subprocess.call(['hhblits', '-i', singleprot, '-d', args.hhblitsdatabase, '-o' , '/dev/null', '-oa3m', hhtempout, '-n', '8', '-e', '0.001', '-E', '0.01', '-maxfilt', str(args.maxfilt), '-neffmax', str(args.neffmax), '-v', "0", "-cpu", str(args.ncpus)])
-					print "Done. HHblits was done to predict the function of the genes by HMM-HMM comparisons\n\n"
-					print "Running HHpred to predict the proteins according to HMM-HMM comparisons in %s using exhaustive mode (see Fidler et al. (2016) Traffic for details)." % singleprot
+					eprint("Done. HHblits was done to predict the function of the genes by HMM-HMM comparisons\n\n")
+					eprint("Running HHpred to predict the proteins according to HMM-HMM comparisons in %s using exhaustive mode (see Fidler et al. (2016) Traffic for details)." % singleprot)
 					subprocess.call(['hhsearch', '-i', hhtempout, '-d', hh_search_dbs, '-o', hhout, '-mac', '-e', '0.01', '-v', "0", "-cpu", str(args.ncpus)])
 				else:
-					print "Running HHblits to predict the proteins according to HMM-HMM comparisons in %s using default parameters." % singleprot
+					eprint("Running HHblits to predict the proteins according to HMM-HMM comparisons in %s using default parameters." % singleprot)
 					subprocess.call(['hhblits', '-i', singleprot, '-d', args.hhblitsdatabase, '-o' , '/dev/null', '-oa3m', hhtempout, '-n', '3', '-E', '0.5', '-maxfilt', str(args.maxfilt), '-neffmax', str(args.neffmax), '-v', "0", "-cpu", str(args.ncpus)])
-					print "Done. HHblits was done to predict the function of the genes by HMM-HMM comparisons\n\n"
-					print "Running HHpred to predict the proteins according to HMM-HMM comparisons in %s using default parameters." % singleprot
+					eprint("Done. HHblits was done to predict the function of the genes by HMM-HMM comparisons\n\n")
+					eprint("Running HHpred to predict the proteins according to HMM-HMM comparisons in %s using default parameters." % singleprot)
 					subprocess.call(['hhsearch', '-i', hhtempout, '-d', hh_search_dbs, '-o', hhout, '-v', "0", "-cpu", str(args.ncpus)])
 			else:
+				eprint("Creating file to run parallel HHblits and HHpred")
 				if args.hhsearchexh==True:
-					print "Creating file to run parallel HHblits: adding %s using exhaustive mode (see Fidler et al. (2016) Traffic for details)." % singleprot
+					eprint("Adding %s to run HHblits using exhaustive mode (see Fidler et al. (2016) Traffic for details)." % singleprot)
 					lineB = ['hhblits', '-i', singleprot, '-d', args.hhblitsdatabase, '-o' , '/dev/null', '-oa3m', hhtempout, '-n', '8', '-e', '0.001', '-E', '0.01', '-maxfilt', str(args.maxfilt), '-neffmax', str(args.neffmax), '-v', "0", '\n']
 					line2writeB = ' '.join(lineB)
 					commandsB.write(line2writeB)
-					print "Creating file to run parallel HHpred: adding %s using exhaustive mode (see Fidler et al. (2016) Traffic for details)." % singleprot
+					eprint("Adding %s to run HHpred using exhaustive mode (see Fidler et al. (2016) Traffic for details)." % singleprot)
 					lineC = ['hhsearch', '-i', hhtempout, '-d', '{!r}'.format(hh_search_dbs), '-o', hhout, '-mac', '-e', '0.01', '-v', "0", '\n']
 					line2writeC = ' '.join(lineC)
 					commandsC.write(line2writeC)
 				else:
-					print "Creating file to run parallel HHblits: adding %s using default parameters." % singleprot
+					eprint("Adding %s to run HHblits using default parameters." % singleprot)
 					lineB = ['hhblits', '-i', singleprot, '-d', args.hhblitsdatabase, '-o' , '/dev/null', '-oa3m', hhtempout, '-n', '3', '-E', '0.5', '-maxfilt', str(args.maxfilt), '-neffmax', str(args.neffmax), '-v', "0", '\n']
 					line2writeB = ' '.join(lineB)
 					commandsB.write(line2writeB)
-					print "Creating file to run parallel HHpred: adding %s using default parameters." % singleprot
+					eprint("Adding %s to run HHpred using default parameters." % singleprot)
 					lineC = ['hhsearch', '-i', hhtempout, '-d', '{!r}'.format(hh_search_dbs), '-o', hhout, '-v', "0", '\n']
 					line2writeC = ' '.join(lineC)
 					commandsC.write(line2writeC)
 
 	if args.noparallel==False:
-		print "Running parallel HHblits"
+		eprint("Running parallel HHblits")
 		subprocess.call(['parallel', '-j', str(args.ncpus)], stdin=open('commandsB.sh'))
-		print "Running parallel HHpred"		
+		eprint("Running parallel HHpred")
 		subprocess.call(['parallel', '-j', str(args.ncpus)], stdin=open('commandsC.sh'))
 		os.remove("commandsB.sh")
 		os.remove("commandsC.sh")
 		for j in sorted(glob.glob("*a3m")):
 			os.remove(j)
-	print "Done. HHpred was done to predict the function of the genes by HMM-HMM comparisons\n\n"
+	eprint("Done. HHpred was done to predict the function of the genes by HMM-HMM comparisons\n\n")
 
 	# Parsing the results from HH-SUITE
 	information_proteins_hhsuite = {}
@@ -461,21 +467,21 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 	# Creation of table
 	debugtable = "%s.csv" % newfile
 	with open(debugtable, "w") as tablefile:
-		print >>tablefile, "\t".join(["Identifier", "Start", "Stop", "Strand", "size_aa", "pI", "Mol_weight_kDa", "Instability_index", "ID_BLAST", "Descr_BLAST", "evalue_BLAST", "%ID_BLAST", "%Cover_BLAST", "ID_HHPRED", "Descr_HHPRED", "Prob_HHPRED", "evalue_HHPRED", "%ID_HHPRED", "%Cover_HHPRED"])
+		print("\t".join(["Identifier", "Start", "Stop", "Strand", "size_aa", "pI", "Mol_weight_kDa", "Instability_index", "ID_BLAST", "Descr_BLAST", "evalue_BLAST", "%ID_BLAST", "%Cover_BLAST", "ID_HHPRED", "Descr_HHPRED", "Prob_HHPRED", "evalue_HHPRED", "%ID_HHPRED", "%Cover_HHPRED"]), file=tablefile)
 		keylist = information_proteins_hhsuite.keys()
 		keylist.sort()
 		for keyB in keylist:
 			keyB = keyB.replace(".hhr", "")
 			try:
-				print >>tablefile, "\t".join([equivalence[keyB], str(tempprotsdict[equivalence[keyB]]['begin']), str(tempprotsdict[equivalence[keyB]]['end']), str(tempprotsdict[equivalence[keyB]]['strand']), str(tempprotsdict[equivalence[keyB]]['length']), str(tempprotsdict[equivalence[keyB]]['isoelectricpoint']), str(tempprotsdict[equivalence[keyB]]['molweightkda']), str(tempprotsdict[equivalence[keyB]]['instability']), information_proteins_blast[equivalence[keyB]]['sseqid'], information_proteins_blast[equivalence[keyB]]['descr'], str(information_proteins_blast[equivalence[keyB]]['evalue']), str(information_proteins_blast[equivalence[keyB]]['pident']), str(information_proteins_blast[equivalence[keyB]]['pcover']), information_proteins_hhsuite[keyB]['name'], information_proteins_hhsuite[keyB]['descr'], str(information_proteins_hhsuite[keyB]['prob']), str(information_proteins_hhsuite[keyB]['evalue']), str(information_proteins_hhsuite[keyB]['pident']), str(information_proteins_hhsuite[keyB]['pcover'])])
+				print("\t".join([equivalence[keyB], str(tempprotsdict[equivalence[keyB]]['begin']), str(tempprotsdict[equivalence[keyB]]['end']), str(tempprotsdict[equivalence[keyB]]['strand']), str(tempprotsdict[equivalence[keyB]]['length']), str(tempprotsdict[equivalence[keyB]]['isoelectricpoint']), str(tempprotsdict[equivalence[keyB]]['molweightkda']), str(tempprotsdict[equivalence[keyB]]['instability']), information_proteins_blast[equivalence[keyB]]['sseqid'], information_proteins_blast[equivalence[keyB]]['descr'], str(information_proteins_blast[equivalence[keyB]]['evalue']), str(information_proteins_blast[equivalence[keyB]]['pident']), str(information_proteins_blast[equivalence[keyB]]['pcover']), information_proteins_hhsuite[keyB]['name'], information_proteins_hhsuite[keyB]['descr'], str(information_proteins_hhsuite[keyB]['prob']), str(information_proteins_hhsuite[keyB]['evalue']), str(information_proteins_hhsuite[keyB]['pident']), str(information_proteins_hhsuite[keyB]['pcover'])]), file=tablefile)
 			except KeyError:
 				try:
-					print >>tablefile, "\t".join([equivalence[keyB], str(tempprotsdict[equivalence[keyB]]['begin']), str(tempprotsdict[equivalence[keyB]]['end']), str(tempprotsdict[equivalence[keyB]]['strand']), str(tempprotsdict[equivalence[keyB]]['length']), str(tempprotsdict[equivalence[keyB]]['isoelectricpoint']), str(tempprotsdict[equivalence[keyB]]['molweightkda']), str(tempprotsdict[equivalence[keyB]]['instability']), information_proteins_blast[equivalence[keyB]]['sseqid'], information_proteins_blast[equivalence[keyB]]['descr'], str(information_proteins_blast[equivalence[keyB]]['evalue']), str(information_proteins_blast[equivalence[keyB]]['pident']), str(information_proteins_blast[equivalence[keyB]]['pcover']), "None", "None", "NA", "NA", "NA", "NA"])
+					print("\t".join([equivalence[keyB], str(tempprotsdict[equivalence[keyB]]['begin']), str(tempprotsdict[equivalence[keyB]]['end']), str(tempprotsdict[equivalence[keyB]]['strand']), str(tempprotsdict[equivalence[keyB]]['length']), str(tempprotsdict[equivalence[keyB]]['isoelectricpoint']), str(tempprotsdict[equivalence[keyB]]['molweightkda']), str(tempprotsdict[equivalence[keyB]]['instability']), information_proteins_blast[equivalence[keyB]]['sseqid'], information_proteins_blast[equivalence[keyB]]['descr'], str(information_proteins_blast[equivalence[keyB]]['evalue']), str(information_proteins_blast[equivalence[keyB]]['pident']), str(information_proteins_blast[equivalence[keyB]]['pcover']), "None", "None", "NA", "NA", "NA", "NA"]), file=tablefile)
 				except KeyError:
 					try:
-						print >>tablefile, "\t".join([equivalence[keyB], str(tempprotsdict[equivalence[keyB]]['begin']), str(tempprotsdict[equivalence[keyB]]['end']), str(tempprotsdict[equivalence[keyB]]['strand']), str(tempprotsdict[equivalence[keyB]]['length']), str(tempprotsdict[equivalence[keyB]]['isoelectricpoint']), str(tempprotsdict[equivalence[keyB]]['molweightkda']), str(tempprotsdict[equivalence[keyB]]['instability']), "None", "None", "NA", "NA", "NA", information_proteins_hhsuite[keyB]['name'], information_proteins_hhsuite[keyB]['descr'], str(information_proteins_hhsuite[keyB]['prob']), str(information_proteins_hhsuite[keyB]['evalue']), str(information_proteins_hhsuite[keyB]['pident']), str(information_proteins_hhsuite[keyB]['pcover'])])
+						print("\t".join([equivalence[keyB], str(tempprotsdict[equivalence[keyB]]['begin']), str(tempprotsdict[equivalence[keyB]]['end']), str(tempprotsdict[equivalence[keyB]]['strand']), str(tempprotsdict[equivalence[keyB]]['length']), str(tempprotsdict[equivalence[keyB]]['isoelectricpoint']), str(tempprotsdict[equivalence[keyB]]['molweightkda']), str(tempprotsdict[equivalence[keyB]]['instability']), "None", "None", "NA", "NA", "NA", information_proteins_hhsuite[keyB]['name'], information_proteins_hhsuite[keyB]['descr'], str(information_proteins_hhsuite[keyB]['prob']), str(information_proteins_hhsuite[keyB]['evalue']), str(information_proteins_hhsuite[keyB]['pident']), str(information_proteins_hhsuite[keyB]['pcover'])]), file=tablefile)
 					except KeyError:
-						print >>tablefile, "\t".join([equivalence[keyB], str(tempprotsdict[equivalence[keyB]]['begin']), str(tempprotsdict[equivalence[keyB]]['end']), str(tempprotsdict[equivalence[keyB]]['strand']), str(tempprotsdict[equivalence[keyB]]['length']), str(tempprotsdict[equivalence[keyB]]['isoelectricpoint']), str(tempprotsdict[equivalence[keyB]]['molweightkda']), str(tempprotsdict[equivalence[keyB]]['instability']), "None", "None", "NA", "NA", "NA",  "None", "None", "NA", "NA", "NA", "NA"])
+						print("\t".join([equivalence[keyB], str(tempprotsdict[equivalence[keyB]]['begin']), str(tempprotsdict[equivalence[keyB]]['end']), str(tempprotsdict[equivalence[keyB]]['strand']), str(tempprotsdict[equivalence[keyB]]['length']), str(tempprotsdict[equivalence[keyB]]['isoelectricpoint']), str(tempprotsdict[equivalence[keyB]]['molweightkda']), str(tempprotsdict[equivalence[keyB]]['instability']), "None", "None", "NA", "NA", "NA",  "None", "None", "NA", "NA", "NA", "NA"]), file=tablefile)
 
 	# Algorithm of decisions (which one: BLAST/HHSUITE?)
 	multipleprots = {}
@@ -531,9 +537,9 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 		multipleprots[keyB] = singleprot
 
 	# (DEBUG) Solution of the decision algorithm
-	#print "NAME\tDESCRIPTION"
+	#print("NAME\tDESCRIPTION")
 	#for keyB in sorted(multipleprots):
-	#	print "\t".join([multipleprots[keyB]['name'], multipleprots[keyB]['descr']])
+	#	print("\t".join([multipleprots[keyB]['name'], multipleprots[keyB]['descr']]))
 
 	#Storing protein information in memory
 	with open("temp.faa", "rU") as protsfile:
@@ -552,11 +558,12 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 			protsdict[dataprot[0]] = indprot
 
 	# Predicting the tRNA sequences
-	print "Running ARAGORN to predict tRNA-like sequences in %s" % newfile
+	eprint("Running ARAGORN to predict tRNA-like sequences in %s" % newfile)
 	genetictable = "-gc%s" % str(args.gcode)
 	with open("trnafile.fasta", "w") as trnafile:
 	    subprocess.call(["aragorn", "-l", "-fon", genetictable, newfile], stdout=trnafile)
-	print "DONE. ARAGORN was done to predict tRNA sequences\n\n"
+	num_tRNA = len(list(SeqIO.parse("trnafile.fasta", "fasta")))
+	eprint("ARAGORN was able to predict %i tRNAs in %s\n" % (num_tRNA, newfile))
 
 	#Storing tRNA information in memory
 	with open("trnafile.fasta", "rU") as trnafile:
@@ -578,14 +585,13 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 			tRNAdict[tRNAseq.id] = indtRNA
 
 	# Predicting repeats
-	print "Predicting repeats in the sequences using TRF and IRF"
+	eprint("Predicting repeats in the sequences using TRF and IRF")
 	with open("/dev/null", "w") as stderr:
 		subprocess.call(["trf", newfile, "2", "7", "7", "80", "10", "50", "500", "-h"], stderr=stderr)
 		os.rename("%s.2.7.7.80.10.50.500.dat" % newfile, "trf_temp.dat")
 	with open("/dev/null", "w") as stderr:
 		subprocess.call(["irf", newfile, "2", "3", "5", "80", "10", "40", "500000", "10000", "-d", "-h"], stderr=stderr)
 		os.rename("%s.2.3.5.80.10.40.500000.10000.dat" % newfile, "irf_temp.dat")
-	print "DONE. TRF and IRF were launched to predict repeats"
 
 	# Storing repeats information
 	information_TRF = {}
@@ -619,6 +625,7 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 			information_IRF[combinedinfo] = information_inverted_repeat
 
 	# Creating a new Genbank and GFF file
+	eprint("Creating the output files")
 	newgbk = "%s.gbk" % newfile
 	with open(newfile, "rU") as basefile, open(newgbk, "w"):
 		for record in SeqIO.parse(basefile, "fasta", IUPAC.ambiguous_dna):
@@ -738,27 +745,27 @@ with open(args.modifiers, "rU") as modifiers, open(gbkoutputfile, "r") as genban
 	wholelist = list(SeqIO.parse(genbank_fh, 'genbank'))
 	for record in wholelist:
 		if len(record) <= args.mincontigsize:
-			print "WARNING: Skipping small contig %s" % rec.id
+			eprint("WARNING: Skipping small contig %s" % rec.id)
 			continue
 		record.description = "%s %s" % (record.id, info)
 		SeqIO.write([record], fasta_fh, 'fasta')
-		print >>feature_fh, '>Feature %s' % (record.name)
+		print('>Feature %s' % (record.name), file=feature_fh)
 		for line in record.features:
 			if line.strand == 1:
-				print >>feature_fh, '%d\t%d\t%s' % (line.location.nofuzzy_start + 1, line.location.nofuzzy_end, line.type)
+				print('%d\t%d\t%s' % (line.location.nofuzzy_start + 1, line.location.nofuzzy_end, line.type), file=feature_fh)
 			else:
-				print >>feature_fh, '%d\t%d\t%s' % (line.location.nofuzzy_end, line.location.nofuzzy_start + 1, line.type)
+				print('%d\t%d\t%s' % (line.location.nofuzzy_end, line.location.nofuzzy_start + 1, line.type), file=feature_fh)
 			for (key, values) in line.qualifiers.iteritems():
 				if key not in allowed_qualifiers:
 					continue
 				for v in values:
-					print >>feature_fh, '\t\t\t%s\t%s' % (key, v)
+					print('\t\t\t%s\t%s' % (key, v), file=feature_fh)
 
 # Final statement
-print "Genome annotation done!"
-print "The GenBank file is %s" % gbkoutputfile
+eprint("Genome annotation done!")
+eprint("The GenBank file is %s" % gbkoutputfile)
 if args.gffprint==True:
-	print "The GFF3 file is %s" % gffoutputfile
-print "The table file for GenBank submission is %s" % tbloutputfile
-print "The FASTA file for GenBank submission is %s" % newfastafile
-print "The table file with all protein information is %s" % newtablefile
+	eprint("The GFF3 file is %s" % gffoutputfile)
+eprint("The table file for GenBank submission is %s" % tbloutputfile)
+eprint("The FASTA file for GenBank submission is %s" % newfastafile)
+eprint("The table file with all protein information is %s" % newtablefile)
