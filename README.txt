@@ -19,9 +19,9 @@ Before using this script, the following Python modules and programs should be in
 	- LASTZ (Harris 2007): it is used to predict the circularity of the contigs. The program is publicly available at https://github.com/lastz/lastz under the MIT licence.
 	- Prodigal (Hyatt et al. 2010): it is used to predict the ORFs. When the contig is smaller than 20,000 bp, MetaProdigal (Hyatt et al. 2012) is automatically activated instead of normal Prodigal. This program is publicly available at https://github.com/hyattpd/prodigal/releases/ under the GPLv3 licence.
 	- BLAST+ (Camacho et al. 2008): it is used to predict the function of the predicted proteins according to homology. This suite is publicly available at ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/ under the GPLv2 licence. Databases are available at ftp://ftp.ncbi.nlm.nih.gov/blast/db/
+	- INFERNAL (Nawrocki and Eddy 2013): it is used to predict ribosomal RNA in the contigs when using the RFAM database (Nawrocki et al. 2015). This program is publicly available at http://eddylab.org/infernal/ under the BSD licence and RFAM database is available at ftp://ftp.ebi.ac.uk/pub/databases/Rfam/
 	- HHSUITE (Söding 2005): it is used to predict the function of the predicted proteins according to Hidden Markov Model-Hidden Markov Model (HMM-HMM) comparisons. First, the sequences are aligned against reference databases using HHblits (Remmert et al. 2011) and, then, the resulting multiple sequence alignment is converted into a HMM and compared with known HMM databases using HHsearch/HHpred (Hildebrand et al. 2009). This suite is publicly available at https://github.com/soedinglab/hh-suite under the GPLv3 licence. Databases are available at http://wwwuser.gwdg.de/~compbiol/data/hhsuite/databases/hhsuite_dbs/
 	- ARAGORN (Laslett and Canback 2004): it is used to predict tRNA sequences in the contig. This program is publicly available at http://mbio-serv2.mbioekol.lu.se/ARAGORN/ under the GPLv2 licence.
-	- RNAmmer 1.2 (Lagesen et al. 2007): it is used to predict rRNA sequences in the contig. If these kind of sequences is detected, the program prints a warning statement because a viral sequence do not harbour ribosomal genes. This program is freely available for academic purposes upon request in http://www.cbs.dtu.dk/services/RNAmmer/.
 	- Tandem Repeats Finder (TRF; Benson 1999): it is used to predict the tandem repeats in your contig. This program is freely available at https://tandem.bu.edu/trf/trf.html under a custom licence.
 	- Inverted Repeats Finder (IRF; Warburton et al. 2004): it is used to predict the inverted repeats in your contig. This program is freely available at https://tandem.bu.edu/irf/irf.download.html under a custom licence.
 
@@ -31,6 +31,7 @@ Although you can install the programs manually, we strongly recommend the use of
 However, you will need to download the databases for BLAST and HHSUITE:
 
 BLAST: https://ftp.ncbi.nlm.nih.gov/blast/db/
+RFAM: http://ftp.ebi.ac.uk/pub/databases/Rfam/
 HHSUITE: http://wwwuser.gwdg.de/~compbiol/data/hhsuite/databases/hhsuite_dbs/
 
 Note that this bioinformatic pipeline only takes protein databases (i.e. "nr", "swissprot"...)!
@@ -44,6 +45,7 @@ The program has the following two kind of arguments:
 
 --input FASTAFILE					Input file as a nucleotidic FASTA file. It can contains multiple sequences (e.g. metagenomic contigs)
 --blastdb BLASTDB					BLAST database that will be used for the protein function prediction. The database MUST be for amino acids.
+--rfamdb RFAMDB						RFAM database that will be used for the ribosomal RNA prediction.
 --hhblitsdb HHBLITSDB					HHblits database that will be used for the first step of the protein function prediction. In this case, HHBLITSDB should be in the format "/full/path/to/db1/db1 (without the extension _a3m_db)"
 --hhsearchdb HHSEARCHDB [HHSEARCHDB ...]		HHsearch/HHpred database/s that will be used for the second step of the protein function prediction. You can use more than a single database for the analysis. In that case, it will be in the format "/full/path/to/db1/db1_hhm_db /full/path/to/db2/db2_hhm_db"
 --modifiers TEXTFILE					Input file as a plain text file with the modifiers per every FASTA header according to SeqIn (https://www.ncbi.nlm.nih.gov/Sequin/modifiers.html). All modifiers must be written in a single line and are separated by a single space character. No space should be placed besides the = sign. For example: [organism=Serratia marcescens subsp. marcescens] [sub-species=marcescens] [strain=AH0650_Sm1] [moltype=DNA] [tech=wgs] [gcode=11] [country=Australia] [isolation-source=sputum]. This line will be copied and printed along with the record name as the definition line of every contig sequence.
@@ -90,8 +92,9 @@ REFERENCES:
 	- Hildebrand A, Remmert A, Biegert A, Söding J (2009) Fast and accurate automatic structure prediction with HHpred. Proteins 77: 128-32.
 	- Hyatt D, Chen GL, Locascio PF, Land ML, Larimer FW, Hauser LJ (2010) Prodigal: prokaryotic gene recognition and translation initiation site identification. BMC Bioinformatics 11: 119.
 	- Hyatt D, Locascio PF, Hauser LJ, Uberbacher EC (2012) Gene and translation initiation site prediction in metagenomic sequences. Bioinformatics 28: 2223-30.
-	- Lagesen K, Hallin PF, Rødland E, Stærfeldt HH, Rognes T Ussery DW (2007) RNammer: consistent annotation of rRNA genes in genomic sequences. Nucleic Acids Research 35, 3100-8.
 	- Laslett D, Canback B (2004) ARAGORN, a program to detect tRNA genes and tmRNA genes in nucleotide sequences. Nucleic Acids Research 32, 11–16.
+	- Nawrocki EP, Eddy SR (2013) Infernal 1.1: 100-fold faster RNA homology searches. Bioinformatics 29: 2933-35.
+	- Nawrocki EP, Burge SW, Bateman A, Daub J, Eberhardt RY, Eddy SR, Floden EW, Gardner PP, Jones TA, Tate J, Finn RD (2013) Rfam 12.0: updates to the RNA families database. Nucleic Acids Research 43: D130-7.
 	- Remmert M, Biegert A, Hauser A, Söding J (2011) HHblits: Lightning-fast iterative protein sequence searching by HMM-HMM alignment. Nature Methods 9: 173-5. 
 	- Söding J (2005) Protein homology detection by HMM-HMM comparison. Bioinformatics 21: 951-60.
 	- Tange O (2011) GNU Parallel - The Command-Line Power Tool. ;login: The USENIX Magazine 36:42-7.
@@ -99,6 +102,7 @@ REFERENCES:
 
 HISTORY: 
 
+v 0.4.0 - Replaced RNAmmer v 1.2. by INFERNAL 1.1 + RFAM to predict rRNA in the contigs. In this case, you must to specify where you have downloaded the RFAM database using the "--rfamdb" option.
 v 0.3.0 - Implemented RNAmmer v 1.2 to predict rRNA in the contigs. If such program is able to predict ribosomal genes, a warning is printed (as viral sequences do not have ribosomal genes).
 v 0.2.0 - Added parallelization of BLAST and HHSUITE. To do that, GNU Parallel (Tange 2011) is required. To disable this option, run the program with the "--noparallel" option.
 v 0.1.0 - Original version of the program.
