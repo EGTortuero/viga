@@ -638,7 +638,7 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 				combinedinfo = "%s_%s" % (str(start), str(end))
 				information_tandem_repeat['start'] = start
 				information_tandem_repeat['end'] = end
-			information_TRF[combinedinfo] = information_tandem_repeat
+				information_TRF[combinedinfo] = information_tandem_repeat
 
 	information_IRF = {}
 	with open("irf_temp.dat", "rU") as irfile:
@@ -653,7 +653,7 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 				combinedinfo = "%s_%s" % (str(start), str(end))
 				information_inverted_repeat['start'] = start
 				information_inverted_repeat['end'] = end
-			information_IRF[combinedinfo] = information_inverted_repeat
+				information_IRF[combinedinfo] = information_inverted_repeat
 
 	# Creating a new Genbank and GFF file
 	eprint("Creating the output files")
