@@ -36,6 +36,7 @@ When using this program, you must to cite their use:
 HISTORY OF THE SOURCE CODE:
 
 * v 0.4.0 - Replaced RNAmmer v 1.2. by INFERNAL 1.1 + RFAM to predict rRNA in the contigs. In this case, you must to specify where you have downloaded the RFAM database using the "--rfamdb" option.
+	  - Fixed an error in the coordinates of inverted and tandem repeats. Before that, only the last coordinates where shown in the GBK file. Now, all detected repeats should be printed in the GBK file.
 * v 0.3.0 - Implemented RNAmmer v 1.2 to predict rRNA in the contigs. If such program is able to predict ribosomal genes, a warning is printed (as viral sequences do not have ribosomal genes).
 * v 0.2.0 - Added parallelization of BLAST and HHSUITE. To do that, GNU Parallel (Tange 2011) is required. To disable this option, run the program with the "--noparallel" option.
 * v 0.1.0 - Original version of the program.
