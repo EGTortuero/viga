@@ -71,38 +71,30 @@ By default, the program will consider every sequence as a contig (CON)</td></tr>
 <tr><td>--gcode NUMBER</td><td>Number of GenBank translation table. At this moment, the available options are:
 <table>
 <tr><td>1</td><td>Standard genetic code [Eukaryotic]</td></tr>
-<tr><td>4</td><td>Mycoplasma/Spiroplasma</td></tr>
-<tr><td>11</td><td>Bacteria/Archaea/Phages</td></tr>
-<tr><td>6</td><td>Protozoa [nuclear]</td></tr>
+<tr><td>2</td><td>Vertebrate mitochondrial code</td></tr>
+<tr><td>3</td><td>Yeast mitochondrial code</td></tr>
+<tr><td>4</td><td>Mycoplasma/Spiroplasma and Protozoan/mold/coelenterate mitochondrial code</td></tr>
+<tr><td>5</td><td>Invertebrate mitochondrial code</td></tr>
+<tr><td>6</td><td>Ciliate/dasycladacean/Hexamita nuclear code</td></tr>
+<tr><td>9</td><td>Echinoderm/flatworm mitochondrial code</td></tr>
+<tr><td>10</td><td>Euplotid nuclear code</td></tr>
+<tr><td>11</td><td>Bacteria/Archaea/Phages/Plant plastid</td></tr>
+<tr><td>12</td><td>Alternative yeast nuclear code</td></tr>
+<tr><td>13</td><td>Ascidian mitochondrial code</td></tr>
+<tr><td>14</td><td>Alternative flatworm mitochondrial code</td></tr>
+<tr><td>16</td><td>Chlorophycean mitochondrial code</td></tr>
+<tr><td>21</td><td>Trematode mitochondrial code</td></tr>
+<tr><td>22</td><td>Scedenesmus obliquus mitochondrial code</td></tr>
+<tr><td>23</td><td>Thraustochytrium mitochondrial code</td></tr>
+<tr><td>24</td><td>Pterobranquia mitochondrial code</td></tr>
 <tr><td>25</td><td>Gracilibacteria and Candidate division SR1</td></tr>
+<tr><td>26</td><td>Pachysolen tannophilus nuclear code</td></tr>
+<tr><td>27</td><td>Karyorelict nuclear code</td></tr>
+<tr><td>28</td><td>Condylostoma nuclear code</td></tr>
+<tr><td>29</td><td>Mesodinium nuclear code</td></tr>
+<tr><td>30</td><td>Peritrich nuclear code</td></tr>
+<tr><td>31</td><td>Blastocrithidia nuclear code</td></tr>
 </table>
-
-'1': 'Standard genetic code [Eukaryotic]'
-'2': 'Vertebrate mitochondrial code'
-'3': 'Yeast mitochondrial code'
-'4': 'Mycoplasma/Spiroplasma and Protozoan/mold/coelenterate mitochondrial code'
-'5': 'Invertebrate mitochondrial code'
-'6': 'Ciliate, dasycladacean and hexamita nuclear code'
-'9': 'Echinoderm/flatworm mitochondrial code'
-'10': 'Euplotid nuclear code'
-'11': 'Bacteria/Archaea/Phages/Plant plastid'
-'12': 'Alternative yeast nuclear code'
-'13': 'Ascidian mitochondrial code'
-'14': 'Alternative flatworm mitochondrial code'
-'16': 'Chlorophycean mitochondrial code'
-'21': 'Trematode mitochondrial code'
-'22': 'Scedenesmus obliquus mitochondrial code'
-'23': 'Thraustochytrium mitochondrial code'
-'24': 'Pterobranquia mitochondrial code'
-'25': 'Gracilibacteria & Candidate division SR1'
-'26': 'Pachysolen tannophilus nuclear code'
-'27': 'Karyorelict nuclear code'
-'28': 'Condylostoma nuclear code'
-'29': 'Mesodinium nuclear code'
-'30': 'Peritrich nuclear code'
-'31': 'Blastocrithidia nuclear code'
-
-
 By default, the program will use the translation table no. 11</td></tr>
 <tr><td>--mincontigsize INT</td><td>Minimum contig length to be considered in the final files. By default, the program only consider from 200 bp.</td></tr>
 <tr><td>--idthr FLOAT</td><td>Identity threshold to consider that a protein belong to a specific hit. By default, the threshold is 50.0 %</td></tr>
