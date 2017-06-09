@@ -573,7 +573,7 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 			except KeyError:
 				continue
 			else:
-				while i < (lengthlist + 1):
+				while i < lengthlist:
 					print("%s harbours a %s from %i to %i" % (newfile, subunits[rRNA]['listdata'][i]['product'], int(subunits[rRNA]['listdata'][i]['begin']), int(subunits[rRNA]['listdata'][i]['end'])))
 					i += 1
 
@@ -698,7 +698,7 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 				except KeyError:
 					continue
 				else:
-					while i < (lengthlist + 1):
+					while i < lengthlist:
 						start_pos = SeqFeature.ExactPosition(subunits[rRNA]['listdata'][i]['begin'])
 						end_pos = SeqFeature.ExactPosition(subunits[rRNA]['listdata'][i]['end'])
 						feature_location = SeqFeature.FeatureLocation(start_pos, end_pos, strand=subunits[rRNA]['listdata'][i]['strand'])
