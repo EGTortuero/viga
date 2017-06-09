@@ -611,13 +611,13 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 		subprocess.call(["irf", newfile, "2", "3", "5", "80", "10", "40", "500000", "10000", "-d", "-h"], stderr=stderr)
 		os.rename("%s.2.3.5.80.10.40.500000.10000.dat" % newfile, "irf_temp.dat")
 
-	# Storing repeats information (PENDING TO CORRECT)
+	# Storing CRISPR repeats information
 	information_CRISPR = {}
 	with open("crisprfile.txt", "rU") as crisprfile:
-		information_crispr_repeat = {}
 		for line in crisprfile:
 			if "SUMMARY BY POSITION" in line:
 				for line in crisprfile:
+					information_crispr_repeat = {}
 					try:
 						patC = re.compile('^\s+(\d+)\s+.{16}\s+(\d+)\s+(\d+)\s+\d+\s+\d+\s+\d+\s+\d?\s+(\w+)')
 						key, start, length, seq = re.match(patC, line).groups()
