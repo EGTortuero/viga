@@ -64,10 +64,10 @@ def cmd_exists(cmd):
 def eprint(*args, **kwargs):
 	print(*args, file=sys.stderr, **kwargs)
 
-def find(name, path):
-	for root, dirs, files in os.walk(path):
-		if name in files:
-			return os.path.join(root, name)
+#def find(name, path):
+#	for root, dirs, files in os.walk(path):
+#		if name in files:
+#			return os.path.join(root, name)
 
 def stringSplitByNumbers(x):
 	r = re.compile('(\d+)')
