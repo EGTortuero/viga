@@ -686,7 +686,7 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 				whole_sequence.features.append(new_data_cds)
 			for rRNA in sorted(subunits, key = stringSplitByNumbers):
 				i = 0
-				lengthlist = len(subunits[rRNA]['list'])
+				lengthlist = len(subunits[rRNA]['listdata'])
 				while i < (lengthlist + 1):
 					start_pos = SeqFeature.ExactPosition(rRNAdict[rRNA]['listdata'][i]['begin'])
 					end_pos = SeqFeature.ExactPosition(rRNAdict[rRNA]['listdata'][i]['end'])
