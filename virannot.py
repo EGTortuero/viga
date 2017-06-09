@@ -698,15 +698,15 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 				except KeyError:
 					continue
 				else:
-					while i < lengthlist:
-						start_pos = SeqFeature.ExactPosition(rRNAdict[rRNA]['listdata'][i]['begin'])
-						end_pos = SeqFeature.ExactPosition(rRNAdict[rRNA]['listdata'][i]['end'])
-						feature_location = SeqFeature.FeatureLocation(start_pos, end_pos, strand=rRNAdict[rRNA]['listdata'][i]['strand'])
-						new_data_gene = SeqFeature.SeqFeature(feature_location, type = "gene", strand = rRNAdict[rRNA]['listdata'][i]['strand'])
+					while i < (lengthlist + 1):
+						start_pos = SeqFeature.ExactPosition(subunits[rRNA]['listdata'][i]['begin'])
+						end_pos = SeqFeature.ExactPosition(subunits[rRNA]['listdata'][i]['end'])
+						feature_location = SeqFeature.FeatureLocation(start_pos, end_pos, strand=subunits[rRNA]['listdata'][i]['strand'])
+						new_data_gene = SeqFeature.SeqFeature(feature_location, type = "gene", strand = subunits[rRNA]['listdata'][i]['strand'])
 						whole_sequence.features.append(new_data_gene)
-						qualifiers = [('product', rRNAdict[rRNA]['listdata'][i]['product'])]
+						qualifiers = [('product', subunits[rRNA]['listdata'][i]['product'])]
 						feature_qualifiers = OrderedDict(qualifiers)
-						new_data_rRNA = SeqFeature.SeqFeature(feature_location, type = "rRNA", strand = rRNAdict[rRNA]['listdata'][i]['strand'], qualifiers = feature_qualifiers)
+						new_data_rRNA = SeqFeature.SeqFeature(feature_location, type = "rRNA", strand = subunits[rRNA]['listdata'][i]['strand'], qualifiers = feature_qualifiers)
 						whole_sequence.features.append(new_data_rRNA)
 						i += 1
 			for tRNA in sorted(tRNAdict, key = stringSplitByNumbers):
