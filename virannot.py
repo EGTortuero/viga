@@ -122,7 +122,7 @@ args = parser.parse_args()
 
 root_output = args.rootoutput
 if not root_output:
-    root_output = '{}_annotated'.format(os.path.splitext(args.inputfile)[0])
+	root_output = '{}_annotated'.format(os.path.splitext(args.inputfile)[0])
 
 hh_search_dbs = '{}'.format(' '.join(args.hhsearchdatabase))
 
@@ -568,16 +568,23 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 		
 		for rRNA in subunits:
 			i = 0
-			lengthlist = len(subunits[rRNA]['listdata'])
-			while i < (lengthlist + 1):
-				print("%s harbours a %s from %i to %i" % (newfile, subunits[rRNA]['listdata'][i]['product'], int(subunits[rRNA]['listdata'][i]['begin']), int(subunits[rRNA]['listdata'][i]['end'])))
-				i += 1
+			try:
+				lengthlist = len(subunits[rRNA]['listdata'])
+			except KeyError:
+				continue
+			else:
+				while i < (lengthlist + 1):
+					print("%s harbours a %s from %i to %i" % (newfile, subunits[rRNA]['listdata'][i]['product'], int(subunits[rRNA]['listdata'][i]['begin']), int(subunits[rRNA]['listdata'][i]['end'])))
+					i += 1
 
 	# Predicting the tRNA sequences
 	print("Running ARAGORN to predict tRNA-like sequences in %s" % newfile)
 	genetictable = "-gc%s" % str(args.gcode)
 	with open("trnafile.fasta", "w") as trnafile:
-	    subprocess.call(["aragorn", "-l", "-fon", genetictable, newfile], stdout=trnafile)
+		if genomeshape['genomeshape'] == "circular":
+			subprocess.call(["aragorn", "-c", "-fon", genetictable, newfile], stdout=trnafile)
+		else:
+			subprocess.call(["aragorn", "-l", "-fon", genetictable, newfile], stdout=trnafile)
 	num_tRNA = len(list(SeqIO.parse("trnafile.fasta", "fasta")))
 	print("ARAGORN was able to predict %i tRNAs in %s\n" % (num_tRNA, newfile))
 
@@ -686,18 +693,22 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 				whole_sequence.features.append(new_data_cds)
 			for rRNA in sorted(subunits, key = stringSplitByNumbers):
 				i = 0
-				lengthlist = len(subunits[rRNA]['listdata'])
-				while i < (lengthlist + 1):
-					start_pos = SeqFeature.ExactPosition(rRNAdict[rRNA]['listdata'][i]['begin'])
-					end_pos = SeqFeature.ExactPosition(rRNAdict[rRNA]['listdata'][i]['end'])
-					feature_location = SeqFeature.FeatureLocation(start_pos, end_pos, strand=rRNAdict[rRNA]['listdata'][i]['strand'])
-					new_data_gene = SeqFeature.SeqFeature(feature_location, type = "gene", strand = rRNAdict[rRNA]['listdata'][i]['strand'])
-					whole_sequence.features.append(new_data_gene)
-					qualifiers = [('product', rRNAdict[rRNA]['listdata'][i]['product'])]
-					feature_qualifiers = OrderedDict(qualifiers)
-					new_data_rRNA = SeqFeature.SeqFeature(feature_location, type = "rRNA", strand = rRNAdict[rRNA]['listdata'][i]['strand'], qualifiers = feature_qualifiers)
-					whole_sequence.features.append(new_data_rRNA)
-					i += 1
+				try:
+					lengthlist = len(subunits[rRNA]['listdata'])
+				except KeyError:
+					continue
+				else:
+					while i < (lengthlist + 1):
+						start_pos = SeqFeature.ExactPosition(rRNAdict[rRNA]['listdata'][i]['begin'])
+						end_pos = SeqFeature.ExactPosition(rRNAdict[rRNA]['listdata'][i]['end'])
+						feature_location = SeqFeature.FeatureLocation(start_pos, end_pos, strand=rRNAdict[rRNA]['listdata'][i]['strand'])
+						new_data_gene = SeqFeature.SeqFeature(feature_location, type = "gene", strand = rRNAdict[rRNA]['listdata'][i]['strand'])
+						whole_sequence.features.append(new_data_gene)
+						qualifiers = [('product', rRNAdict[rRNA]['listdata'][i]['product'])]
+						feature_qualifiers = OrderedDict(qualifiers)
+						new_data_rRNA = SeqFeature.SeqFeature(feature_location, type = "rRNA", strand = rRNAdict[rRNA]['listdata'][i]['strand'], qualifiers = feature_qualifiers)
+						whole_sequence.features.append(new_data_rRNA)
+						i += 1
 			for tRNA in sorted(tRNAdict, key = stringSplitByNumbers):
 				start_pos = SeqFeature.ExactPosition(tRNAdict[tRNA]['begin'])
 				end_pos = SeqFeature.ExactPosition(tRNAdict[tRNA]['end'])
