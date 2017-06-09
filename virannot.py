@@ -573,7 +573,7 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 			except KeyError:
 				continue
 			else:
-				while i < lengthlist:
+				while i < (lengthlist + 1):
 					print("%s harbours a %s from %i to %i" % (newfile, subunits[rRNA]['listdata'][i]['product'], int(subunits[rRNA]['listdata'][i]['begin']), int(subunits[rRNA]['listdata'][i]['end'])))
 					i += 1
 
