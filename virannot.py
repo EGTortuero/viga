@@ -127,11 +127,11 @@ if not root_output:
 hh_search_dbs = '{}'.format(' '.join(args.hhsearchdatabase))
 
 # Printing the header of the program 
-print("This is VirAnnot %s" % str(version))
-print("Written by Enrique Gonzalez Tortuero & Vimalkumar Velayudhan")
-print("Homepage is https://github.com/EGTortuero/virannot")
-print("Local time: ", strftime("%a, %d %b %Y %H:%M:%S"))
-print("\n\n")
+eprint("This is VirAnnot %s" % str(version))
+eprint("Written by Enrique Gonzalez Tortuero & Vimalkumar Velayudhan")
+eprint("Homepage is https://github.com/EGTortuero/virannot")
+eprint("Local time: ", strftime("%a, %d %b %Y %H:%M:%S"))
+eprint("\n")
 
 # checking the presence of the programs in the system
 if not cmd_exists("lastz")==True:
@@ -155,7 +155,7 @@ elif not cmd_exists("trf")==True:
 elif not cmd_exists("irf")==True:
 	sys.exit("You must install Inverted Repeats Finder before using this script")
 
-print("Data type is {0} and GenBank translation table no is {1}\n".format(args.typedata, args.gcode))
+eprint("Data type is {0} and GenBank translation table no is {1}\n".format(args.typedata, args.gcode))
 
 # Correcting the original file (long headers problem + multiple FASTA files)
 record_iter = SeqIO.parse(open(args.inputfile, "rU"),"fasta")
@@ -181,7 +181,7 @@ for i, batch in enumerate(batch_iterator(record_iter, 1)):
 for newfile in sorted(glob.glob("CONTIG_*.fna")):
 
 	# Predicting the shape of the contig (code based on Alex Crits-Christoph's find_circular.py script [https://github.com/alexcritschristoph/VICA/blob/master/find_circular.py])
-	print("Predicting the shape of the contig using LASTZ")
+	eprint("Predicting the shape of the contig using LASTZ")
 	genomeshape = {}
 	with open(newfile, "rU") as targetfasta:
 		Sequence = SeqIO.parse(newfile, "fasta")
@@ -225,10 +225,10 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 					Newseq = SeqRecord(Seq(Corrseq, IUPAC.ambiguous_dna), id = record.id)
 					SeqIO.write(Newseq, correctedcircular, "fasta")
 				os.rename("temp.fasta", newfile)
-		print("LASTZ predicted that %s is %s\n" % (newfile, genomeshape['genomeshape']))
+		eprint("LASTZ predicted that %s is %s\n" % (newfile, genomeshape['genomeshape']))
 
 	# Predicting genes using PRODIGAL
-	print("\nRunning Prodigal to predict the genes in %s" % newfile)
+	eprint("\nRunning Prodigal to predict the genes in %s" % newfile)
 	for record in SeqIO.parse(newfile, "fasta"):
 		length_contig = len(record.seq)
 		if (length_contig >= 100000):
@@ -262,23 +262,23 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 
 	if args.noparallel==True:
 		if args.blastexh==True:
-			print("Running BLAST to predict the genes according to homology inference in %s using exhaustive mode (see Fozo et al. (2010) Nucleic Acids Res for details)" % newfile)
+			eprint("Running BLAST to predict the genes according to homology inference in %s using exhaustive mode (see Fozo et al. (2010) Nucleic Acids Res for details)" % newfile)
 			subprocess.call(['blastp', '-query', "temp.faa", '-db', args.blastdatabase, '-evalue', str(args.blastevalue), '-outfmt', '6 qseqid sseqid pident length qlen slen qstart qend evalue bitscore stitle', '-out', 'temp_blast.csv', '-max_target_seqs', '10', '-word_size', '2', '-gapopen', '8', '-gapextend', '2', '-matrix', '"PAM70"', '-comp_based_stats', '"0"', "-num_threads", str(args.ncpus)])
 		else:
-			print("Running BLAST to predict the genes according to homology inference in %s using default parameters" % newfile)
+			eprint("Running BLAST to predict the genes according to homology inference in %s using default parameters" % newfile)
 			subprocess.call(['blastp', '-query', "temp.faa", '-db', args.blastdatabase, '-evalue', str(args.blastevalue), '-outfmt', '6 qseqid sseqid pident length qlen slen qstart qend evalue bitscore stitle', '-out', 'temp_blast.csv', '-max_target_seqs', '10', "-num_threads", str(args.ncpus)])
 	else:
-		print("Creating file to run parallel BLAST")
+		eprint("Creating file to run parallel BLAST")
 		with open("commands.sh", "w") as commands:
 			for j in sorted(glob.glob("SEQ_*.faa")):
 				jout = "%s.blast.csv" % j
 				if args.blastexh==True:
-					print("Adding %s to run parallel BLAST in exhaustive mode (see Fozo et al. (2010) Nucleic Acids Res for details)" % j)
+					eprint("Adding %s to run parallel BLAST in exhaustive mode (see Fozo et al. (2010) Nucleic Acids Res for details)" % j)
 					line = ['blastp', '-query', j, '-db', args.blastdatabase, '-evalue', str(args.blastevalue), '-outfmt', '"6 qseqid sseqid pident length qlen slen qstart qend evalue bitscore stitle"', '-out', jout, '-max_target_seqs', '10', '-word_size', '2', '-gapopen', '8', '-gapextend', '2', '-matrix', '"PAM70"', '-comp_based_stats', '"0"', '\n']
 					line2write = ' '.join(line)
 					commands.write(line2write)
 				else:
-					print("Adding %s to run parallel BLAST using default parameters" % j)
+					eprint("Adding %s to run parallel BLAST using default parameters" % j)
 					line = ['blastp', '-query', j, '-db', args.blastdatabase, '-evalue', str(args.blastevalue), '-outfmt', '"6 qseqid sseqid pident length qlen slen qstart qend evalue bitscore stitle"', '-out', jout, '-max_target_seqs', '10', '\n']
 					line2write = ' '.join(line)
 					commands.write(line2write)
@@ -326,48 +326,48 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 			hhout = "%s.hhr" % singleprot
 			if args.noparallel==True:
 				if args.hhsearchexh==True:
-					print("Running HHblits to predict the proteins according to HMM-HMM comparisons in %s using exhaustive mode (see Fidler et al. (2016) Traffic for details)." % singleprot)
+					eprint("Running HHblits to predict the proteins according to HMM-HMM comparisons in %s using exhaustive mode (see Fidler et al. (2016) Traffic for details)." % singleprot)
 					subprocess.call(['hhblits', '-i', singleprot, '-d', args.hhblitsdatabase, '-o' , '/dev/null', '-oa3m', hhtempout, '-n', '8', '-e', '0.001', '-E', '0.01', '-maxfilt', str(args.maxfilt), '-neffmax', str(args.neffmax), '-v', "0", "-cpu", str(args.ncpus)])
-					print("Done. HHblits was done to predict the function of the genes by HMM-HMM comparisons\n\n")
-					print("Running HHpred to predict the proteins according to HMM-HMM comparisons in %s using exhaustive mode (see Fidler et al. (2016) Traffic for details)." % singleprot)
+					eprint("Done. HHblits was done to predict the function of the genes by HMM-HMM comparisons\n\n")
+					eprint("Running HHpred to predict the proteins according to HMM-HMM comparisons in %s using exhaustive mode (see Fidler et al. (2016) Traffic for details)." % singleprot)
 					subprocess.call(['hhsearch', '-i', hhtempout, '-d', hh_search_dbs, '-o', hhout, '-mac', '-e', '0.01', '-v', "0", "-cpu", str(args.ncpus)])
 				else:
-					print("Running HHblits to predict the proteins according to HMM-HMM comparisons in %s using default parameters." % singleprot)
+					eprint("Running HHblits to predict the proteins according to HMM-HMM comparisons in %s using default parameters." % singleprot)
 					subprocess.call(['hhblits', '-i', singleprot, '-d', args.hhblitsdatabase, '-o' , '/dev/null', '-oa3m', hhtempout, '-n', '3', '-E', '0.5', '-maxfilt', str(args.maxfilt), '-neffmax', str(args.neffmax), '-v', "0", "-cpu", str(args.ncpus)])
-					print("Done. HHblits was done to predict the function of the genes by HMM-HMM comparisons\n\n")
-					print("Running HHpred to predict the proteins according to HMM-HMM comparisons in %s using default parameters." % singleprot)
+					eprint("Done. HHblits was done to predict the function of the genes by HMM-HMM comparisons\n\n")
+					eprint("Running HHpred to predict the proteins according to HMM-HMM comparisons in %s using default parameters." % singleprot)
 					subprocess.call(['hhsearch', '-i', hhtempout, '-d', hh_search_dbs, '-o', hhout, '-v', "0", "-cpu", str(args.ncpus)])
 			else:
-				print("Creating file to run parallel HHblits and HHpred")
+				eprint("Creating file to run parallel HHblits and HHpred")
 				if args.hhsearchexh==True:
-					print("Adding %s to run HHblits using exhaustive mode (see Fidler et al. (2016) Traffic for details)." % singleprot)
+					eprint("Adding %s to run HHblits using exhaustive mode (see Fidler et al. (2016) Traffic for details)." % singleprot)
 					lineB = ['hhblits', '-i', singleprot, '-d', args.hhblitsdatabase, '-o' , '/dev/null', '-oa3m', hhtempout, '-n', '8', '-e', '0.001', '-E', '0.01', '-maxfilt', str(args.maxfilt), '-neffmax', str(args.neffmax), '-v', "0", '\n']
 					line2writeB = ' '.join(lineB)
 					commandsB.write(line2writeB)
-					print("Adding %s to run HHpred using exhaustive mode (see Fidler et al. (2016) Traffic for details)." % singleprot)
+					eprint("Adding %s to run HHpred using exhaustive mode (see Fidler et al. (2016) Traffic for details)." % singleprot)
 					lineC = ['hhsearch', '-i', hhtempout, '-d', '{!r}'.format(hh_search_dbs), '-o', hhout, '-mac', '-e', '0.01', '-v', "0", '\n']
 					line2writeC = ' '.join(lineC)
 					commandsC.write(line2writeC)
 				else:
-					print("Adding %s to run HHblits using default parameters." % singleprot)
+					eprint("Adding %s to run HHblits using default parameters." % singleprot)
 					lineB = ['hhblits', '-i', singleprot, '-d', args.hhblitsdatabase, '-o' , '/dev/null', '-oa3m', hhtempout, '-n', '3', '-E', '0.5', '-maxfilt', str(args.maxfilt), '-neffmax', str(args.neffmax), '-v', "0", '\n']
 					line2writeB = ' '.join(lineB)
 					commandsB.write(line2writeB)
-					print("Adding %s to run HHpred using default parameters." % singleprot)
+					eprint("Adding %s to run HHpred using default parameters." % singleprot)
 					lineC = ['hhsearch', '-i', hhtempout, '-d', '{!r}'.format(hh_search_dbs), '-o', hhout, '-v', "0", '\n']
 					line2writeC = ' '.join(lineC)
 					commandsC.write(line2writeC)
 
 	if args.noparallel==False:
-		print("Running parallel HHblits")
+		eprint("Running parallel HHblits")
 		subprocess.call(['parallel', '-j', str(args.ncpus)], stdin=open('commandsB.sh'))
-		print("Running parallel HHpred")
+		eprint("Running parallel HHpred")
 		subprocess.call(['parallel', '-j', str(args.ncpus)], stdin=open('commandsC.sh'))
 		os.remove("commandsB.sh")
 		os.remove("commandsC.sh")
 		for j in sorted(glob.glob("*a3m")):
 			os.remove(j)
-	print("Done. HHpred was done to predict the function of the genes by HMM-HMM comparisons\n\n")
+	eprint("Done. HHpred was done to predict the function of the genes by HMM-HMM comparisons\n\n")
 
 	# Parsing the results from HH-SUITE
 	information_proteins_hhsuite = {}
@@ -534,7 +534,7 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 
 	# Predicting the rRNA sequences
 	with open(newfile, "rU") as targetfasta, open("/dev/null", "w") as apocalypse:
-		print("Running INFERNAL+RFAM to predict rRNA-like sequences in %s" % newfile)
+		eprint("Running INFERNAL+RFAM to predict rRNA-like sequences in %s" % newfile)
 		subprocess.call(["cmscan", "--rfam", "--cut_ga", "--nohmmonly", "--tblout", "rrnafile.csv", "--cpu", args.ncpus, args.rfamdatabase, newfile], stdout=apocalypse)
 
 	#Storing rRNA information in memory
@@ -574,11 +574,11 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 				continue
 			else:
 				while i < lengthlist:
-					print("%s harbours a %s from %i to %i" % (newfile, subunits[rRNA]['listdata'][i]['product'], int(subunits[rRNA]['listdata'][i]['begin']), int(subunits[rRNA]['listdata'][i]['end'])))
+					eprint("%s harbours a %s from %i to %i" % (newfile, subunits[rRNA]['listdata'][i]['product'], int(subunits[rRNA]['listdata'][i]['begin']), int(subunits[rRNA]['listdata'][i]['end'])))
 					i += 1
 
 	# Predicting the tRNA sequences
-	print("Running ARAGORN to predict tRNA-like sequences in %s" % newfile)
+	eprint("Running ARAGORN to predict tRNA-like sequences in %s" % newfile)
 	genetictable = "-gc%s" % str(args.gcode)
 	with open("trnafile.fasta", "w") as trnafile:
 		if genomeshape['genomeshape'] == "circular":
@@ -586,7 +586,7 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 		else:
 			subprocess.call(["aragorn", "-l", "-fon", genetictable, newfile], stdout=trnafile)
 	num_tRNA = len(list(SeqIO.parse("trnafile.fasta", "fasta")))
-	print("ARAGORN was able to predict %i tRNAs in %s\n" % (num_tRNA, newfile))
+	eprint("ARAGORN was able to predict %i tRNAs in %s\n" % (num_tRNA, newfile))
 
 	#Storing tRNA information in memory
 	with open("trnafile.fasta", "rU") as trnafile:
@@ -608,9 +608,9 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 			tRNAdict[tRNAseq.id] = indtRNA
 
 	#Predicting CRISPR repeats and others
-	print("Running PILERCR to predict CRISPR repeats in %s" % newfile)
+	eprint("Running PILERCR to predict CRISPR repeats in %s" % newfile)
 	subprocess.call(["pilercr", "-in", newfile, "-out", "crisprfile.txt", "-noinfo", "-minrepeat", str(args.minrepeat), "-maxrepeat", str(args.maxrepeat), "-minspacer", str(args.minspacer), "-maxspacer", str(args.maxspacer)])
-	print("Predicting repeats in the sequences using TRF and IRF")
+	eprint("Predicting repeats in the sequences using TRF and IRF")
 	with open("/dev/null", "w") as stderr:
 		subprocess.call(["trf", newfile, "2", "7", "7", "80", "10", "50", "500", "-h"], stderr=stderr)
 		os.rename("%s.2.7.7.80.10.50.500.dat" % newfile, "trf_temp.dat")
@@ -672,7 +672,7 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 				count += 1
 
 	# Creating a new Genbank and GFF file
-	print("Creating the output files")
+	eprint("Creating the output files")
 	newgbk = "%s.gbk" % newfile
 	with open(newfile, "rU") as basefile, open(newgbk, "w"):
 		for record in SeqIO.parse(basefile, "fasta", IUPAC.ambiguous_dna):
@@ -727,7 +727,7 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 				feature_qualifiers = OrderedDict(qualifiers)
 				new_data_CRISPRrepeat = SeqFeature.SeqFeature(feature_location, type = "repeat_region", qualifiers = feature_qualifiers)
 				whole_sequence.features.append(new_data_CRISPRrepeat)
-			for tandem in sorted(information_TRF, key = stringSplitByNumbers):
+			for tandem in sorted(information_TRF):
 				start_pos = SeqFeature.ExactPosition(information_TRF[tandem]['start'])
 				end_pos = SeqFeature.ExactPosition(information_TRF[tandem]['end'])
 				feature_location = SeqFeature.FeatureLocation(start_pos, end_pos)
@@ -735,7 +735,7 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 				feature_qualifiers = OrderedDict(qualifiers)
 				new_data_tandemrepeat = SeqFeature.SeqFeature(feature_location, type = "repeat_region", qualifiers = feature_qualifiers)
 				whole_sequence.features.append(new_data_tandemrepeat)
-			for inverted in sorted(information_IRF, key = stringSplitByNumbers):
+			for inverted in sorted(information_IRF):
 				start_pos = SeqFeature.ExactPosition(information_IRF[inverted]['start'])
 				end_pos = SeqFeature.ExactPosition(information_IRF[inverted]['end'])
 				feature_location = SeqFeature.FeatureLocation(start_pos, end_pos)
@@ -825,10 +825,10 @@ with open(args.modifiers, "rU") as modifiers, open(gbkoutputfile, "r") as genban
 					print('\t\t\t%s\t%s' % (key, v), file=feature_fh)
 
 # Final statement
-print("Genome annotation done!")
-print("The GenBank file is %s" % gbkoutputfile)
+eprint("Genome annotation done!")
+eprint("The GenBank file is %s" % gbkoutputfile)
 if args.gffprint==True:
 	print("The GFF3 file is %s" % gffoutputfile)
-print("The table file for GenBank submission is %s" % tbloutputfile)
-print("The FASTA file for GenBank submission is %s" % newfastafile)
-print("The table file with all protein information is %s" % newtablefile)
+eprint("The table file for GenBank submission is %s" % tbloutputfile)
+eprint("The FASTA file for GenBank submission is %s" % newfastafile)
+eprint("The table file with all protein information is %s" % newtablefile)
