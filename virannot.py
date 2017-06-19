@@ -677,7 +677,7 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 	with open(newfile, "rU") as basefile, open(newgbk, "w"):
 		for record in SeqIO.parse(basefile, "fasta", IUPAC.ambiguous_dna):
 			whole_sequence = SeqRecord(record.seq)
-			whole_sequence.id = re.sub("\_\d+$", "", str(record.id))
+			whole_sequence.id = str(record.id)
 			whole_sequence.annotations['data_file_division'] = args.typedata.upper()
 			whole_sequence.annotations['date'] = strftime("%d-%b-%Y").upper()
 			whole_sequence.annotations['topology'] = genomeshape['genomeshape']
