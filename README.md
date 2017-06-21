@@ -109,6 +109,10 @@ By default, the program will use the translation table no. 11</td></tr>
 <tr><td>--blastexh</td><td>Use of exhaustive BLAST to predict the proteins by homology according to Fozo et al. (2010). In this case, the search will be done using a word size of 2, a gap open penalty of 8, a gap extension penalty of 2, the PAM70 matrix instead of the BLOSUM62 and no compositional based statistics. This method is more accurate to predict the functions of the proteins but it is slower than BLAST default parameters. By default, exhaustive BLAST is disabled.</td></tr>
 </table>
 
+An example of execution is:
+
+python virannot.py --input eukarya.fasta --blastdb databases/blast/nr/nr --rfamdb databases/rfam/Rfam.cm --hmmdb databases/UniProt/uniprot_trembl.fasta --gcode 1 --out eukarya_BENCHMARK --modifiers ../modifiers.txt --threads 10
+
 HISTORY OF THE SOURCE CODE:
 
 * v 0.6.0 - Replaced HHSUITE by HMMER 3.1 to predict protein function according to Hidden Markov Models. In a recent benchmark (as well as internal ones), we found that HHPred tends to be the slowest program to predict protein function (compared with PHMMER and BLASTP). Additionally, HMMER had a high accuracy when proteins are annotated (Saripella et al. 2016). Moreover, it has the advantage that the databases must be in FASTA format (such UniProt and, even, PFAM), which it is a standard format. For all these reasons, we replaced HHSUITE by HMMER 3.1. Additionally, fixed small issues related with the Genbank file (omission of the contig topology as well as the name of the locus).
