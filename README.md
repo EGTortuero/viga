@@ -16,8 +16,8 @@ Before using this script, the following Python modules and programs should be in
 	- LASTZ (Harris 2007): it is used to predict the circularity of the contigs. The program is publicly available at https://github.com/lastz/lastz under the MIT licence.
 	- Prodigal (Hyatt et al. 2010): it is used to predict the ORFs. When the contig is smaller than 20,000 bp, MetaProdigal (Hyatt et al. 2012) is automatically activated instead of normal Prodigal. This program is publicly available at https://github.com/hyattpd/prodigal/releases/ under the GPLv3 licence.
 	- BLAST+ (Camacho et al. 2008): it is used to predict the function of the predicted proteins according to homology. This suite is publicly available at ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/ under the GPLv2 licence. Databases are available at ftp://ftp.ncbi.nlm.nih.gov/blast/db/
+	- HMMER (Finn et al. 2011): it is used to predict the function of the predicted proteins according to Hidden Markov Models. This suite is publicly available at http://hmmer.org/ under the GPLv3 licence. Databases must be in FASTA format and examples of potential databases are UniProtKB (http://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/complete/uniprot_trembl.fasta.gz) or PFAM (http://ftp.ebi.ac.uk/pub/databases/Pfam/current_release/Pfam-A.fasta.gz).
 	- INFERNAL (Nawrocki and Eddy 2013): it is used to predict ribosomal RNA in the contigs when using the RFAM database (Nawrocki et al. 2015). This program is publicly available at http://eddylab.org/infernal/ under the BSD licence and RFAM database is available at ftp://ftp.ebi.ac.uk/pub/databases/Rfam/
-	- HHSUITE (Söding 2005): it is used to predict the function of the predicted proteins according to Hidden Markov Model-Hidden Markov Model (HMM-HMM) comparisons. First, the sequences are aligned against reference databases using HHblits (Remmert et al. 2011) and, then, the resulting multiple sequence alignment is converted into a HMM and compared with known HMM databases using HHsearch/HHpred (Hildebrand et al. 2009). This suite is publicly available at https://github.com/soedinglab/hh-suite under the GPLv3 licence. Databases are available at http://wwwuser.gwdg.de/~compbiol/data/hhsuite/databases/hhsuite_dbs/
 	- ARAGORN (Laslett and Canback 2004): it is used to predict tRNA sequences in the contig. This program is publicly available at http://mbio-serv2.mbioekol.lu.se/ARAGORN/ under the GPLv2 licence.
 	- PILERCR (Edgar 2007): it is used to predict CRISPR repeats in your contig. This program is freely available at http://drive5.com/pilercr/ under a public licence.
 	- Tandem Repeats Finder (TRF; Benson 1999): it is used to predict the tandem repeats in your contig. This program is freely available at https://tandem.bu.edu/trf/trf.html under a custom licence.
@@ -25,14 +25,17 @@ Before using this script, the following Python modules and programs should be in
 
 Although you can install the programs manually, we strongly recommend the use of the Docker image to create an environment for virannot. The link to the Docker image is https://github.com/vimalkvn/sysadminbio/tree/master/docker-images/virannot
 
-However, you will need to download the databases for BLAST and HHSUITE:
-* BLAST: https://ftp.ncbi.nlm.nih.gov/blast/db/
-* RFAM: http://ftp.ebi.ac.uk/pub/databases/Rfam/
-* HHSUITE: http://wwwuser.gwdg.de/~compbiol/data/hhsuite/databases/hhsuite_dbs/
+However, you will need to download the databases for BLAST, HHMER and INFERNAL:
+* BLAST DBs: https://ftp.ncbi.nlm.nih.gov/blast/db/
+* RFAM (INFERNAL): http://ftp.ebi.ac.uk/pub/databases/Rfam/
+* UniProtKB (HMMER): http://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/complete/uniprot_trembl.fasta.gz
+* PFAM (HMMER): http://ftp.ebi.ac.uk/pub/databases/Pfam/current_release/Pfam-A.fasta.gz
 
 Note that this bioinformatic pipeline only takes protein databases (i.e. "nr", "swissprot"...)!
 
 When using this program, you must to cite their use:
+
+<In construction>
 
 PARAMETERS:
 
@@ -44,8 +47,7 @@ The program has the following two kind of arguments:
 <tr><td>--input FASTAFILE</td><td>Input file as a nucleotidic FASTA file. It can contains multiple sequences (e.g. metagenomic contigs)</td></tr>
 <tr><td>--blastdb BLASTDB</td><td>BLAST database that will be used for the protein function prediction. The database MUST be for amino acids.</td></tr>
 <tr><td>--rfamdb RFAMDB</td><td>RFAM database that will be used for the ribosomal RNA prediction.</td></tr>
-<tr><td>--hhblitsdb HHBLITSDB</td><td>HHblits database that will be used for the first step of the protein function prediction. In this case, HHBLITSDB should be in the format "/full/path/to/db1/db1 (without the extension _a3m_db)"</tr></td>
-<tr><td>--hhsearchdb HHSEARCHDB [HHSEARCHDB ...]</td><td>HHsearch/HHpred database/s that will be used for the second step of the protein function prediction. You can use more than a single database for the analysis. In that case, it will be in the format "/full/path/to/db1/db1_hhm_db /full/path/to/db2/db2_hhm_db"</tr></td>
+<tr><td>--hmmdb HMMDB</td><td>PHMMER Database that will be used for the protein function prediction according to Hidden Markov Models. In this case, HMMDB must be in FASTA format (e.g. UniProt)"</td></tr>
 <tr><td>--modifiers TEXTFILE</td><td>Input file as a plain text file with the modifiers per every FASTA header according to SeqIn (https://www.ncbi.nlm.nih.gov/Sequin/modifiers.html). All modifiers must be written in a single line and are separated by a single space character. No space should be placed besides the = sign. For example: [organism=Serratia marcescens subsp. marcescens] [sub-species=marcescens] [strain=AH0650_Sm1] [moltype=DNA] [tech=wgs] [gcode=11] [country=Australia] [isolation-source=sputum]. This line will be copied and printed along with the record name as the definition line of every contig sequence.</tr></td>
 </table>
 
@@ -56,10 +58,10 @@ The program has the following two kind of arguments:
 <tr><td>--out OUTPUTNAME</td><td>Name of the outputs files without extensions, as the program will add them automatically. By default, the program will use the input name as the output.</td></tr>
 <tr><td>--locus STRING</td><td>Name of the contigs. If the input is a multiFASTA file, please put a general name as the program will add the number of the contig at the end of the name. By default, the name of the contigs will be "LOC".</td></tr>
 <tr><td>--threads INT</td><td>Number of threads/CPUs. By default, the program will use 1 CPU.</td></tr>
-<tr><td>--noparallel</td><td>Using multithreading BLAST and HHPRED instead of using parallel BLAST and HHPRED. Only recommendable when GNU Parallel is not installed. By default, this option is disabled.</td></tr>
+<tr><td>--noparallel</td><td>Using multithreading BLAST and PHMMER instead of using parallel BLAST and PHMMER. Only recommendable when GNU Parallel is not installed. By default, this option is disabled.</td></tr>
 <tr><td>--gff</td><td>Printing the output as a General Feature Format (GFF) version 3. It is a flat table file with contains 9 columns of data (see http://www.ensembl.org/info/website/upload/gff3.html for more information). By default, the program will not print the GFF3 file (--gff False).</td></tr>
 <tr><td>--blastevalue FLOAT</td><td>BLAST e-value threshold. By default, the threshold will be 1e-05.</td></tr>
-<tr><td>--hhsuiteevalue FLOAT</td><td>HHSUITE e-value threshold. By default, the threshold is 1e-03.</td></tr>
+<tr><td>--hmmerevalue FLOAT</td><td>PHMMER e-value threshold. By default, the threshold is 1e-03.</td></tr>
 <tr><td>--typedata BCT|CON|VRL|PHG</td><td>GenBank Division: One of the following codes:
 <table>
 <tr><td>BCT</td><td>Prokaryotic chromosome</td></tr>
@@ -99,15 +101,17 @@ By default, the program will use the translation table no. 11</td></tr>
 <tr><td>--mincontigsize INT</td><td>Minimum contig length to be considered in the final files. By default, the program only consider from 200 bp.</td></tr>
 <tr><td>--idthr FLOAT</td><td>Identity threshold to consider that a protein belong to a specific hit. By default, the threshold is 50.0 %</td></tr>
 <tr><td>--coverthr FLOAT</td><td>Coverage threshold to consider that a protein belong to a specific hit. By default, the threshold is 50.0 %</td></tr>
-<tr><td>--maxfilt INT (>100)</td><td>Max number of hits allowed to pass 2nd prefilter in HHblits. By default, the max number of hits is 20000</td></tr>
-<tr><td>--neffmax FLOAT [1.00-20.00]</td><td>Skip further search iterations in HHblits when diversity of query MSA becomes larger than this value. By default, this value is 10</td></tr>
 <tr><td>--diffid FLOAT (>0.01)</td><td>Max allowed difference between the ID percentages of BLAST and HHsearch/HHpred. By default, the allowed difference is 5.00 % and we do not recommended to change such value.</td></tr>
+<tr><td>--minrepeat INT</td><td>Minimum repeat length for CRISPR detection (Default: 16)</td></tr>
+<tr><td>--maxrepeat INT</td><td>Maximum repeat length for CRISPR detection (Default: 64)</td></tr>
+<tr><td>--minspacer INT</td><td>Minimum spacer length for CRISPR detection (Default: 8)</td></tr>
+<tr><td>--maxspacer INT</td><td>Maximum spacer length for CRISPR detection (Default: 64)</td></tr>
 <tr><td>--blastexh</td><td>Use of exhaustive BLAST to predict the proteins by homology according to Fozo et al. (2010). In this case, the search will be done using a word size of 2, a gap open penalty of 8, a gap extension penalty of 2, the PAM70 matrix instead of the BLOSUM62 and no compositional based statistics. This method is more accurate to predict the functions of the proteins but it is slower than BLAST default parameters. By default, exhaustive BLAST is disabled.</td></tr>
-<tr><td>--hhsearchexh</td><td>Use of exhaustive HHsearch/HHpred to tackle proteins of unknown function according to Fidler et al. (2016). In this case, the MSA is created with HHblits using 8 iterations and with a dynamic progressive e-value acceptance from 1e-03 to 1e-02. After that, HHsearch/HHpred use the Maximum ACcuracy (MAC) alignment algorithm to re-align the MSA and an e-value threshold of 1e-02. This method allows to predict a putative function when there are a lot of unknown function proteins but it is slower than HHsearch/HHpred default parameters. By default, exhaustive HHsearch/HHpred is disabled.</td></tr>
 </table>
 
 HISTORY OF THE SOURCE CODE:
 
+* v 0.6.0 - Replaced HHSUITE by HMMER 3.1 to predict protein function according to Hidden Markov Models. In a recent benchmark (as well as internal ones), we found that HHPred tends to be the slowest program to predict protein function (compared with PHMMER and BLASTP). Additionally, HMMER had a high accuracy when proteins are annotated (Saripella et al. 2016). Moreover, it has the advantage that the databases must be in FASTA format (such UniProt and, even, PFAM), which it is a standard format. For all these reasons, we replaced HHSUITE by HMMER 3.1. Additionally, fixed small issues related with the Genbank file (omission of the contig topology as well as the name of the locus).
 * v 0.5.0 - Implemented PILERCR to predict CRISPR repeats regions. Additionally, fixed errors in the rRNA prediction and inverted and tandem repeats.
 * v 0.4.0 - Replaced RNAmmer v 1.2. by INFERNAL 1.1 + RFAM to predict rRNA in the contigs. In this case, you must to specify where you have downloaded the RFAM database using the "--rfamdb" option.
 * v 0.3.0 - Implemented RNAmmer v 1.2 to predict rRNA in the contigs. If such program is able to predict ribosomal genes, a warning is printed (as viral sequences do not have ribosomal genes).
@@ -117,18 +121,16 @@ HISTORY OF THE SOURCE CODE:
 REFERENCES:
 
 	- Benson G (2008) Tandem repeats finder: a program to analyze DNA sequences. Nucleic Acids Research 27, 573–80.
-	- Camacho C, Coulouris G, Avagyan V, Ma N, Papadopoulos J, Bealer K, Madden TL (2008) BLAST+: architecture and applications. BMC Bioinformatics 10: 421.	
+	- Camacho C, Coulouris G, Avagyan V, Ma N, Papadopoulos J, Bealer K, Madden TL (2008) BLAST+: architecture and applications. BMC Bioinformatics 10: 421.
 	- Edgar RC (2007) PILER-CR: fast and accurate identification of CRISPR repeats. BMC Bioinformatics 8:18.
-	- Fidler DR, Murphy SE, Courtis K, Antonodiou P, El-Tohamy R, Ient J, Levine TP (2016) Using HHsearch to tackle proteins of unknown function: a pilot study with PH domains. Traffic 17: 1214–26.
+	- Finn RD, Clements J, Eddy SR (2011) HMMER web server: interactive sequence similarity searching. Nucleic Acids Research 39: W29-37.
 	- Fozo EM, Makarova KS, Shabalina SA, Yutin N, Koonin EV, Storz G (2010) Abundance of type I toxin-antitoxin systems in bacteria: searches for new candidates and discovery of novel families. Nucleic Acids Research 38: 3743-59.
 	- Harris RS (2007) Improved pairwise alignment of genomic DNA. Ph.D. Thesis, The Pennsylvania State University. 
-	- Hildebrand A, Remmert A, Biegert A, Söding J (2009) Fast and accurate automatic structure prediction with HHpred. Proteins 77: 128-32.
 	- Hyatt D, Chen GL, Locascio PF, Land ML, Larimer FW, Hauser LJ (2010) Prodigal: prokaryotic gene recognition and translation initiation site identification. BMC Bioinformatics 11: 119.
 	- Hyatt D, Locascio PF, Hauser LJ, Uberbacher EC (2012) Gene and translation initiation site prediction in metagenomic sequences. Bioinformatics 28: 2223-30.
 	- Laslett D, Canback B (2004) ARAGORN, a program to detect tRNA genes and tmRNA genes in nucleotide sequences. Nucleic Acids Research 32, 11–16.
 	- Nawrocki EP, Eddy SR (2013) Infernal 1.1: 100-fold faster RNA homology searches. Bioinformatics 29: 2933-35.
 	- Nawrocki EP, Burge SW, Bateman A, Daub J, Eberhardt RY, Eddy SR, Floden EW, Gardner PP, Jones TA, Tate J, Finn RD (2013) Rfam 12.0: updates to the RNA families database. Nucleic Acids Research 43: D130-7.
-	- Remmert M, Biegert A, Hauser A, Söding J (2011) HHblits: Lightning-fast iterative protein sequence searching by HMM-HMM alignment. Nature Methods 9: 173-5. 
-	- Söding J (2005) Protein homology detection by HMM-HMM comparison. Bioinformatics 21: 951-60.
+	- Saripella GV, Sonnhammer EL, Forslund K (2016) Benchmarking the next generation of homology inference tools. Bioinformatics 32: 2636-41.
 	- Tange O (2011) GNU Parallel - The Command-Line Power Tool. ;login: The USENIX Magazine 36:42-7.
 	- Warburton PE, Giordano J, Cheung F, Gelfand Y, Benson G (2004) Inverted repeat structure of the human genome: The X-chromosome contains a preponderance of large, highly homologous inverted repeats that contain testes genes. Genome Research 14: 1861-9.
