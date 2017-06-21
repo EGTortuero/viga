@@ -101,7 +101,7 @@ By default, the program will use the translation table no. 11</td></tr>
 <tr><td>--mincontigsize INT</td><td>Minimum contig length to be considered in the final files. By default, the program only consider from 200 bp.</td></tr>
 <tr><td>--idthr FLOAT</td><td>Identity threshold to consider that a protein belong to a specific hit. By default, the threshold is 50.0 %</td></tr>
 <tr><td>--coverthr FLOAT</td><td>Coverage threshold to consider that a protein belong to a specific hit. By default, the threshold is 50.0 %</td></tr>
-<tr><td>--diffid FLOAT (>0.01)</td><td>Max allowed difference between the ID percentages of BLAST and HHsearch/HHpred. By default, the allowed difference is 5.00 % and we do not recommended to change such value.</td></tr>
+<tr><td>--diffid FLOAT (>0.01)</td><td>Max allowed difference between the ID percentages of BLAST and HMMER. By default, the allowed difference is 5.00 % and we do not recommended to change such value.</td></tr>
 <tr><td>--minrepeat INT</td><td>Minimum repeat length for CRISPR detection (Default: 16)</td></tr>
 <tr><td>--maxrepeat INT</td><td>Maximum repeat length for CRISPR detection (Default: 64)</td></tr>
 <tr><td>--minspacer INT</td><td>Minimum spacer length for CRISPR detection (Default: 8)</td></tr>
