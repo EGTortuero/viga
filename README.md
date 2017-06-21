@@ -1,7 +1,7 @@
 # VirAnnot
 De novo automatic Viral Annotation
 
-VirAnnot is a script written in Python 2.7 that annotates viral genomes automatically (using a de novo algorithm) and predict the function of their proteins using BLAST and HHSEARCH/HHPRED.
+VirAnnot is a script written in Python 2.7 that annotates viral genomes automatically (using a de novo algorithm) and predict the function of their proteins using BLAST and HMMER.
 
 REQUIREMENTS:
 
