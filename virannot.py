@@ -324,7 +324,7 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 			else:
 				eprint("Creating file to run parallel PHMMER")
 				eprint("Adding %s to run PHMMER." % singleprot)
-				lineB = ["phmmer", "--domtblout", hhmtable, "-E", str(args.hmmerevalue), "-o", "/dev/null", singleprot, args.hmmdatabase, '\n']
+				lineB = ["phmmer", "--cpu", "1", "--domtblout", hhmtable, "-E", str(args.hmmerevalue), "-o", "/dev/null", singleprot, args.hmmdatabase, '\n']
 				line2writeB = ' '.join(lineB)
 				commandsB.write(line2writeB)
 
