@@ -75,7 +75,7 @@ def stringSplitByNumbers(x):
 	return [int(y) if y.isdigit() else y for y in l]
 
 # Defining the program version
-version = "0.6.0"
+version = "0.6.1"
 
 # Processing the parameters
 parser = argparse.ArgumentParser(description='Virannot is a automatic de novo viral genome annotator.')
@@ -92,7 +92,7 @@ advanced_group.add_argument("--readlength", dest="read_length", type=int, defaul
 advanced_group.add_argument("--out", dest="rootoutput", type=str, help='Name of the outputs files (without extension)', metavar="OUTPUTNAME")
 advanced_group.add_argument("--locus", dest="locus", type=str, default='LOC', help='Name of the sequences. If the input is a multiFASTA file, please put a general name as the program will add the number of the contig at the end of the name (Default: %(default)s)', metavar="STRING")
 advanced_group.add_argument("--threads", dest="ncpus", default=1, help='Number of threads/cpus (Default: %(default)s cpu)', metavar="INT")
-advanced_group.add_argument("--noparallel", dest="noparallel", action='store_true', default=False, help="Don't use of GNU Parallel to run BLAST and HHSEARCH in parallel jobs (Default=FALSE)")
+advanced_group.add_argument("--noparallel", dest="noparallel", action='store_true', default=False, help="Don't use of GNU Parallel to run BLAST and HMMER in parallel jobs (Default=FALSE)")
 advanced_group.add_argument("--gff", dest="gffprint", action='store_true', default=False, help='Printing the output as GFF3 file (Default: False)')
 advanced_group.add_argument("--blastevalue", dest="blastevalue", default=0.00001, help='Blast e-value threshold (Default: 0.00001)', metavar="FLOAT")
 advanced_group.add_argument("--hmmerevalue", dest="hmmerevalue", default=0.001, help='PHMMER e-value threshold (Default: 0.001)', metavar="FLOAT")
@@ -364,13 +364,16 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 								infoprot_hmmer['pident'] = float(pident)
 								infoprot_hmmer['descr'] = description
 							else:
-								if (float(protarea) >= float(args.covthreshold)) and (float(protarea) >= float(infoprot_hmmer['pcover'])) and (float(evaluehh) <= float(args.hmmerevalue)) and (float(evaluehh) <= float(infoprot_hmmer['evalue'])) and (float(pident) >= 50.00) and (float(pident) >= infoprot_hmmer['pident']) :
-									infoprot_hmmer['lociname'] = lociname
-									infoprot_hmmer['name'] = matchname
-									infoprot_hmmer['evalue'] = float(evaluehh)
-									infoprot_hmmer['pcover'] = float(protarea)
-									infoprot_hmmer['pident'] = float(pident)
-									infoprot_hmmer['descr'] = description
+								try:
+									if (float(protarea) >= float(args.covthreshold)) and (float(protarea) >= float(infoprot_hmmer['pcover'])) and (float(evaluehh) <= float(args.hmmerevalue)) and (float(evaluehh) <= float(infoprot_hmmer['evalue'])) and (float(pident) >= 50.00) and (float(pident) >= infoprot_hmmer['pident']) :
+										infoprot_hmmer['lociname'] = lociname
+										infoprot_hmmer['name'] = matchname
+										infoprot_hmmer['evalue'] = float(evaluehh)
+										infoprot_hmmer['pcover'] = float(protarea)
+										infoprot_hmmer['pident'] = float(pident)
+										infoprot_hmmer['descr'] = description
+								except KeyError:
+										continue
 			information_proteins_hmmer[rootname] = infoprot_hmmer
 
 	#Storing protein information in memory
@@ -433,7 +436,7 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 					if (float(information_proteins_blast[equivalence[keyB]]['pident'])>float(information_proteins_hmmer[keyB]['pident'])) and (float(information_proteins_blast[equivalence[keyB]]['pcover'])>float(information_proteins_hmmer[keyB]['pcover'])):
 						singleprot['descr'] = information_proteins_blast[equivalence[keyB]]['descr']
 					elif (float(information_proteins_blast[equivalence[keyB]]['pident'])<float(information_proteins_hmmer[keyB]['pident'])) and (float(information_proteins_blast[equivalence[keyB]]['pcover'])<float(information_proteins_hmmer[keyB]['pcover'])):
-						singleprot['descr'] = information_proteins_hhsuite[keyB]['descr']
+						singleprot['descr'] = information_proteins_hmmer[keyB]['descr']
 					elif (float(information_proteins_blast[equivalence[keyB]]['pident'])>float(information_proteins_hmmer[keyB]['pident'])) and (float(information_proteins_blast[equivalence[keyB]]['pcover'])<float(information_proteins_hmmer[keyB]['pcover'])):
 						if (float(information_proteins_blast[equivalence[keyB]]['pident'])-float(information_proteins_hmmer[keyB]['pident']) >= args.diffid):
 							singleprot['descr'] = information_proteins_blast[equivalence[keyB]]['descr']
@@ -441,7 +444,7 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 							singleprot['descr'] = information_proteins_hmmer[keyB]['descr']
 					else:
 						if (float(information_proteins_hmmer[keyB]['pident'])-float(information_proteins_blast[equivalence[keyB]]['pident']) >= args.diffid):
-							singleprot['descr'] = information_proteins_hhsuite[keyB]['descr']
+							singleprot['descr'] = information_proteins_hmmer[keyB]['descr']
 						else:
 							singleprot['descr'] = information_proteins_blast[equivalence[keyB]]['descr']
 				except KeyError:
