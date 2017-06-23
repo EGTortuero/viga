@@ -12,7 +12,7 @@ Before using this script, the following Python modules and programs should be in
 	- Biopython (Bio module; Cock et al. 2009)
 
 * Programs:
-	- GNU Parallel (Tange 2011): it is used to parallelize BLAST and HHSUITE. The program is publicly available at https://www.gnu.org/software/parallel/ under the GPLv3 licence.
+	- GNU Parallel (Tange 2011): it is used to parallelize HMMER. The program is publicly available at https://www.gnu.org/software/parallel/ under the GPLv3 licence.
 	- LASTZ (Harris 2007): it is used to predict the circularity of the contigs. The program is publicly available at https://github.com/lastz/lastz under the MIT licence.
 	- Prodigal (Hyatt et al. 2010): it is used to predict the ORFs. When the contig is smaller than 20,000 bp, MetaProdigal (Hyatt et al. 2012) is automatically activated instead of normal Prodigal. This program is publicly available at https://github.com/hyattpd/prodigal/releases/ under the GPLv3 licence.
 	- BLAST+ (Camacho et al. 2008): it is used to predict the function of the predicted proteins according to homology. This suite is publicly available at ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/ under the GPLv2 licence. Databases are available at ftp://ftp.ncbi.nlm.nih.gov/blast/db/
@@ -58,7 +58,6 @@ The program has the following two kind of arguments:
 <tr><td>--out OUTPUTNAME</td><td>Name of the outputs files without extensions, as the program will add them automatically. By default, the program will use the input name as the output.</td></tr>
 <tr><td>--locus STRING</td><td>Name of the contigs. If the input is a multiFASTA file, please put a general name as the program will add the number of the contig at the end of the name. By default, the name of the contigs will be "LOC".</td></tr>
 <tr><td>--threads INT</td><td>Number of threads/CPUs. By default, the program will use 1 CPU.</td></tr>
-<tr><td>--noparallel</td><td>Using multithreading BLAST and PHMMER instead of using parallel BLAST and PHMMER. Only recommendable when GNU Parallel is not installed. By default, this option is disabled.</td></tr>
 <tr><td>--gff</td><td>Printing the output as a General Feature Format (GFF) version 3. It is a flat table file with contains 9 columns of data (see http://www.ensembl.org/info/website/upload/gff3.html for more information). By default, the program will not print the GFF3 file (--gff False).</td></tr>
 <tr><td>--blastevalue FLOAT</td><td>BLAST e-value threshold. By default, the threshold will be 1e-05.</td></tr>
 <tr><td>--hmmerevalue FLOAT</td><td>PHMMER e-value threshold. By default, the threshold is 1e-03.</td></tr>
@@ -115,6 +114,7 @@ python virannot.py --input eukarya.fasta --blastdb databases/blast/nr/nr --rfamd
 
 HISTORY OF THE SOURCE CODE:
 
+* v 0.6.2 - Removed the "--noparallel" parameter. After doing time benchmarks to test the speed of BLAST and HMMER when they are run using the multithreading option and as a parallel program, we found that BLAST tends to be faster using multithreading option while HMMER had the opposite behavior. For that, we decided to consider only the parallelization of HMMER and to run BLAST using multiple threads. 
 * v 0.6.1 - Fixed issue with parallel HMMER (the program tend to take all available CPUs independently of the parsed arguments) and with the BLAST/HMMER decision trees (typos).
 * v 0.6.0 - Replaced HHSUITE by HMMER 3.1 to predict protein function according to Hidden Markov Models. In a recent benchmark (as well as internal ones), we found that HHPred tends to be the slowest program to predict protein function (compared with PHMMER and BLASTP). Additionally, HMMER had a high accuracy when proteins are annotated (Saripella et al. 2016). Moreover, it has the advantage that the databases must be in FASTA format (such UniProt and, even, PFAM), which it is a standard format. For all these reasons, we replaced HHSUITE by HMMER 3.1. Additionally, fixed small issues related with the Genbank file (omission of the contig topology as well as the name of the locus).
 * v 0.5.0 - Implemented PILERCR to predict CRISPR repeats regions. Additionally, fixed errors in the rRNA prediction and inverted and tandem repeats.
