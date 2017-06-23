@@ -340,6 +340,14 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 										infoprot_hmmer['descr'] = description
 								except KeyError:
 										continue
+						else:
+							if (float(protarea) >= float(args.covthreshold)) and (float(protarea) >= float(infoprot_hmmer['pcover'])) and (float(evaluehh) <= float(args.hmmerevalue)) and (float(evaluehh) <= float(infoprot_hmmer['evalue'])) and (float(pident) >= 50.00):
+								infoprot_hmmer['lociname'] = lociname
+								infoprot_hmmer['name'] = matchname
+								infoprot_hmmer['evalue'] = float(evaluehh)
+								infoprot_hmmer['pcover'] = float(protarea)
+								infoprot_hmmer['pident'] = float(pident)
+								infoprot_hmmer['descr'] = description
 			information_proteins_hmmer[rootname] = infoprot_hmmer
 
 	#Storing protein information in memory
