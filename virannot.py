@@ -75,7 +75,7 @@ def stringSplitByNumbers(x):
 	return [int(y) if y.isdigit() else y for y in l]
 
 # Defining the program version
-version = "0.6.1"
+version = "0.6.2"
 
 # Processing the parameters
 parser = argparse.ArgumentParser(description='Virannot is a automatic de novo viral genome annotator.')
@@ -92,7 +92,6 @@ advanced_group.add_argument("--readlength", dest="read_length", type=int, defaul
 advanced_group.add_argument("--out", dest="rootoutput", type=str, help='Name of the outputs files (without extension)', metavar="OUTPUTNAME")
 advanced_group.add_argument("--locus", dest="locus", type=str, default='LOC', help='Name of the sequences. If the input is a multiFASTA file, please put a general name as the program will add the number of the contig at the end of the name (Default: %(default)s)', metavar="STRING")
 advanced_group.add_argument("--threads", dest="ncpus", default=1, help='Number of threads/cpus (Default: %(default)s cpu)', metavar="INT")
-advanced_group.add_argument("--noparallel", dest="noparallel", action='store_true', default=False, help="Don't use of GNU Parallel to run BLAST and HMMER in parallel jobs (Default=FALSE)")
 advanced_group.add_argument("--gff", dest="gffprint", action='store_true', default=False, help='Printing the output as GFF3 file (Default: False)')
 advanced_group.add_argument("--blastevalue", dest="blastevalue", default=0.00001, help='Blast e-value threshold (Default: 0.00001)', metavar="FLOAT")
 advanced_group.add_argument("--hmmerevalue", dest="hmmerevalue", default=0.001, help='PHMMER e-value threshold (Default: 0.001)', metavar="FLOAT")
@@ -135,7 +134,7 @@ elif not cmd_exists("cmscan")==True:
 	sys.exit("You must install INFERNAL before using this script")
 elif not cmd_exists("prodigal")==True:
 	sys.exit("You must install prodigal before using this script")
-elif not cmd_exists("parallel")==True and args.noparallel==False:
+elif not cmd_exists("parallel")==True:
 	sys.exit("You must install GNU Parallel before using this script")
 elif not cmd_exists("blastp")==True:
 	sys.exit("You must install BLAST before using this script")
@@ -255,39 +254,12 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 			count = SeqIO.write(batch, handle, "fasta")
 			equivalence[seq_index] = batch[0].id
 
-	if args.noparallel==True:
-		if args.blastexh==True:
-			eprint("Running BLAST to predict the genes according to homology inference in %s using exhaustive mode (see Fozo et al. (2010) Nucleic Acids Res for details)" % newfile)
-			subprocess.call(['blastp', '-query', "temp.faa", '-db', args.blastdatabase, '-evalue', str(args.blastevalue), '-outfmt', '6 qseqid sseqid pident length qlen slen qstart qend evalue bitscore stitle', '-out', 'temp_blast.csv', '-max_target_seqs', '10', '-word_size', '2', '-gapopen', '8', '-gapextend', '2', '-matrix', '"PAM70"', '-comp_based_stats', '"0"', "-num_threads", str(args.ncpus)])
-		else:
-			eprint("Running BLAST to predict the genes according to homology inference in %s using default parameters" % newfile)
-			subprocess.call(['blastp', '-query', "temp.faa", '-db', args.blastdatabase, '-evalue', str(args.blastevalue), '-outfmt', '6 qseqid sseqid pident length qlen slen qstart qend evalue bitscore stitle', '-out', 'temp_blast.csv', '-max_target_seqs', '10', "-num_threads", str(args.ncpus)])
+	if args.blastexh==True:
+		eprint("Running BLAST to predict the genes according to homology inference in %s using exhaustive mode (see Fozo et al. (2010) Nucleic Acids Res for details)" % newfile)
+		subprocess.call(['blastp', '-query', "temp.faa", '-db', args.blastdatabase, '-evalue', str(args.blastevalue), '-outfmt', '6 qseqid sseqid pident length qlen slen qstart qend evalue bitscore stitle', '-out', 'temp_blast.csv', '-max_target_seqs', '10', '-word_size', '2', '-gapopen', '8', '-gapextend', '2', '-matrix', '"PAM70"', '-comp_based_stats', '"0"', "-num_threads", str(args.ncpus)])
 	else:
-		eprint("Creating file to run parallel BLAST")
-		with open("commands.sh", "w") as commands:
-			for j in sorted(glob.glob("SEQ_*.faa")):
-				jout = "%s.blast.csv" % j
-				if args.blastexh==True:
-					eprint("Adding %s to run parallel BLAST in exhaustive mode (see Fozo et al. (2010) Nucleic Acids Res for details)" % j)
-					line = ['blastp', '-query', j, '-db', args.blastdatabase, '-evalue', str(args.blastevalue), '-outfmt', '"6 qseqid sseqid pident length qlen slen qstart qend evalue bitscore stitle"', '-out', jout, '-max_target_seqs', '10', '-word_size', '2', '-gapopen', '8', '-gapextend', '2', '-matrix', '"PAM70"', '-comp_based_stats', '"0"', '\n']
-					line2write = ' '.join(line)
-					commands.write(line2write)
-				else:
-					eprint("Adding %s to run parallel BLAST using default parameters" % j)
-					line = ['blastp', '-query', j, '-db', args.blastdatabase, '-evalue', str(args.blastevalue), '-outfmt', '"6 qseqid sseqid pident length qlen slen qstart qend evalue bitscore stitle"', '-out', jout, '-max_target_seqs', '10', '\n']
-					line2write = ' '.join(line)
-					commands.write(line2write)
-		eprint("Running parallel BLAST")
-		subprocess.call(['parallel', '-j', str(args.ncpus)], stdin=open('commands.sh'))
-		listblastcsv = sorted(glob.glob('SEQ_*.csv'))
-		with open('temp_blast.csv', 'w') as finalblastcsv:
-			for fname in listblastcsv:
-				with open(fname) as infile:
-					for line in infile:
-						finalblastcsv.write(line)
-		os.remove("commands.sh")
-		for fname in listblastcsv:
-			os.remove(fname)
+		eprint("Running BLAST to predict the genes according to homology inference in %s using default parameters" % newfile)
+		subprocess.call(['blastp', '-query', "temp.faa", '-db', args.blastdatabase, '-evalue', str(args.blastevalue), '-outfmt', '6 qseqid sseqid pident length qlen slen qstart qend evalue bitscore stitle', '-out', 'temp_blast.csv', '-max_target_seqs', '10', "-num_threads", str(args.ncpus)])
 	eprint("Done. BLASTp was done to predict the genes by homology\n")
 
 	# Parsing the results from BLAST
@@ -315,23 +287,17 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 					information_proteins_blast[row['qseqid']] = infoprot_blast
 
 	## Predicting the function of the proteins based on HMM predictions using phmmer
-	with open("commandsB.sh", "w") as commandsB:
+	with open("commands.sh", "w") as commandsB:
 		for singleprot in sorted(glob.glob("SEQ_*.faa")):
 			hhmtable = "%s.tbl" % singleprot
-			if args.noparallel==True:
-				eprint("Running PHMMER to predict protein function according to Hidden Markov Models in %s." % singleprot)
-				subprocess.call(["phmmer", "--cpu", str(args.ncpus), "--domtblout", hhmtable, "-E", str(args.hmmerevalue), "-o", "/dev/null", singleprot, args.hmmdatabase])
-			else:
-				eprint("Creating file to run parallel PHMMER")
-				eprint("Adding %s to run PHMMER." % singleprot)
-				lineB = ["phmmer", "--cpu", "1", "--domtblout", hhmtable, "-E", str(args.hmmerevalue), "-o", "/dev/null", singleprot, args.hmmdatabase, '\n']
-				line2writeB = ' '.join(lineB)
-				commandsB.write(line2writeB)
-
-	if args.noparallel==False:
+			eprint("Creating file to run parallel PHMMER")
+			eprint("Adding %s to run PHMMER." % singleprot)
+			lineB = ["phmmer", "--cpu", "1", "--domtblout", hhmtable, "-E", str(args.hmmerevalue), "-o", "/dev/null", singleprot, args.hmmdatabase, '\n']
+			line2writeB = ' '.join(lineB)
+			commandsB.write(line2writeB)
 		eprint("Running parallel PHMMER")
-		subprocess.call(['parallel', '-j', str(args.ncpus)], stdin=open('commandsB.sh'))
-		os.remove("commandsB.sh")
+		subprocess.call(['parallel', '-j', str(args.ncpus)], stdin=open('commands.sh'))
+		os.remove("commands.sh")
 	eprint("Done. PHMMER was done to predict the function of the genes according to Hidden Markov Models\n")
 
 	# Parsing the results from HMMER
