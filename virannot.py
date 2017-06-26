@@ -295,9 +295,9 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 			lineB = ["phmmer", "--cpu", "1", "--domtblout", hhmtable, "-E", str(args.hmmerevalue), "-o", "/dev/null", singleprot, args.hmmdatabase, '\n']
 			line2writeB = ' '.join(lineB)
 			commandsB.write(line2writeB)
-		eprint("Running parallel PHMMER")
-		subprocess.call(['parallel', '-j', str(args.ncpus)], stdin=open('commands.sh'))
-		os.remove("commands.sh")
+	eprint("Running parallel PHMMER")
+	subprocess.call(['parallel', '-j', str(args.ncpus)], stdin=open('commands.sh'))
+	os.remove("commands.sh")
 	eprint("Done. PHMMER was done to predict the function of the genes according to Hidden Markov Models\n")
 
 	# Parsing the results from HMMER
