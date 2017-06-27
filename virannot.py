@@ -121,8 +121,8 @@ root_output = args.rootoutput
 if not root_output:
 	root_output = '{}_annotated'.format(os.path.splitext(args.inputfile)[0])
 
-if args.fast == False and args.hmmdb == None:
-    sys.exit('You MUST specify HMMER database using the parameter --hmmdb if you are not using --fast option')
+if args.fast == False and args.hmmdatabase == None:
+	sys.exit('You MUST specify HMMER database using the parameter --hmmdb if you are not using --fast option')
 
 # Printing the header of the program 
 eprint("This is VirAnnot %s" % str(version))
