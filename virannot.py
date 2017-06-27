@@ -75,7 +75,7 @@ def stringSplitByNumbers(x):
 	return [int(y) if y.isdigit() else y for y in l]
 
 # Defining the program version
-version = "0.6.2"
+version = "0.7.0"
 
 # Processing the parameters
 parser = argparse.ArgumentParser(description='Virannot is a automatic de novo viral genome annotator.')
@@ -84,7 +84,6 @@ basic_group = parser.add_argument_group('Basic options for virannot [REQUIRED]')
 basic_group.add_argument("--input", dest="inputfile", type=str, required=True, help='Input file as a FASTA file', metavar="FASTAFILE")
 basic_group.add_argument("--blastdb", dest="blastdatabase", type=str, required=True, help='BLAST Database that will be used for the protein function prediction. The database must be an amino acid one, not  nucleotidic', metavar="BLASTDB")
 basic_group.add_argument("--rfamdb", dest="rfamdatabase", type=str, required=True, help='RFAM Database that will be used for the ribosomal RNA prediction. RFAMDB should be in the format "/full/path/to/rfamdb/Rfam.cm" and must be compressed accordingly (see INFERNAL manual) before running the script.', metavar="RFAMDB")
-basic_group.add_argument("--hmmdb", dest="hmmdatabase", type=str, required=True, help='PHMMER Database that will be used for the protein function prediction according to Hidden Markov Models. In this case, HMMDB must be in FASTA format (e.g. UniProt: "', metavar="HMMDB")
 basic_group.add_argument("--modifiers", dest="modifiers", type=str, required=True, help='Input file as a plain text file with the modifiers per every FASTA header according to SeqIn (https://www.ncbi.nlm.nih.gov/Sequin/modifiers.html). All modifiers must be written in a single line and are separated by a single space character. No space should be placed besides the = sign. For example: [organism=Serratia marcescens subsp. marcescens] [sub-species=marcescens] [strain=AH0650_Sm1] [topology=linear] [moltype=DNA] [tech=wgs] [gcode=11] [country=Australia] [isolation-source=sputum]. This line will be copied and printed along with the record name as the definition line of every contig sequence.', metavar="TEXTFILE")
 
 advanced_group = parser.add_argument_group('Advanced options for virannot [OPTIONAL]')
@@ -94,6 +93,8 @@ advanced_group.add_argument("--locus", dest="locus", type=str, default='LOC', he
 advanced_group.add_argument("--threads", dest="ncpus", default=1, help='Number of threads/cpus (Default: %(default)s cpu)', metavar="INT")
 advanced_group.add_argument("--gff", dest="gffprint", action='store_true', default=False, help='Printing the output as GFF3 file (Default: False)')
 advanced_group.add_argument("--blastevalue", dest="blastevalue", default=0.00001, help='Blast e-value threshold (Default: 0.00001)', metavar="FLOAT")
+advanced_group.add_argument("--fast", dest="fast", action='store_true', default=False, help='Running only BLAST to predict protein function. (Default: False)')
+advanced_group.add_argument("--hmmdb", dest="hmmdatabase", type=str, help='PHMMER Database that will be used for the protein function prediction according to Hidden Markov Models. In this case, HMMDB must be in FASTA format (e.g. UniProt: "', metavar="HMMDB")
 advanced_group.add_argument("--hmmerevalue", dest="hmmerevalue", default=0.001, help='PHMMER e-value threshold (Default: 0.001)', metavar="FLOAT")
 
 type_choices = {'BCT': 'Prokaryotic chromosome', 'CON': 'Contig', 'PHG': 'Phages', 'VRL': 'Eukaryotic/Archaea virus'}
@@ -119,6 +120,9 @@ args = parser.parse_args()
 root_output = args.rootoutput
 if not root_output:
 	root_output = '{}_annotated'.format(os.path.splitext(args.inputfile)[0])
+
+if args.fast == False and args.hmmdb == None:
+    sys.exit('You MUST specify HMMER database using the parameter --hmmdb if you are not using --fast option')
 
 # Printing the header of the program 
 eprint("This is VirAnnot %s" % str(version))
@@ -287,68 +291,69 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 					information_proteins_blast[row['qseqid']] = infoprot_blast
 
 	## Predicting the function of the proteins based on HMM predictions using phmmer
-	with open("commands.sh", "w") as commandsB:
-		for singleprot in sorted(glob.glob("SEQ_*.faa")):
-			hhmtable = "%s.tbl" % singleprot
-			eprint("Creating file to run parallel PHMMER")
-			eprint("Adding %s to run PHMMER." % singleprot)
-			lineB = ["phmmer", "--cpu", "1", "--domtblout", hhmtable, "-E", str(args.hmmerevalue), "-o", "/dev/null", singleprot, args.hmmdatabase, '\n']
-			line2writeB = ' '.join(lineB)
-			commandsB.write(line2writeB)
-	eprint("Running parallel PHMMER")
-	subprocess.call(['parallel', '-j', str(args.ncpus)], stdin=open('commands.sh'))
-	os.remove("commands.sh")
-	eprint("Done. PHMMER was done to predict the function of the genes according to Hidden Markov Models\n")
+	if args.fast == False:
+		with open("commands.sh", "w") as commands:
+			for singleprot in sorted(glob.glob("SEQ_*.faa")):
+				hhmtable = "%s.tbl" % singleprot
+				eprint("Creating file to run parallel PHMMER")
+				eprint("Adding %s to run PHMMER." % singleprot)
+				line2write = ' '.join(["phmmer", "--cpu", "1", "--domtblout", hhmtable, "-E", str(args.hmmerevalue), "-o", "/dev/null", singleprot, args.hmmdatabase, '\n'])
+				commands.write(line2write)
 
-	# Parsing the results from HMMER
-	information_proteins_hmmer = {}
-	for singletbl in sorted(glob.glob("*.faa.tbl")):
-		rootname = singletbl.replace(".faa.tbl", "")
-		with open(singletbl) as tblfile:
-			infoprot_hmmer = {}
-			for line in tblfile:
-				if line.startswith("#"):
-					continue
-				else:
-					try:
-						pat = re.compile("^(\S+)\s+\S\s+\d+\s+(\S+)\s+\S\s+(\d+)\s+((?:0|[1-9]\d*)(?:\.\d*)?(?:[eE][+\-]?\d+)?)\s+\S+\s+\S+\s+\S+\s+\S+\s+(?:0|[1-9]\d*)(?:\.\d*)?(?:[eE][+\-]?\d+)?\s+\S+\s+\S+\s+\S+\s+(\d+)\s+(\d+)\s+\d+\s+\d+\s+\S+\s+\S+\s+(\S+)\s+(.*)")
-						matchname, lociname, length, evaluehh, start, end, pident, description = re.match(pat, line).groups()
-					except AttributeError:
+		eprint("Running parallel PHMMER")
+		subprocess.call(['parallel', '-j', str(args.ncpus)], stdin=open('commands.sh'))
+		eprint("Done. PHMMER was done to predict the function of the genes according to Hidden Markov Models\n")
+		os.remove("commands.sh")
+
+		# Parsing the results from HMMER
+		information_proteins_hmmer = {}
+		for singletbl in sorted(glob.glob("*.faa.tbl")):
+			rootname = singletbl.replace(".faa.tbl", "")
+			with open(singletbl) as tblfile:
+				infoprot_hmmer = {}
+				for line in tblfile:
+					if line.startswith("#"):
 						continue
 					else:
-						length = float(length)
-						pident = 100.00*float(pident)
-						protarea = 100.00*(((float(end)-1.00) - (float(start)-1.00))/length)
 						try:
-							data2 = infoprot_hmmer['lociname']
-						except KeyError:
-							if float(protarea) >= float(args.covthreshold) and (float(evaluehh) <= float(args.hmmerevalue)) and (float(pident) >= 50.00):
-								infoprot_hmmer['lociname'] = lociname
-								infoprot_hmmer['name'] = matchname
-								infoprot_hmmer['evalue'] = float(evaluehh)
-								infoprot_hmmer['pcover'] = float(protarea)
-								infoprot_hmmer['pident'] = float(pident)
-								infoprot_hmmer['descr'] = description
-							else:
-								try:
-									if (float(protarea) >= float(args.covthreshold)) and (float(protarea) >= float(infoprot_hmmer['pcover'])) and (float(evaluehh) <= float(args.hmmerevalue)) and (float(evaluehh) <= float(infoprot_hmmer['evalue'])) and (float(pident) >= 50.00) and (float(pident) >= infoprot_hmmer['pident']) :
-										infoprot_hmmer['lociname'] = lociname
-										infoprot_hmmer['name'] = matchname
-										infoprot_hmmer['evalue'] = float(evaluehh)
-										infoprot_hmmer['pcover'] = float(protarea)
-										infoprot_hmmer['pident'] = float(pident)
-										infoprot_hmmer['descr'] = description
-								except KeyError:
-										continue
+							pat = re.compile("^(\S+)\s+\S\s+\d+\s+(\S+)\s+\S\s+(\d+)\s+((?:0|[1-9]\d*)(?:\.\d*)?(?:[eE][+\-]?\d+)?)\s+\S+\s+\S+\s+\S+\s+\S+\s+(?:0|[1-9]\d*)(?:\.\d*)?(?:[eE][+\-]?\d+)?\s+\S+\s+\S+\s+\S+\s+(\d+)\s+(\d+)\s+\d+\s+\d+\s+\S+\s+\S+\s+(\S+)\s+(.*)")
+							matchname, lociname, length, evaluehh, start, end, pident, description = re.match(pat, line).groups()
+						except AttributeError:
+							continue
 						else:
-							if (float(protarea) >= float(args.covthreshold)) and (float(protarea) >= float(infoprot_hmmer['pcover'])) and (float(evaluehh) <= float(args.hmmerevalue)) and (float(evaluehh) <= float(infoprot_hmmer['evalue'])) and (float(pident) >= 50.00):
-								infoprot_hmmer['lociname'] = lociname
-								infoprot_hmmer['name'] = matchname
-								infoprot_hmmer['evalue'] = float(evaluehh)
-								infoprot_hmmer['pcover'] = float(protarea)
-								infoprot_hmmer['pident'] = float(pident)
-								infoprot_hmmer['descr'] = description
-			information_proteins_hmmer[rootname] = infoprot_hmmer
+							length = float(length)
+							pident = 100.00*float(pident)
+							protarea = 100.00*(((float(end)-1.00) - (float(start)-1.00))/length)
+							try:
+								data2 = infoprot_hmmer['lociname']
+							except KeyError:
+								if float(protarea) >= float(args.covthreshold) and (float(evaluehh) <= float(args.hmmerevalue)) and (float(pident) >= 50.00):
+									infoprot_hmmer['lociname'] = lociname
+									infoprot_hmmer['name'] = matchname
+									infoprot_hmmer['evalue'] = float(evaluehh)
+									infoprot_hmmer['pcover'] = float(protarea)
+									infoprot_hmmer['pident'] = float(pident)
+									infoprot_hmmer['descr'] = description
+								else:
+									try:
+										if (float(protarea) >= float(args.covthreshold)) and (float(protarea) >= float(infoprot_hmmer['pcover'])) and (float(evaluehh) <= float(args.hmmerevalue)) and (float(evaluehh) <= float(infoprot_hmmer['evalue'])) and (float(pident) >= 50.00) and (float(pident) >= infoprot_hmmer['pident']) :
+											infoprot_hmmer['lociname'] = lociname
+											infoprot_hmmer['name'] = matchname
+											infoprot_hmmer['evalue'] = float(evaluehh)
+											infoprot_hmmer['pcover'] = float(protarea)
+											infoprot_hmmer['pident'] = float(pident)
+											infoprot_hmmer['descr'] = description
+									except KeyError:
+											continue
+							else:
+								if (float(protarea) >= float(args.covthreshold)) and (float(protarea) >= float(infoprot_hmmer['pcover'])) and (float(evaluehh) <= float(args.hmmerevalue)) and (float(evaluehh) <= float(infoprot_hmmer['evalue'])) and (float(pident) >= 50.00):
+									infoprot_hmmer['lociname'] = lociname
+									infoprot_hmmer['name'] = matchname
+									infoprot_hmmer['evalue'] = float(evaluehh)
+									infoprot_hmmer['pcover'] = float(protarea)
+									infoprot_hmmer['pident'] = float(pident)
+									infoprot_hmmer['descr'] = description
+				information_proteins_hmmer[rootname] = infoprot_hmmer
 
 	#Storing protein information in memory
 	with open("temp.faa", "rU") as protsfile:
@@ -371,73 +376,92 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 	# Creation of table
 	debugtable = "%s.csv" % newfile
 	with open(debugtable, "w") as tablefile:
-		print("\t".join(["Identifier", "Start", "Stop", "Strand", "size_aa", "pI", "Mol_weight_kDa", "Instability_index", "ID_BLAST", "Descr_BLAST", "evalue_BLAST", "%ID_BLAST", "%Cover_BLAST", "ID_HMMER", "Descr_HMMER", "evalue_HMMER", "%ID_HMMER", "%Cover_HMMER"]), file=tablefile)
+		if args.fast == False:
+			print("\t".join(["Identifier", "Start", "Stop", "Strand", "size_aa", "pI", "Mol_weight_kDa", "Instability_index", "ID_BLAST", "Descr_BLAST", "evalue_BLAST", "%ID_BLAST", "%Cover_BLAST", "ID_HMMER", "Descr_HMMER", "evalue_HMMER", "%ID_HMMER", "%Cover_HMMER"]), file=tablefile)
+			keylist = information_proteins_hmmer.keys()
+			keylist.sort()
+			for keyB in keylist:
+				keyB = keyB.replace(".faa.tbl", "")
+				try:
+					print("\t".join([equivalence[keyB], str(tempprotsdict[equivalence[keyB]]['begin']), str(tempprotsdict[equivalence[keyB]]['end']), str(tempprotsdict[equivalence[keyB]]['strand']), str(tempprotsdict[equivalence[keyB]]['length']), str(tempprotsdict[equivalence[keyB]]['isoelectricpoint']), str(tempprotsdict[equivalence[keyB]]['molweightkda']), str(tempprotsdict[equivalence[keyB]]['instability']), information_proteins_blast[equivalence[keyB]]['sseqid'], information_proteins_blast[equivalence[keyB]]['descr'], str(information_proteins_blast[equivalence[keyB]]['evalue']), str(information_proteins_blast[equivalence[keyB]]['pident']), str(information_proteins_blast[equivalence[keyB]]['pcover']), information_proteins_hmmer[keyB]['name'], information_proteins_hmmer[keyB]['descr'], str(information_proteins_hmmer[keyB]['evalue']), str(information_proteins_hmmer[keyB]['pident']), str(information_proteins_hmmer[keyB]['pcover'])]), file=tablefile)
+				except KeyError:
+					try:
+						print("\t".join([equivalence[keyB], str(tempprotsdict[equivalence[keyB]]['begin']), str(tempprotsdict[equivalence[keyB]]['end']), str(tempprotsdict[equivalence[keyB]]['strand']), str(tempprotsdict[equivalence[keyB]]['length']), str(tempprotsdict[equivalence[keyB]]['isoelectricpoint']), str(tempprotsdict[equivalence[keyB]]['molweightkda']), str(tempprotsdict[equivalence[keyB]]['instability']), information_proteins_blast[equivalence[keyB]]['sseqid'], information_proteins_blast[equivalence[keyB]]['descr'], str(information_proteins_blast[equivalence[keyB]]['evalue']), str(information_proteins_blast[equivalence[keyB]]['pident']), str(information_proteins_blast[equivalence[keyB]]['pcover']), "None", "None", "NA", "NA", "NA"]), file=tablefile)
+					except KeyError:
+						try:
+							print("\t".join([equivalence[keyB], str(tempprotsdict[equivalence[keyB]]['begin']), str(tempprotsdict[equivalence[keyB]]['end']), str(tempprotsdict[equivalence[keyB]]['strand']), str(tempprotsdict[equivalence[keyB]]['length']), str(tempprotsdict[equivalence[keyB]]['isoelectricpoint']), str(tempprotsdict[equivalence[keyB]]['molweightkda']), str(tempprotsdict[equivalence[keyB]]['instability']), "None", "None", "NA", "NA", "NA", information_proteins_hmmer[keyB]['name'], information_proteins_hmmer[keyB]['descr'], str(information_proteins_hmmer[keyB]['evalue']), str(information_proteins_hmmer[keyB]['pident']), str(information_proteins_hmmer[keyB]['pcover'])]), file=tablefile)
+						except KeyError:
+							print("\t".join([equivalence[keyB], str(tempprotsdict[equivalence[keyB]]['begin']), str(tempprotsdict[equivalence[keyB]]['end']), str(tempprotsdict[equivalence[keyB]]['strand']), str(tempprotsdict[equivalence[keyB]]['length']), str(tempprotsdict[equivalence[keyB]]['isoelectricpoint']), str(tempprotsdict[equivalence[keyB]]['molweightkda']), str(tempprotsdict[equivalence[keyB]]['instability']), "None", "None", "NA", "NA", "NA",  "None", "None", "NA", "NA", "NA"]), file=tablefile)
+		else:
+			print("\t".join(["Identifier", "Start", "Stop", "Strand", "size_aa", "pI", "Mol_weight_kDa", "Instability_index", "ID_BLAST", "Descr_BLAST", "evalue_BLAST", "%ID_BLAST", "%Cover_BLAST"]), file=tablefile)
+			keylist = information_proteins_blast.keys()
+			keylist.sort()
+			for keyB in keylist:
+				try:
+					print("\t".join([keyB, str(tempprotsdict[keyB]['begin']), str(tempprotsdict[keyB]['end']), str(tempprotsdict[keyB]['strand']), str(tempprotsdict[keyB]['length']), str(tempprotsdict[keyB]['isoelectricpoint']), str(tempprotsdict[keyB]['molweightkda']), str(tempprotsdict[keyB]['instability']), information_proteins_blast[keyB]['sseqid'], information_proteins_blast[keyB]['descr'], str(information_proteins_blast[keyB]['evalue']), str(information_proteins_blast[keyB]['pident']), str(information_proteins_blast[keyB]['pcover'])]), file=tablefile)
+				except KeyError:
+					print("\t".join([keyB, str(tempprotsdict[keyB]['begin']), str(tempprotsdict[keyB]['end']), str(tempprotsdict[keyB]['strand']), str(tempprotsdict[keyB]['length']), str(tempprotsdict[keyB]['isoelectricpoint']), str(tempprotsdict[keyB]['molweightkda']), str(tempprotsdict[keyB]['instability']), "None", "None", "NA", "NA", "NA"]), file=tablefile)
+
+	# Algorithm of decisions (which one: BLAST/HMMER?)
+	multipleprots = {}
+	Hypotheticalpat = re.compile(r'(((H|h)ypothetical)|((U|u)ncharacteri(z|s)ed)) protein')
+	if args.fast == False:
 		keylist = information_proteins_hmmer.keys()
 		keylist.sort()
 		for keyB in keylist:
 			keyB = keyB.replace(".faa.tbl", "")
-			try:
-				print("\t".join([equivalence[keyB], str(tempprotsdict[equivalence[keyB]]['begin']), str(tempprotsdict[equivalence[keyB]]['end']), str(tempprotsdict[equivalence[keyB]]['strand']), str(tempprotsdict[equivalence[keyB]]['length']), str(tempprotsdict[equivalence[keyB]]['isoelectricpoint']), str(tempprotsdict[equivalence[keyB]]['molweightkda']), str(tempprotsdict[equivalence[keyB]]['instability']), information_proteins_blast[equivalence[keyB]]['sseqid'], information_proteins_blast[equivalence[keyB]]['descr'], str(information_proteins_blast[equivalence[keyB]]['evalue']), str(information_proteins_blast[equivalence[keyB]]['pident']), str(information_proteins_blast[equivalence[keyB]]['pcover']), information_proteins_hmmer[keyB]['name'], information_proteins_hmmer[keyB]['descr'], str(information_proteins_hmmer[keyB]['evalue']), str(information_proteins_hmmer[keyB]['pident']), str(information_proteins_hmmer[keyB]['pcover'])]), file=tablefile)
-			except KeyError:
-				try:
-					print("\t".join([equivalence[keyB], str(tempprotsdict[equivalence[keyB]]['begin']), str(tempprotsdict[equivalence[keyB]]['end']), str(tempprotsdict[equivalence[keyB]]['strand']), str(tempprotsdict[equivalence[keyB]]['length']), str(tempprotsdict[equivalence[keyB]]['isoelectricpoint']), str(tempprotsdict[equivalence[keyB]]['molweightkda']), str(tempprotsdict[equivalence[keyB]]['instability']), information_proteins_blast[equivalence[keyB]]['sseqid'], information_proteins_blast[equivalence[keyB]]['descr'], str(information_proteins_blast[equivalence[keyB]]['evalue']), str(information_proteins_blast[equivalence[keyB]]['pident']), str(information_proteins_blast[equivalence[keyB]]['pcover']), "None", "None", "NA", "NA", "NA"]), file=tablefile)
-				except KeyError:
+			singleprot = {}
+			singleprot['name'] = equivalence[keyB]
+			if (equivalence[keyB] in information_proteins_blast) and (keyB in information_proteins_hmmer):
+				if re.match(Hypotheticalpat, information_proteins_blast[equivalence[keyB]]['descr']):
 					try:
-						print("\t".join([equivalence[keyB], str(tempprotsdict[equivalence[keyB]]['begin']), str(tempprotsdict[equivalence[keyB]]['end']), str(tempprotsdict[equivalence[keyB]]['strand']), str(tempprotsdict[equivalence[keyB]]['length']), str(tempprotsdict[equivalence[keyB]]['isoelectricpoint']), str(tempprotsdict[equivalence[keyB]]['molweightkda']), str(tempprotsdict[equivalence[keyB]]['instability']), "None", "None", "NA", "NA", "NA", information_proteins_hmmer[keyB]['name'], information_proteins_hmmer[keyB]['descr'], str(information_proteins_hmmer[keyB]['evalue']), str(information_proteins_hmmer[keyB]['pident']), str(information_proteins_hmmer[keyB]['pcover'])]), file=tablefile)
+						if re.match(Hypotheticalpat, information_proteins_hmmer[keyB]['descr']):
+							singleprot['descr'] = information_proteins_blast[equivalence[keyB]]['descr']
+						else:
+							singleprot['descr'] = information_proteins_hmmer[keyB]['descr']
 					except KeyError:
-						print("\t".join([equivalence[keyB], str(tempprotsdict[equivalence[keyB]]['begin']), str(tempprotsdict[equivalence[keyB]]['end']), str(tempprotsdict[equivalence[keyB]]['strand']), str(tempprotsdict[equivalence[keyB]]['length']), str(tempprotsdict[equivalence[keyB]]['isoelectricpoint']), str(tempprotsdict[equivalence[keyB]]['molweightkda']), str(tempprotsdict[equivalence[keyB]]['instability']), "None", "None", "NA", "NA", "NA",  "None", "None", "NA", "NA", "NA"]), file=tablefile)
-
-	# Algorithm of decisions (which one: BLAST/HMMER?)
-	multipleprots = {}
-	keylist = information_proteins_hmmer.keys()
-	keylist.sort()
-	Hypotheticalpat = re.compile(r'((H|h)ypothetical|(U|u)ncharacteri(z|s)ed) protein')
-	for keyB in keylist:
-		keyB = keyB.replace(".faa.tbl", "")
-		singleprot = {}
-		singleprot['name'] = equivalence[keyB]
-		if (equivalence[keyB] in information_proteins_blast) and (keyB in information_proteins_hmmer):
-			if re.match(Hypotheticalpat, information_proteins_blast[equivalence[keyB]]['descr']):
-				try:
-					if re.match(Hypotheticalpat, information_proteins_hmmer[keyB]['descr']):
 						singleprot['descr'] = information_proteins_blast[equivalence[keyB]]['descr']
-					else:
-						singleprot['descr'] = ' '.join(["Putative", information_proteins_hmmer[keyB]['descr']])
+				else:
+					try:
+						if (float(information_proteins_blast[equivalence[keyB]]['pident'])>float(information_proteins_hmmer[keyB]['pident'])) and (float(information_proteins_blast[equivalence[keyB]]['pcover'])>float(information_proteins_hmmer[keyB]['pcover'])):
+							singleprot['descr'] = information_proteins_blast[equivalence[keyB]]['descr']
+						elif (float(information_proteins_blast[equivalence[keyB]]['pident'])<float(information_proteins_hmmer[keyB]['pident'])) and (float(information_proteins_blast[equivalence[keyB]]['pcover'])<float(information_proteins_hmmer[keyB]['pcover'])):
+							singleprot['descr'] = information_proteins_hmmer[keyB]['descr']
+						elif (float(information_proteins_blast[equivalence[keyB]]['pident'])>float(information_proteins_hmmer[keyB]['pident'])) and (float(information_proteins_blast[equivalence[keyB]]['pcover'])<float(information_proteins_hmmer[keyB]['pcover'])):
+							if (float(information_proteins_blast[equivalence[keyB]]['pident'])-float(information_proteins_hmmer[keyB]['pident']) >= args.diffid):
+								singleprot['descr'] = information_proteins_blast[equivalence[keyB]]['descr']
+							else:
+								singleprot['descr'] = information_proteins_hmmer[keyB]['descr']
+						else:
+							if (float(information_proteins_hmmer[keyB]['pident'])-float(information_proteins_blast[equivalence[keyB]]['pident']) >= args.diffid):
+								singleprot['descr'] = information_proteins_hmmer[keyB]['descr']
+							else:
+								singleprot['descr'] = information_proteins_blast[equivalence[keyB]]['descr']
+					except KeyError:
+						try:
+							if (float(information_proteins_blast[equivalence[keyB]]['pcover'])>float(information_proteins_hmmer[keyB]['pcover'])):
+								singleprot['descr'] = information_proteins_blast[equivalence[keyB]]['descr']
+							else:
+								singleprot['descr'] = information_proteins_hmmer[keyB]['descr']
+						except KeyError:
+							singleprot['descr'] = information_proteins_blast[equivalence[keyB]]['descr']
+			elif equivalence[keyB] in information_proteins_blast:
+				singleprot['descr'] = information_proteins_blast[equivalence[keyB]]['descr']
+			elif keyB in information_proteins_hmmer:
+				try:
+					singleprot['descr'] = information_proteins_hmmer[keyB]['descr']
 				except KeyError:
-					singleprot['descr'] = information_proteins_blast[equivalence[keyB]]['descr']
+					singleprot['descr'] = 'Hypothetical protein'
 			else:
-				try:
-					if (float(information_proteins_blast[equivalence[keyB]]['pident'])>float(information_proteins_hmmer[keyB]['pident'])) and (float(information_proteins_blast[equivalence[keyB]]['pcover'])>float(information_proteins_hmmer[keyB]['pcover'])):
-						singleprot['descr'] = information_proteins_blast[equivalence[keyB]]['descr']
-					elif (float(information_proteins_blast[equivalence[keyB]]['pident'])<float(information_proteins_hmmer[keyB]['pident'])) and (float(information_proteins_blast[equivalence[keyB]]['pcover'])<float(information_proteins_hmmer[keyB]['pcover'])):
-						singleprot['descr'] = information_proteins_hmmer[keyB]['descr']
-					elif (float(information_proteins_blast[equivalence[keyB]]['pident'])>float(information_proteins_hmmer[keyB]['pident'])) and (float(information_proteins_blast[equivalence[keyB]]['pcover'])<float(information_proteins_hmmer[keyB]['pcover'])):
-						if (float(information_proteins_blast[equivalence[keyB]]['pident'])-float(information_proteins_hmmer[keyB]['pident']) >= args.diffid):
-							singleprot['descr'] = information_proteins_blast[equivalence[keyB]]['descr']
-						else:
-							singleprot['descr'] = information_proteins_hmmer[keyB]['descr']
-					else:
-						if (float(information_proteins_hmmer[keyB]['pident'])-float(information_proteins_blast[equivalence[keyB]]['pident']) >= args.diffid):
-							singleprot['descr'] = information_proteins_hmmer[keyB]['descr']
-						else:
-							singleprot['descr'] = information_proteins_blast[equivalence[keyB]]['descr']
-				except KeyError:
-					try:
-						if (float(information_proteins_blast[equivalence[keyB]]['pcover'])>float(information_proteins_hmmer[keyB]['pcover'])):
-							singleprot['descr'] = information_proteins_blast[equivalence[keyB]]['descr']
-						else:
-							singleprot['descr'] = information_proteins_hmmer[keyB]['descr']
-					except KeyError:
-						singleprot['descr'] = information_proteins_blast[equivalence[keyB]]['descr']
-		elif equivalence[keyB] in information_proteins_blast:
-			singleprot['descr'] = information_proteins_blast[equivalence[keyB]]['descr']
-		elif keyB in information_proteins_hmmer:
-			try:
-				singleprot['descr'] = information_proteins_hmmer[keyB]['descr']
-			except KeyError:
-				singleprot['descr'] = 'Hypothetical protein'
-		else:
-			singleprot['descr'] = information_proteins_blast[equivalence[keyB]]['descr']
+				singleprot['descr'] = information_proteins_blast[equivalence[keyB]]['descr']
+			multipleprots[keyB] = singleprot
+	else:
+		keylist = information_proteins_blast.keys()
+		keylist.sort()
+		for keyB in keylist:
+			singleprot = {}
+			singleprot['name'] = keyB
+			singleprot['descr'] = information_proteins_blast[keyB]['descr']
 		multipleprots[keyB] = singleprot
 
 	#Storing protein information in memory
