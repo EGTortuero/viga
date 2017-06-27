@@ -47,7 +47,6 @@ The program has the following two kind of arguments:
 <tr><td>--input FASTAFILE</td><td>Input file as a nucleotidic FASTA file. It can contains multiple sequences (e.g. metagenomic contigs)</td></tr>
 <tr><td>--blastdb BLASTDB</td><td>BLAST database that will be used for the protein function prediction. The database MUST be for amino acids.</td></tr>
 <tr><td>--rfamdb RFAMDB</td><td>RFAM database that will be used for the ribosomal RNA prediction.</td></tr>
-<tr><td>--hmmdb HMMDB</td><td>PHMMER Database that will be used for the protein function prediction according to Hidden Markov Models. In this case, HMMDB must be in FASTA format (e.g. UniProt)"</td></tr>
 <tr><td>--modifiers TEXTFILE</td><td>Input file as a plain text file with the modifiers per every FASTA header according to SeqIn (https://www.ncbi.nlm.nih.gov/Sequin/modifiers.html). All modifiers must be written in a single line and are separated by a single space character. No space should be placed besides the = sign. For example: [organism=Serratia marcescens subsp. marcescens] [sub-species=marcescens] [strain=AH0650_Sm1] [moltype=DNA] [tech=wgs] [gcode=11] [country=Australia] [isolation-source=sputum]. This line will be copied and printed along with the record name as the definition line of every contig sequence.</tr></td>
 </table>
 
@@ -60,6 +59,9 @@ The program has the following two kind of arguments:
 <tr><td>--threads INT</td><td>Number of threads/CPUs. By default, the program will use 1 CPU.</td></tr>
 <tr><td>--gff</td><td>Printing the output as a General Feature Format (GFF) version 3. It is a flat table file with contains 9 columns of data (see http://www.ensembl.org/info/website/upload/gff3.html for more information). By default, the program will not print the GFF3 file (--gff False).</td></tr>
 <tr><td>--blastevalue FLOAT</td><td>BLAST e-value threshold. By default, the threshold will be 1e-05.</td></tr>
+
+<tr><td>--fast</td><td>Running the program without using PHMMER to predict protein function. In this case, the program will be as fast as Prokka (Seemann 2014) but the annotations will not be accurate. By default, this program had this flag disabled.</td></tr>
+<tr><td>--hmmdb HMMDB</td><td>PHMMER Database that will be used for the protein function prediction according to Hidden Markov Models. In this case, HMMDB must be in FASTA format (e.g. UniProt). This parameter is mandatory if the "--fast" option is disabled. "</td></tr>
 <tr><td>--hmmerevalue FLOAT</td><td>PHMMER e-value threshold. By default, the threshold is 1e-03.</td></tr>
 <tr><td>--typedata BCT|CON|VRL|PHG</td><td>GenBank Division: One of the following codes:
 <table>
@@ -112,8 +114,13 @@ An example of execution is:
 
 python virannot.py --input eukarya.fasta --blastdb databases/blast/nr/nr --rfamdb databases/rfam/Rfam.cm --hmmdb databases/UniProt/uniprot_trembl.fasta --gcode 1 --out eukarya_BENCHMARK --modifiers ../modifiers.txt --threads 10
 
+Another example is:
+
+python virannot.py --input bacteria.fasta --blastdb databases/blast/nr/nr --rfamdb databases/rfam/Rfam.cm --fast --out bacteria_BENCHMARK --modifiers ../modifiers.txt --threads 10
+
 HISTORY OF THE SOURCE CODE:
 
+* v 0.7.0 - Added the "--fast" parameter. In this case, the program will launch BLAST (but not PHMMER) to annotate protein function. In this case, the program will be as fast as Prokka (Seemann 2014) but the annotations will not be accurate. As a consequence of this new parameter, the "--hmmdb" parameter is only mandatory when this flag is NOT used (as by default).
 * v 0.6.2 - Removed the "--noparallel" parameter. After doing time benchmarks to test the speed of BLAST and HMMER when they are run using the multithreading option and as a parallel program, we found that BLAST tends to be faster using multithreading option while HMMER had the opposite behavior. For that, we decided to consider only the parallelization of HMMER and to run BLAST using multiple threads. 
 * v 0.6.1 - Fixed issue with parallel HMMER (the program tend to take all available CPUs independently of the parsed arguments) and with the BLAST/HMMER decision trees (typos).
 * v 0.6.0 - Replaced HHSUITE by HMMER 3.1 to predict protein function according to Hidden Markov Models. In a recent benchmark (as well as internal ones), we found that HHPred tends to be the slowest program to predict protein function (compared with PHMMER and BLASTP). Additionally, HMMER had a high accuracy when proteins are annotated (Saripella et al. 2016). Moreover, it has the advantage that the databases must be in FASTA format (such UniProt and, even, PFAM), which it is a standard format. For all these reasons, we replaced HHSUITE by HMMER 3.1. Additionally, fixed small issues related with the Genbank file (omission of the contig topology as well as the name of the locus).
@@ -137,5 +144,6 @@ REFERENCES:
 	- Nawrocki EP, Eddy SR (2013) Infernal 1.1: 100-fold faster RNA homology searches. Bioinformatics 29: 2933-35.
 	- Nawrocki EP, Burge SW, Bateman A, Daub J, Eberhardt RY, Eddy SR, Floden EW, Gardner PP, Jones TA, Tate J, Finn RD (2013) Rfam 12.0: updates to the RNA families database. Nucleic Acids Research 43: D130-7.
 	- Saripella GV, Sonnhammer EL, Forslund K (2016) Benchmarking the next generation of homology inference tools. Bioinformatics 32: 2636-41.
+	- Seemann T (2014) Prokka: rapid prokaryote genome annotation. Bioinformatics 30: 2068-9.
 	- Tange O (2011) GNU Parallel - The Command-Line Power Tool. ;login: The USENIX Magazine 36:42-7.
 	- Warburton PE, Giordano J, Cheung F, Gelfand Y, Benson G (2004) Inverted repeat structure of the human genome: The X-chromosome contains a preponderance of large, highly homologous inverted repeats that contain testes genes. Genome Research 14: 1861-9.
