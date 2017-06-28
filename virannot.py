@@ -75,7 +75,7 @@ def stringSplitByNumbers(x):
 	return [int(y) if y.isdigit() else y for y in l]
 
 # Defining the program version
-version = "0.7.0"
+version = "0.7.1"
 
 # Processing the parameters
 parser = argparse.ArgumentParser(description='Virannot is a automatic de novo viral genome annotator.')
@@ -122,7 +122,7 @@ if not root_output:
 	root_output = '{}_annotated'.format(os.path.splitext(args.inputfile)[0])
 
 if args.fast == False and args.hmmdatabase == None:
-	sys.exit('You MUST specify HMMER database using the parameter --hmmdb if you are not using --fast option')
+    sys.exit('You MUST specify HMMER database using the parameter --hmmdb if you are not using --fast option')
 
 # Printing the header of the program 
 eprint("This is VirAnnot %s" % str(version))
@@ -260,7 +260,7 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 
 	if args.blastexh==True:
 		eprint("Running BLAST to predict the genes according to homology inference in %s using exhaustive mode (see Fozo et al. (2010) Nucleic Acids Res for details)" % newfile)
-		subprocess.call(['blastp', '-query', "temp.faa", '-db', args.blastdatabase, '-evalue', str(args.blastevalue), '-outfmt', '6 qseqid sseqid pident length qlen slen qstart qend evalue bitscore stitle', '-out', 'temp_blast.csv', '-max_target_seqs', '10', '-word_size', '2', '-gapopen', '8', '-gapextend', '2', '-matrix', '"PAM70"', '-comp_based_stats', '"0"', "-num_threads", str(args.ncpus)])
+		subprocess.call(['blastp', '-query', "temp.faa", '-db', args.blastdatabase, '-evalue', str(args.blastevalue), '-outfmt', '6 qseqid sseqid pident length qlen slen qstart qend evalue bitscore stitle', -out', 'temp_blast.csv', '-max_target_seqs', '10', '-word_size', '2', '-gapopen', '8', '-gapextend', '2', '-matrix', '"PAM70"', '-comp_based_stats', '"0"', "-num_threads", str(args.ncpus)])
 	else:
 		eprint("Running BLAST to predict the genes according to homology inference in %s using default parameters" % newfile)
 		subprocess.call(['blastp', '-query', "temp.faa", '-db', args.blastdatabase, '-evalue', str(args.blastevalue), '-outfmt', '6 qseqid sseqid pident length qlen slen qstart qend evalue bitscore stitle', '-out', 'temp_blast.csv', '-max_target_seqs', '10', "-num_threads", str(args.ncpus)])
@@ -394,7 +394,7 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 							print("\t".join([equivalence[keyB], str(tempprotsdict[equivalence[keyB]]['begin']), str(tempprotsdict[equivalence[keyB]]['end']), str(tempprotsdict[equivalence[keyB]]['strand']), str(tempprotsdict[equivalence[keyB]]['length']), str(tempprotsdict[equivalence[keyB]]['isoelectricpoint']), str(tempprotsdict[equivalence[keyB]]['molweightkda']), str(tempprotsdict[equivalence[keyB]]['instability']), "None", "None", "NA", "NA", "NA",  "None", "None", "NA", "NA", "NA"]), file=tablefile)
 		else:
 			print("\t".join(["Identifier", "Start", "Stop", "Strand", "size_aa", "pI", "Mol_weight_kDa", "Instability_index", "ID_BLAST", "Descr_BLAST", "evalue_BLAST", "%ID_BLAST", "%Cover_BLAST"]), file=tablefile)
-			keylist = information_proteins_blast.keys()
+			keylist = equivalence.values()
 			keylist.sort()
 			for keyB in keylist:
 				try:
@@ -456,7 +456,7 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 				singleprot['descr'] = information_proteins_blast[equivalence[keyB]]['descr']
 			multipleprots[keyB] = singleprot
 	else:
-		keylist = information_proteins_blast.keys()
+		keylist = equivalence.values()
 		keylist.sort()
 		for keyB in keylist:
 			singleprot = {}
@@ -468,7 +468,7 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 					singleprot['descr'] = information_proteins_blast[keyB]['descr']
 			except KeyError:
 				singleprot['descr'] = 'Hypothetical protein'
-		multipleprots[keyB] = singleprot
+			multipleprots[keyB] = singleprot
 
 	#Storing protein information in memory
 	with open("temp.faa", "rU") as protsfile:
