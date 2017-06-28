@@ -120,6 +120,7 @@ python virannot.py --input bacteria.fasta --blastdb databases/blast/nr/nr --rfam
 
 HISTORY OF THE SOURCE CODE:
 
+* v 0.7.1 - Fixed error on the "--fast" parameter. All proteins that had no hits in BLAST analyses were not parsed properly. By now, these are identified as "Hypothetical proteins" in all files.
 * v 0.7.0 - Added the "--fast" parameter. In this case, the program will launch BLAST (but not PHMMER) to annotate protein function. In this case, the program will be as fast as Prokka (Seemann 2014) but the annotations will not be accurate. As a consequence of this new parameter, the "--hmmdb" parameter is only mandatory when this flag is NOT used (as by default).
 * v 0.6.2 - Removed the "--noparallel" parameter. After doing time benchmarks to test the speed of BLAST and HMMER when they are run using the multithreading option and as a parallel program, we found that BLAST tends to be faster using multithreading option while HMMER had the opposite behavior. For that, we decided to consider only the parallelization of HMMER and to run BLAST using multiple threads. 
 * v 0.6.1 - Fixed issue with parallel HMMER (the program tend to take all available CPUs independently of the parsed arguments) and with the BLAST/HMMER decision trees (typos).
