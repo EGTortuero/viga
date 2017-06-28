@@ -461,7 +461,10 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 		for keyB in keylist:
 			singleprot = {}
 			singleprot['name'] = keyB
-			singleprot['descr'] = information_proteins_blast[keyB]['descr']
+			if information_proteins_blast[keyB]['descr'] == None:
+				singleprot['descr'] = 'Hypothetical protein'
+			else:
+				singleprot['descr'] = information_proteins_blast[keyB]['descr']
 		multipleprots[keyB] = singleprot
 
 	#Storing protein information in memory
