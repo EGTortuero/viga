@@ -136,26 +136,26 @@ using the wrapper included in this repository.
 
 3. Update ``config/tool_conf.xml`` like this
 
-     <section id="annotation" name="Annotation">
-       <tool file="virannot/wrapper.xml" />
-     </section>
+		<section id="annotation" name="Annotation">
+			<tool file="virannot/wrapper.xml" />
+		</section>
 
 4. Update ``config/tool_data_table_conf.xml`` to add location of loc
    files
 
-     <!-- virannot databases -->
-     <table name="virannot_blastdb" comment_char="#">
-       <columns>value, dbkey, name, path</columns>
-       <file path="tool-data/virannot_blastdb.loc" />
-     </table>
-     <table name="virannot_rfamdb" comment_char="#">
-       <columns>value, dbkey, name, path</columns>
-       <file path="tool-data/virannot_rfamdb.loc" />
-     </table>
-     <table name="virannot_hmmdb" comment_char="#">
-       <columns>value, dbkey, name, path</columns>
-       <file path="tool-data/virannot_hmmdb.loc" />
-     </table>
+		<!-- virannot databases -->
+		<table name="virannot_blastdb" comment_char="#">
+			<columns>value, dbkey, name, path</columns>
+			<file path="tool-data/virannot_blastdb.loc" />
+		</table>
+		<table name="virannot_rfamdb" comment_char="#">
+			<columns>value, dbkey, name, path</columns>
+			<file path="tool-data/virannot_rfamdb.loc" />
+		</table>
+		<table name="virannot_hmmdb" comment_char="#">
+			<columns>value, dbkey, name, path</columns>
+			<file path="tool-data/virannot_hmmdb.loc" />
+		</table>
 
 5. Copy ``.loc`` files from ``virannot/tool-data`` to
    ``galaxy/tool-data`` and update the database paths within those
