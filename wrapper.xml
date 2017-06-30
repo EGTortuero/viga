@@ -1,0 +1,258 @@
+<tool id="virannot" name="virannot" version="0.7.1">
+    <description>de novo viral genome annotator</description>
+    <requirements>
+        <container type="docker">vimalkvn/virannot</container>
+    </requirements>
+    <stdio>
+        <exit_code range="1:" />
+    </stdio>
+    <command><![CDATA[
+python $__tool_directory__/virannot.py
+--input $input
+--blastdb $blastdb.fields.path
+--rfamdb $rfamdb.fields.path
+--modifiers $modifiers
+--threads \${GALAXY_SLOTS:-5}
+--typedata $typedata_select
+--gcode $gcode_select
+--out "default"
+--minrepeat $minrepeat
+--maxrepeat $maxrepeat
+--minspacer $minspacer
+--maxspacer $maxspacer
+
+#if $readlength
+    --readlength $readlength
+#end if
+#if $locus
+    --locus $locus
+#end if
+#if $gffprint
+    --gff
+#end if
+#if str($blastevalue)
+    --blastevalue $blastevalue
+#end if
+#if str($mincontigsize)
+    --mincontigsize $mincontigsize
+#end if
+#if str($idthr)
+    --idthr $idthr
+#end if
+#if str($coverthr)
+    --coverthr $coverthr
+#end if
+#if str($diffid)
+    --diffid $diffid
+#end if
+#if $blastexh
+    --blastexh
+#end if
+#if str($method.use_phmmer) == "yes"
+--hmmdb $method.hmmdb.fields.path
+--hmmerevalue $method.hmmerevalue
+#else:
+--fast
+#end if
+]]></command>
+    <inputs>
+        <param name="input" type="data" format="fasta" label="(Viral) contigs to annotate" help="Input file as a FASTA file. It can contain multiple sequences (e.g. metagenomic contigs)" />
+        <param name="blastdb" type="select" label="BLAST Database" help="BLAST Protein Database that will be used for the protein function prediction">
+            <options from_data_table="virannot_blastdb">
+                <filter type="sort_by" column="2"/>
+                <validator type="no_options" message="No indexes are available for the selected input dataset"/>
+            </options>
+        </param>
+        <param name="rfamdb" type="select" label="RFAM database used for ribosomal RNA prediction">
+            <options from_data_table="virannot_rfamdb">
+                <filter type="sort_by" column="2"/>
+                <validator type="no_options" message="No indexes are available for the selected input dataset"/>
+            </options>
+        </param>
+        <param name="modifiers" type="data" format="txt" label="Metadata of the contigs" help="Modifiers per every FASTA header according to SeqIn (https://www.ncbi.nlm.nih.gov/Sequin/modifiers.html)" />
+	<param name="typedata_select" type="select" label="GenBank division (--typedata)">
+	    <option value="CON" selected="true">Contig</option>
+	    <option value="PHG">Phages</option>
+	    <option value="VRL">Eukaryotic/Archaea virus</option>
+	    <option value="BCT">Prokaryotic chromosome</option>
+	</param>
+	<param name="gcode_select" type="select" label="Number of GenBank translation table (--gcode)">
+	  <option value="1">Standard genetic code [Eukaryotic]</option>
+	  <option value="2">Vertebrate mitochondrial code</option>
+	  <option value="3">Yeast mitochondrial code</option>
+	  <option value="4">Mycoplasma/Spiroplasma and Protozoan/mold/coelenterate mitochondrial code</option>
+	  <option value="5">Invertebrate mitochondrial code</option>
+	  <option value="6">Ciliate, dasycladacean and hexamita nuclear code</option>
+	  <option value="9">Echinoderm/flatworm mitochondrial code</option>
+	  <option value="10">Euplotid nuclear code</option>
+	  <option value="11" selected="true">Bacteria/Archaea/Phages/Plant plastid</option>
+	  <option value="12">Alternative yeast nuclear code</option>
+	  <option value="13">Ascidian mitochondrial code</option>
+	  <option value="14">Alternative flatworm mitochondrial code</option>
+	  <option value="16">Chlorophycean mitochondrial code</option>
+	  <option value="21">Trematode mitochondrial code</option>
+	  <option value="22">Scedenesmus obliquus mitochondrial code</option>
+	  <option value="23">Thraustochytrium mitochondrial code</option>
+	  <option value="24">Pterobranquia mitochondrial code</option>
+	  <option value="25">Gracilibacteria and Candidate division SR1</option>
+	  <option value="26">Pachysolen tannophilus nuclear code</option>
+	  <option value="27">Karyorelict nuclear code</option>
+	  <option value="28">Condylostoma nuclear code</option>
+	  <option value="29">Mesodinium nuclear code</option>
+	  <option value="30">Peritrich nuclear code</option>
+	  <option value="31">Blastocrithidia nuclear code</option>
+	</param>
+        <param name="readlength" type="integer" value="101" min="1" optional="true" label="Read length (--readlength)" help="Read length for the circularity prediction"/>
+        <param name="locus" type="text" value="LOC" optional="true" label="Locus tag prefix (--locustag)" help="Name of the sequences. If the input is a multifasta file, please put a general name"/>
+        <param name="gffprint" type="boolean" checked="false" optional="true" label="Print the output also as GFF3 file" help="Printing the output as GFF3 file (Default: FALSE)" />
+        <param name="blastevalue" type="float" value="1e-5" min="0" optional="true" label="Blast e-value threshold" />
+
+	<conditional name="method">
+	  <param name="use_phmmer" type="select" label="Use PHMMER to predict protein function">
+	    <option value="yes" selected="True">Yes (more accurate)</option>
+	    <option value="no">No (fast, less accurate)</option>
+	  </param>
+	  <when value="yes">
+	    <param name="hmmdb" type="select" label="PHMMER database to use for protein function prediction">
+	      <options from_data_table="virannot_hmmdb">
+		<filter type="sort_by" column="2"/>
+		<validator type="no_options" message="No indexes are available for the selected input dataset"/>
+	      </options>
+	    </param>
+	    <param name="hmmerevalue" type="float" value="0.001" label="PHMMER e-value threshold"/>	    
+	  </when>
+	</conditional>
+	<param name="mincontigsize" type="integer" value="200" min="1" optional="true" label="Minimum contig length to be considered in the output" />
+        <param name="idthr" type="float" value="50.0" min="0.01" max="100.00" optional="true" label="ID threshold" />
+        <param name="coverthr" type="float" value="50.0" min="0.01" max="100.00" optional="true" label="Coverage threshold" />
+        <param name="diffid" type="float" value="5.00" min="0.01" max="100.00" optional="true" label="Max allowed difference between the ID percentages of BLAST and HHSEARCH" />
+
+        <param name="minrepeat" type="integer" value="16" min="1" optional="true" label="Minimum repeat length for CRISPR detection (--minrepeat)"/>
+        <param name="maxrepeat" type="integer" value="64" min="1" optional="true" label="Maximum repeat length for CRISPR detection (--maxrepeat)"/>
+        <param name="minspacer" type="integer" value="8" min="1" optional="true" label="Minimum spacer length for CRISPR detection (--minspacer)"/>
+        <param name="maxspacer" type="integer" value="64" min="1" optional="true" label="Maximum spacer length for CRISPR detection (--maxspacer)"/>	
+	
+        <param name="blastexh" type="boolean" checked="false" optional="true" label="Use exhaustive BLAST (--blastexh)" help="Use of exhaustive BLAST to predict the proteins by homology according to Fozo et al. (2010) Nucleic Acids Res (Default=FALSE)" />
+    </inputs>
+    <outputs>
+        <data name="default_csv" format="csv" label="${tool.name} on ${on_string}: csv" from_work_dir="default.csv" />
+        <data name="default_gff" format="gff" label="${tool.name} on ${on_string}: gff" from_work_dir="default.gff">
+            <filter>gffprint</filter>
+        </data>
+        <data name="default_gbk" format="txt" label="${tool.name} on ${on_string}: gbk" from_work_dir="default.gbk" />
+        <data name="default_fasta" format="fasta" label="${tool.name} on ${on_string}: fasta" from_work_dir="default.fasta" />
+        <data name="default_tbl" format="txt" label="${tool.name} on ${on_string}: tbl" from_work_dir="default.tbl" />
+    </outputs>
+    <tests>
+        <test>
+            <param name="input" ftype="fasta" value="rubella.fasta" />
+            <param name="outputs" value="csv,gbk,fasta,tbl" />
+            <output name="default_csv" file="default.csv" />
+            <output name="default_gbk" file="default.gbk" />
+            <output name="default_fasta" file="default.fasta" />
+            <output name="default_tbl" file="default.tbl" />
+        </test>
+        <test>
+            <param name="input" ftype="fasta" value="mu.fasta" />
+            <param name="outputs" value="csv,gbk,fasta,tbl" />
+            <output name="default_csv" file="default.csv" />
+            <output name="default_gbk" file="default.gbk" />
+            <output name="default_fasta" file="default.fasta" />
+            <output name="default_tbl" file="default.tbl" />
+        </test>
+    </tests>
+    <help><![CDATA[
+**About VirAnnot**
+
+VirAnnot_ is a script written in Python 2.7 that annotates viral
+genomes automatically (using a de novo algorithm) and predict the
+function of their proteins using BLAST and HMMER.
+
+----
+
+**About this Galaxy wrapper**
+
+*Installation*
+
+#. `Docker <https://www.docker.com>`_ should first be installed and
+   working on the server where this Galaxy instance is setup. The
+   **galaxy** user should be part of the **docker** group.
+
+#. Download or clone the VirAnnot_ Github repository (as a submodule)
+   in to the ``tools`` directory.
+
+#. Update ``config/tool_conf.xml`` like this::
+
+     <section id="annotation" name="Annotation">
+       <tool file="virannot/wrapper.xml" />
+     </section>
+
+#. Update ``config/tool_data_table_conf.xml`` to add location of loc
+   files::
+
+     <!-- virannot databases -->
+     <table name="virannot_blastdb" comment_char="#">
+       <columns>value, dbkey, name, path</columns>
+       <file path="tool-data/virannot_blastdb.loc" />
+     </table>
+     <table name="virannot_rfamdb" comment_char="#">
+       <columns>value, dbkey, name, path</columns>
+       <file path="tool-data/virannot_rfamdb.loc" />
+     </table>
+     <table name="virannot_hmmdb" comment_char="#">
+       <columns>value, dbkey, name, path</columns>
+       <file path="tool-data/virannot_hmmdb.loc" />
+     </table>
+
+#. Copy ``.loc`` files from ``virannot/tool-data`` to
+   ``galaxy/tool-data`` and update the database paths within those
+   files.
+
+#. Restart Galaxy.
+   
+----
+
+**Output files**
+
+VirAnnot creates the following output files:
+
+* tbl - Table file with all protein information.
+* gbk - GenBank format file with annotations.
+* fasta - FASTA format file for GenBank submission
+* csv - Table file for GenBank submission.
+* gff - GFF3 format file (if option is selected)
+
+----
+
+**License and citation**
+
+VirAnnot_ and this Galaxy wrapper - `GPLv3 <https://www.gnu.org/copyleft/gpl.html>`_.
+
+
+Galaxy
+
+- Goecks, J, Nekrutenko, A, Taylor, J and The Galaxy Team. "Galaxy: a
+  comprehensive approach for supporting accessible, reproducible, and
+  transparent computational research in the life sciences." 
+  Genome Biol. 2010 Aug 25;11(8):R86.
+
+- Blankenberg D, Von Kuster G, Coraor N, Ananda G, Lazarus R, Mangan M,
+  Nekrutenko A, Taylor J. "Galaxy: a web-based genome analysis tool for
+  experimentalists". Current Protocols in Molecular Biology. 
+  2010 Jan; Chapter 19:Unit 19.10.1-21.
+
+- Giardine B, Riemer C, Hardison RC, Burhans R, Elnitski L, Shah P, Zhang Y,
+  Blankenberg D, Albert I, Taylor J, Miller W, Kent WJ, Nekrutenko A. "Galaxy:
+  a platform for interactive large-scale genome analysis." 
+  Genome Research. 2005 Oct; 15(10):1451-5.
+
+You can use this tool only if you agree to the license terms of: `virannot`_.
+
+.. _VirAnnot: https://github.com/EGTortuero/virannot
+
+]]></help>
+<!--    <citations>
+        <citation type="doi">NOT YET</citation>
+    </citations>
+-->
+</tool>
