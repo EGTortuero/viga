@@ -1,0 +1,15 @@
+<!-- Use the file tool_data_table_conf.xml.oldlocstyle if you don't want to update your loc files as changed in revision 4550:535d276c92bc-->
+<tables>
+    <table name="virannot_blastdb" comment_char="#">
+        <columns>value, dbkey, name, path</columns>
+        <file path="tool-data/virannot_blastdb.loc" />
+    </table>
+    <table name="virannot_rfamdb" comment_char="#">
+        <columns>value, dbkey, name, path</columns>
+        <file path="tool-data/virannot_rfamdb.loc" />
+    </table>
+    <table name="virannot_phmmdb" comment_char="#">
+        <columns>value, dbkey, name, path</columns>
+        <file path="tool-data/virannot_phmmdb.loc" />
+    </table>
+</tables>

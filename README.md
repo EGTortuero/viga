@@ -3,7 +3,7 @@ De novo automatic Viral Annotation
 
 VirAnnot is a script written in Python 2.7 that annotates viral genomes automatically (using a de novo algorithm) and predict the function of their proteins using BLAST and HMMER.
 
-REQUIREMENTS:
+## REQUIREMENTS:
 
 Before using this script, the following Python modules and programs should be installed:
 
@@ -37,11 +37,11 @@ When using this program, you must to cite their use:
 
 <In construction>
 
-PARAMETERS:
+## PARAMETERS:
 
 The program has the following two kind of arguments:
 
-* Mandatory parameters:
+### Mandatory parameters:
 
 <table>
 <tr><td>--input FASTAFILE</td><td>Input file as a nucleotidic FASTA file. It can contains multiple sequences (e.g. metagenomic contigs)</td></tr>
@@ -50,7 +50,7 @@ The program has the following two kind of arguments:
 <tr><td>--modifiers TEXTFILE</td><td>Input file as a plain text file with the modifiers per every FASTA header according to SeqIn (https://www.ncbi.nlm.nih.gov/Sequin/modifiers.html). All modifiers must be written in a single line and are separated by a single space character. No space should be placed besides the = sign. For example: [organism=Serratia marcescens subsp. marcescens] [sub-species=marcescens] [strain=AH0650_Sm1] [moltype=DNA] [tech=wgs] [gcode=11] [country=Australia] [isolation-source=sputum]. This line will be copied and printed along with the record name as the definition line of every contig sequence.</tr></td>
 </table>
 
-* Advanced parameters:
+### Advanced parameters:
 
 <table>
 <tr><td>--readlength INT</td><td>Read length for the circularity prediction (default: 101 bp)</td></tr>
@@ -110,15 +110,62 @@ By default, the program will use the translation table no. 11</td></tr>
 <tr><td>--blastexh</td><td>Use of exhaustive BLAST to predict the proteins by homology according to Fozo et al. (2010). In this case, the search will be done using a word size of 2, a gap open penalty of 8, a gap extension penalty of 2, the PAM70 matrix instead of the BLOSUM62 and no compositional based statistics. This method is more accurate to predict the functions of the proteins but it is slower than BLAST default parameters. By default, exhaustive BLAST is disabled.</td></tr>
 </table>
 
+## Examples
 An example of execution is:
 
-python virannot.py --input eukarya.fasta --blastdb databases/blast/nr/nr --rfamdb databases/rfam/Rfam.cm --hmmdb databases/UniProt/uniprot_trembl.fasta --gcode 1 --out eukarya_BENCHMARK --modifiers ../modifiers.txt --threads 10
+	python virannot.py --input eukarya.fasta --blastdb databases/blast/nr/nr --rfamdb databases/rfam/Rfam.cm --hmmdb databases/UniProt/uniprot_trembl.fasta --gcode 1 --out eukarya_BENCHMARK --modifiers ../modifiers.txt --threads 10
 
 Another example is:
 
-python virannot.py --input bacteria.fasta --blastdb databases/blast/nr/nr --rfamdb databases/rfam/Rfam.cm --fast --out bacteria_BENCHMARK --modifiers ../modifiers.txt --threads 10
+	python virannot.py --input bacteria.fasta --blastdb databases/blast/nr/nr --rfamdb databases/rfam/Rfam.cm --fast --out bacteria_BENCHMARK --modifiers ../modifiers.txt --threads 10
 
-HISTORY OF THE SOURCE CODE:
+
+## Galaxy wrapper
+VirAnnot can be integrated into [Galaxy](https://galaxyproject.org) 
+using the wrapper included in this repository.
+
+
+### Installation
+
+1. [Docker](https://www.docker.com) should first be installed and
+   working on the server where this Galaxy instance is setup. The
+   **galaxy** user should be part of the **docker** group.
+
+2. Download or clone this repository (as a submodule)
+   in to the ``tools`` directory.
+
+3. Update ``config/tool_conf.xml`` like this
+
+		<section id="annotation" name="Annotation">
+			<tool file="virannot/wrapper.xml" />
+		</section>
+
+4. Update ``config/tool_data_table_conf.xml`` to add location of loc
+   files
+
+		<!-- virannot databases -->
+		<table name="virannot_blastdb" comment_char="#">
+			<columns>value, dbkey, name, path</columns>
+			<file path="tool-data/virannot_blastdb.loc" />
+		</table>
+		<table name="virannot_rfamdb" comment_char="#">
+			<columns>value, dbkey, name, path</columns>
+			<file path="tool-data/virannot_rfamdb.loc" />
+		</table>
+		<table name="virannot_hmmdb" comment_char="#">
+			<columns>value, dbkey, name, path</columns>
+			<file path="tool-data/virannot_hmmdb.loc" />
+		</table>
+
+5. Copy ``.loc`` files from ``virannot/tool-data`` to
+   ``galaxy/tool-data`` and update the database paths within those
+   files.
+
+6. Restart Galaxy. The tool will be available under the "Annotation"
+   section.
+
+
+## HISTORY OF THE SOURCE CODE:
 
 * v 0.7.1 - Fixed error on the "--fast" parameter. All proteins that had no hits in BLAST analyses were not parsed properly. By now, these are identified as "Hypothetical proteins" in all files.
 * v 0.7.0 - Added the "--fast" parameter. In this case, the program will launch BLAST (but not PHMMER) to annotate protein function. In this case, the program will be as fast as Prokka (Seemann 2014) but the annotations will not be accurate. As a consequence of this new parameter, the "--hmmdb" parameter is only mandatory when this flag is NOT used (as by default).
@@ -131,7 +178,7 @@ HISTORY OF THE SOURCE CODE:
 * v 0.2.0 - Added parallelization of BLAST and HHSUITE. To do that, GNU Parallel (Tange 2011) is required. To disable this option, run the program with the "--noparallel" option.
 * v 0.1.0 - Original version of the program.
 
-REFERENCES:
+## REFERENCES:
 
 	- Benson G (2008) Tandem repeats finder: a program to analyze DNA sequences. Nucleic Acids Research 27, 573–80.
 	- Camacho C, Coulouris G, Avagyan V, Ma N, Papadopoulos J, Bealer K, Madden TL (2008) BLAST+: architecture and applications. BMC Bioinformatics 10: 421.
