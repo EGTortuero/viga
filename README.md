@@ -16,6 +16,7 @@ Before using this script, the following Python modules and programs should be in
 	- LASTZ (Harris 2007): it is used to predict the circularity of the contigs. The program is publicly available at https://github.com/lastz/lastz under the MIT licence.
 	- Prodigal (Hyatt et al. 2010): it is used to predict the ORFs. When the contig is smaller than 20,000 bp, MetaProdigal (Hyatt et al. 2012) is automatically activated instead of normal Prodigal. This program is publicly available at https://github.com/hyattpd/prodigal/releases/ under the GPLv3 licence.
 	- BLAST+ (Camacho et al. 2008): it is used to predict the function of the predicted proteins according to homology. This suite is publicly available at ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/ under the GPLv2 licence. Databases are available at ftp://ftp.ncbi.nlm.nih.gov/blast/db/
+	- DIAMOND (Buchfink et al. 2015): it is used to preduct the function of the predicted proteins according to homology when "--ultrafast" parameter is used. This program is publicly available at https://github.com/bbuchfink/diamond under the GPLv3 licence. Databases must to be created from FASTA files according to their instructions before running.
 	- HMMER (Finn et al. 2011): it is used to predict the function of the predicted proteins according to Hidden Markov Models. This suite is publicly available at http://hmmer.org/ under the GPLv3 licence. Databases must be in FASTA format and examples of potential databases are UniProtKB (ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/complete/uniprot_trembl.fasta.gz) or PFAM (http://ftp.ebi.ac.uk/pub/databases/Pfam/current_release/Pfam-A.fasta.gz).
 	- INFERNAL (Nawrocki and Eddy 2013): it is used to predict ribosomal RNA in the contigs when using the RFAM database (Nawrocki et al. 2015). This program is publicly available at http://eddylab.org/infernal/ under the BSD licence and RFAM database is available at ftp://ftp.ebi.ac.uk/pub/databases/Rfam/
 	- ARAGORN (Laslett and Canback 2004): it is used to predict tRNA sequences in the contig. This program is publicly available at http://mbio-serv2.mbioekol.lu.se/ARAGORN/ under the GPLv2 licence.
@@ -27,15 +28,19 @@ Although you can install the programs manually, we strongly recommend the use of
 
 However, you will need to download the databases for BLAST, HHMER and INFERNAL:
 * BLAST DBs: https://ftp.ncbi.nlm.nih.gov/blast/db/
+* BLAST FASTA (DIAMOND): https://ftp.ncbi.nlm.nih.gov/blast/db/FASTA
 * RFAM (INFERNAL): http://ftp.ebi.ac.uk/pub/databases/Rfam/
 * UniProtKB (HMMER): ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/complete/uniprot_trembl.fasta.gz
 * PFAM (HMMER): http://ftp.ebi.ac.uk/pub/databases/Pfam/current_release/Pfam-A.fasta.gz
 
 Note that this bioinformatic pipeline only takes protein databases (i.e. "nr", "swissprot"...)!
+Additionally, before running the "ultrafast" mode, you need to convert the FASTA file to the DIAMOND DB format using the following command:
+
+	diamond makedb --in nr -d nr
 
 When using this program, you must to cite their use:
 
-<In construction>
+	<In construction>
 
 ## PARAMETERS:
 
@@ -45,7 +50,6 @@ The program has the following two kind of arguments:
 
 <table>
 <tr><td>--input FASTAFILE</td><td>Input file as a nucleotidic FASTA file. It can contains multiple sequences (e.g. metagenomic contigs)</td></tr>
-<tr><td>--blastdb BLASTDB</td><td>BLAST database that will be used for the protein function prediction. The database MUST be for amino acids.</td></tr>
 <tr><td>--rfamdb RFAMDB</td><td>RFAM database that will be used for the ribosomal RNA prediction.</td></tr>
 <tr><td>--modifiers TEXTFILE</td><td>Input file as a plain text file with the modifiers per every FASTA header according to SeqIn (https://www.ncbi.nlm.nih.gov/Sequin/modifiers.html). All modifiers must be written in a single line and are separated by a single space character. No space should be placed besides the = sign. For example: [organism=Serratia marcescens subsp. marcescens] [sub-species=marcescens] [strain=AH0650_Sm1] [moltype=DNA] [tech=wgs] [gcode=11] [country=Australia] [isolation-source=sputum]. This line will be copied and printed along with the record name as the definition line of every contig sequence.</tr></td>
 </table>
@@ -58,9 +62,12 @@ The program has the following two kind of arguments:
 <tr><td>--locus STRING</td><td>Name of the contigs. If the input is a multiFASTA file, please put a general name as the program will add the number of the contig at the end of the name. By default, the name of the contigs will be "LOC".</td></tr>
 <tr><td>--threads INT</td><td>Number of threads/CPUs. By default, the program will use 1 CPU.</td></tr>
 <tr><td>--gff</td><td>Printing the output as a General Feature Format (GFF) version 3. It is a flat table file with contains 9 columns of data (see http://www.ensembl.org/info/website/upload/gff3.html for more information). By default, the program will not print the GFF3 file (--gff False).</td></tr>
+<tr><td>--blastdb BLASTDB</td><td>BLAST database that will be used for the protein function prediction. The database MUST be for amino acids. This is only mandatory if the "ultrafast" mode is not active</td></tr>
+<tr><td>--diamonddb DIAMONDDB</td><td>DIAMOND database that will be used for the protein function prediction. The database MUST be for amino acids. This is only mandatory when "ultrafast" mode is active</td></tr>
 <tr><td>--blastevalue FLOAT</td><td>BLAST e-value threshold. By default, the threshold will be 1e-05.</td></tr>
 
 <tr><td>--fast</td><td>Running the program without using PHMMER to predict protein function. In this case, the program will be as fast as Prokka (Seemann 2014) but the annotations will not be accurate. By default, this program had this flag disabled.</td></tr>
+<tr><td>--ultrafast</td><td>Running the program without using PHMMER to predict protein function and replacing BLAST by DIAMOND. In this case, the program will be faster than the "fast" mode but the annotations will not be accurate. By default, this program had this flag disabled.</td></tr>
 <tr><td>--hmmdb HMMDB</td><td>PHMMER Database that will be used for the protein function prediction according to Hidden Markov Models. In this case, HMMDB must be in FASTA format (e.g. UniProt). This parameter is mandatory if the "--fast" option is disabled. "</td></tr>
 <tr><td>--hmmerevalue FLOAT</td><td>PHMMER e-value threshold. By default, the threshold is 1e-03.</td></tr>
 <tr><td>--typedata BCT|CON|VRL|PHG</td><td>GenBank Division: One of the following codes:
@@ -167,6 +174,7 @@ using the wrapper included in this repository.
 
 ## HISTORY OF THE SOURCE CODE:
 
+* v 0.8.0 - Added the "--ultrafast" parameter. In this case, DIAMOND (Buchfink et al. 2015) will be launch to predict protein function according to homology instead of BLAST. It is faster than the "fast" mode but the sensitivity of the annotations will not be the highest.
 * v 0.7.1 - Fixed error on the "--fast" parameter. All proteins that had no hits in BLAST analyses were not parsed properly. By now, these are identified as "Hypothetical proteins" in all files.
 * v 0.7.0 - Added the "--fast" parameter. In this case, the program will launch BLAST (but not PHMMER) to annotate protein function. In this case, the program will be as fast as Prokka (Seemann 2014) but the annotations will not be accurate. As a consequence of this new parameter, the "--hmmdb" parameter is only mandatory when this flag is NOT used (as by default).
 * v 0.6.2 - Removed the "--noparallel" parameter. After doing time benchmarks to test the speed of BLAST and HMMER when they are run using the multithreading option and as a parallel program, we found that BLAST tends to be faster using multithreading option while HMMER had the opposite behavior. For that, we decided to consider only the parallelization of HMMER and to run BLAST using multiple threads. 
@@ -180,7 +188,8 @@ using the wrapper included in this repository.
 
 ## REFERENCES:
 
-	- Benson G (2008) Tandem repeats finder: a program to analyze DNA sequences. Nucleic Acids Research 27, 573–80.
+	- Benson G (2008) Tandem repeats finder: a program to analyze DNA sequences. Nucleic Acids Research 27: 573–80.
+	- Buchfink B, Xie C, Huson DH (2015) Fast and sensitive protein alignment using DIAMOND. Nature Methods 12: 59-60.
 	- Camacho C, Coulouris G, Avagyan V, Ma N, Papadopoulos J, Bealer K, Madden TL (2008) BLAST+: architecture and applications. BMC Bioinformatics 10: 421.
 	- Edgar RC (2007) PILER-CR: fast and accurate identification of CRISPR repeats. BMC Bioinformatics 8:18.
 	- Finn RD, Clements J, Eddy SR (2011) HMMER web server: interactive sequence similarity searching. Nucleic Acids Research 39: W29-37.
