@@ -4,6 +4,10 @@
         <columns>value, dbkey, name, path</columns>
         <file path="tool-data/virannot_blastdb.loc" />
     </table>
+    <table name="virannot_diamonddb" comment_char="#">
+        <columns>value, dbkey, name, path</columns>
+        <file path="tool-data/virannot_diamonddb.loc" />
+    </table>
     <table name="virannot_rfamdb" comment_char="#">
         <columns>value, dbkey, name, path</columns>
         <file path="tool-data/virannot_rfamdb.loc" />
