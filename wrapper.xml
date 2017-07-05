@@ -9,7 +9,6 @@
     <command><![CDATA[
 python $__tool_directory__/virannot.py
 --input $input
---blastdb $blastdb.fields.path
 --rfamdb $rfamdb.fields.path
 --modifiers $modifiers
 --threads \${GALAXY_SLOTS:-5}
@@ -48,9 +47,19 @@ python $__tool_directory__/virannot.py
 #if $blastexh
     --blastexh
 #end if
-#if str($method.use_phmmer) == "yes"
---hmmdb $method.hmmdb.fields.path
---hmmerevalue $method.hmmerevalue
+#if str($method.use_diamond) == "yes"
+--ultrafast
+--diamonddb $method.diamonddb.fields.path
+#else
+--blastdb $blastdb.fields.path
+  #if str($method.use_phmmer) == "yes"
+  --hmmdb $method.hmmdb.fields.path
+  --hmmerevalue $method.hmmerevalue
+  #else
+  --fast
+  #end if
+#end if
+
 #else:
 --fast
 #end if
@@ -108,8 +117,8 @@ python $__tool_directory__/virannot.py
         <param name="blastevalue" type="float" value="1e-5" min="0" optional="true" label="Blast e-value threshold" />
 
 	<conditional name="method">
-	  <param name="use_phmmer" type="select" label="Use PHMMER to predict protein function">
-	    <option value="yes" selected="True">Yes (more accurate)</option>
+	  <param name="use_phmmer" type="select" label="Use PHMMER to predict protein function using HMM">
+	    <option value="yes" selected="True">Yes (slow, more accurate)</option>
 	    <option value="no">No (fast, less accurate)</option>
 	  </param>
 	  <when value="yes">
@@ -119,7 +128,18 @@ python $__tool_directory__/virannot.py
 		<validator type="no_options" message="No indexes are available for the selected input dataset"/>
 	      </options>
 	    </param>
-	    <param name="hmmerevalue" type="float" value="0.001" label="PHMMER e-value threshold"/>	    
+	    <param name="hmmerevalue" type="float" value="0.001" label="PHMMER e-value threshold"/>
+	  <param name="use_diamond" type="select" label="Use DIAMOND instead of BLAST to predict protein function">
+	    <option value="yes" selected="True">Yes (fast, less accurate)</option>
+	    <option value="no">No (slow, more accurate)</option>
+	  </param>
+	  <when value="yes">
+	    <param name="diamonddb" type="select" label="DIAMOND database to use for protein function prediction">
+	      <options from_data_table="virannot_diamonddb">
+		<filter type="sort_by" column="2"/>
+		<validator type="no_options" message="No indexes are available for the selected input dataset"/>
+	      </options>
+	    </param>
 	  </when>
 	</conditional>
 	<param name="mincontigsize" type="integer" value="200" min="1" optional="true" label="Minimum contig length to be considered in the output" />
