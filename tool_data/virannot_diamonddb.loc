@@ -1,0 +1,5 @@
+#
+# <unique_build_id>	<dbkey>	<display_name>	<file_base_path>
+
+nr	nr	Non_redundant (nr)	/data/databases/diamonddb/nr
+swissprot	swissprot	Swissprot (swissprot)	/data/databases/diamonddb/swissprot
