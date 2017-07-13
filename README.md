@@ -118,14 +118,17 @@ By default, the program will use the translation table no. 11</td></tr>
 </table>
 
 ## Examples
-An example of execution is:
+An example of execution (using BLAST and HMMER) is:
 
-	python virannot.py --input eukarya.fasta --blastdb databases/blast/nr/nr --rfamdb databases/rfam/Rfam.cm --hmmdb databases/UniProt/uniprot_trembl.fasta --gcode 1 --out eukarya_BENCHMARK --modifiers ../modifiers.txt --threads 10
+	python virannot.py --input eukarya.fasta --blastdb databases/blast/nr/nr --hmmdb databases/UniProt/uniprot_trembl.fasta --rfamdb databases/rfam/Rfam.cm --gcode 1 --out eukarya_BENCHMARK --modifiers ../modifiers.txt --threads 10
 
-Another example is:
+Another example (but this time using BLAST but not HMMER - "fast mode") is:
 
-	python virannot.py --input bacteria.fasta --blastdb databases/blast/nr/nr --rfamdb databases/rfam/Rfam.cm --fast --out bacteria_BENCHMARK --modifiers ../modifiers.txt --threads 10
+	python virannot.py --input bacteria.fasta --blastdb databases/blast/nr/nr --nohmmer --rfamdb databases/rfam/Rfam.cm --out bacteria_BENCHMARK --modifiers ../modifiers.txt --threads 10
+	
+Finally, an example using DIAMOND and not HMMER ("ultrafast mode") is:
 
+	python virannot.py --input archaea.fasta --noblast --diamonddb databases/diamond/nr --nohmmer --rfamdb databases/rfam/Rfam.cm --out archaea_BENCHMARK --modifiers ../modifiers.txt --threads 10
 
 ## Galaxy wrapper
 VirAnnot can be integrated into [Galaxy](https://galaxyproject.org) 
