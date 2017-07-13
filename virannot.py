@@ -724,8 +724,8 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 			for tmRNA in sorted(tmRNAdict, key = stringSplitByNumbers):
 				start_pos = SeqFeature.ExactPosition(tmRNAdict[tmRNA]['begin'])
 				end_pos = SeqFeature.ExactPosition(tmRNAdict[tmRNA]['end'])
-				feature_location = SeqFeature.FeatureLocation(start_pos, end_pos, strand=tmRNAdict[tRNA]['strand'])
-				new_data_gene = SeqFeature.SeqFeature(feature_location, type = "gene", strand = tmRNAdict[tRNA]['strand'])
+				feature_location = SeqFeature.FeatureLocation(start_pos, end_pos, strand=tmRNAdict[tmRNA]['strand'])
+				new_data_gene = SeqFeature.SeqFeature(feature_location, type = "gene", strand = tmRNAdict[tmRNA]['strand'])
 				whole_sequence.features.append(new_data_gene)
 				qualifiers = [('product', tmRNAdict[tmRNA]['product'])]
 				feature_qualifiers = OrderedDict(qualifiers)
