@@ -76,7 +76,7 @@ def stringSplitByNumbers(x):
 	return [int(y) if y.isdigit() else y for y in l]
 
 # Defining the program version
-version = "0.8.1"
+version = "0.8.2"
 
 # Processing the parameters
 parser = argparse.ArgumentParser(description='Virannot is a automatic de novo viral genome annotator.')
@@ -273,16 +273,23 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 	if args.blastexh==True:
 		eprint("Running BLAST to predict the genes according to homology inference in %s using exhaustive mode (see Fozo et al. (2010) Nucleic Acids Res for details)" % newfile)
 		subprocess.call(['blastp', '-query', "temp.faa", '-db', args.blastdatabase, '-evalue', str(args.blastevalue), '-outfmt', '6 qseqid sseqid pident length qlen slen qstart qend evalue bitscore stitle', '-out', 'temp_blast.csv', '-max_target_seqs', '10', '-word_size', '2', '-gapopen', '8', '-gapextend', '2', '-matrix', '"PAM70"', '-comp_based_stats', '"0"', "-num_threads", str(args.ncpus)])
+		eprint("Done. BLAST was done to predict the genes by homology\n")
 	elif args.noblast==True:
 		eprint("Running DIAMOND to predict the genes according to homology inference in %s using default parameters" % newfile)
-		subprocess.call(['diamond', 'blastp', '-q', "temp.faa", '-d', args.diamonddatabase, '-e', str(args.blastevalue), '-f', '6', 'qseqid', 'sseqid', 'pident', 'length', 'qlen', 'slen', 'qstart', 'qend', 'evalue', 'bitscore', 'stitle', '-o', 'temp_blast.csv', '-k', '10', "-p", str(args.ncpus), '--quiet'])
+		with open("temp.faa", "r") as tempfile:
+			first_line = tempfile.readline()
+			if first_line.startswith(">"):
+				subprocess.call(['diamond', 'blastp', '-q', 'temp.faa', '-d', args.diamonddatabase, '-e', str(args.blastevalue), '-f', '6', 'qseqid', 'sseqid', 'pident', 'length', 'qlen', 'slen', 'qstart', 'qend', 'evalue', 'bitscore', 'stitle', '-o', 'temp_blast.csv', '-k', '10', "-p", str(args.ncpus), '--quiet'])
+			else:
+				open("temp_blast.csv", 'a').close()
+		eprint("Done. DIAMOND was done to predict the genes by homology\n")
 	else:
 		eprint("Running BLAST to predict the genes according to homology inference in %s using default parameters" % newfile)
 		subprocess.call(['blastp', '-query', "temp.faa", '-db', args.blastdatabase, '-evalue', str(args.blastevalue), '-outfmt', '6 qseqid sseqid pident length qlen slen qstart qend evalue bitscore stitle', '-out', 'temp_blast.csv', '-max_target_seqs', '10', "-num_threads", str(args.ncpus)])
-	eprint("Done. BLASTp was done to predict the genes by homology\n")
+		eprint("Done. BLAST was done to predict the genes by homology\n")
 
-	blast_log = "%s.blast.log" % newfile
-	shutil.copyfile("temp_blast.csv", blast_log)
+	#blast_log = "%s.blast.log" % newfile
+	#shutil.copyfile("temp_blast.csv", blast_log)
 
 	# Parsing the results from BLAST
 	with open("temp_blast.csv", "rU") as blastresults:
@@ -291,14 +298,12 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 		for row in reader:
 			perc_cover = round(100.00*(float(row['length'])/float(row['qlen'])),2)
 			perc_id = float(row['pident'])
-	
 			infoprot_blast = {}
 			infoprot_blast['sseqid'] = row['sseqid']
 			infoprot_blast['pident'] = perc_id
 			infoprot_blast['pcover'] = perc_cover
 			infoprot_blast['evalue'] = row['evalue']
 			infoprot_blast['descr'] = row['stitle']
-	
 			try:
 				data = information_proteins_blast[row['qseqid']]
 			except KeyError:		
