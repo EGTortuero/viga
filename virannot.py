@@ -76,7 +76,7 @@ def stringSplitByNumbers(x):
 	return [int(y) if y.isdigit() else y for y in l]
 
 # Defining the program version
-version = "0.8.0"
+version = "0.8.1"
 
 # Processing the parameters
 parser = argparse.ArgumentParser(description='Virannot is a automatic de novo viral genome annotator.')
@@ -92,8 +92,8 @@ advanced_group.add_argument("--out", dest="rootoutput", type=str, help='Name of 
 advanced_group.add_argument("--locus", dest="locus", type=str, default='LOC', help='Name of the sequences. If the input is a multiFASTA file, please put a general name as the program will add the number of the contig at the end of the name (Default: %(default)s)', metavar="STRING")
 advanced_group.add_argument("--gff", dest="gffprint", action='store_true', default=False, help='Printing the output as GFF3 file (Default: False)')
 advanced_group.add_argument("--threads", dest="ncpus", default=1, help='Number of threads/cpus (Default: %(default)s cpu)', metavar="INT")
-advanced_group.add_argument("--fast", dest="fast", action='store_true', default=False, help='Running only BLAST to predict protein function. (Default: False)')
-advanced_group.add_argument("--ultrafast", dest="ultrafast", action='store_true', default=False, help='Running DIAMOND instead of BLAST to predict protein function according to homology. This will be less sensitive but faster than BLAST. (Default: False)')
+advanced_group.add_argument("--nohmmer", dest="nohmmer", action='store_true', default=False, help='Running only BLAST to predict protein function. (Default: False)')
+advanced_group.add_argument("--noblast", dest="noblast", action='store_true', default=False, help='Running DIAMOND instead of BLAST to predict protein function according to homology. This will be less sensitive but faster than BLAST. (Default: False)')
 advanced_group.add_argument("--blastevalue", dest="blastevalue", default=0.00001, help='Blast e-value threshold (Default: 0.00001)', metavar="FLOAT")
 basic_group.add_argument("--blastdb", dest="blastdatabase", type=str, help='BLAST Database that will be used for the protein function prediction. The database must be an amino acid one, not  nucleotidic', metavar="BLASTDB")
 basic_group.add_argument("--diamonddb", dest="diamonddatabase", type=str, help='DIAMOND Database that will be used for the protein function prediction. The database must be created from a amino acid FASTA file as indicated in https://github.com/bbuchfink/diamond. This argument is mandatory when --ultrafast option is enabled', metavar="DIAMONDDB")
@@ -124,14 +124,14 @@ root_output = args.rootoutput
 if not root_output:
 	root_output = '{}_annotated'.format(os.path.splitext(args.inputfile)[0])
 
-if args.ultrafast == False and args.blastdatabase == None:
-    sys.exit('You MUST specify BLAST database using the parameter --blastdb if you are not using --ultrafast option')
+if args.noblast == False and args.blastdatabase == None:
+    sys.exit('You MUST specify BLAST database using the parameter --blastdb if you are not using --noblast option')
 
-if args.ultrafast == True and args.diamonddatabase == None:
-    sys.exit('You MUST specify DIAMOND database using the parameter --diamonddb if you are using --ultrafast option')
+if args.noblast == True and args.diamonddatabase == None:
+    sys.exit('You MUST specify DIAMOND database using the parameter --diamonddb if you are using --noblast option')
 
-if args.ultrafast == False and args.fast == False and args.hmmdatabase == None:
-		sys.exit('You MUST specify HMMER database using the parameter --hmmdb if you are not using --fast option')
+if args.nohmmer == False and args.noblast == False and args.hmmdatabase == None:
+		sys.exit('You MUST specify HMMER database using the parameter --hmmdb if you are not using --nohmmer option')
 
 # Printing the header of the program 
 eprint("This is VirAnnot %s" % str(version))
@@ -273,7 +273,7 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 	if args.blastexh==True:
 		eprint("Running BLAST to predict the genes according to homology inference in %s using exhaustive mode (see Fozo et al. (2010) Nucleic Acids Res for details)" % newfile)
 		subprocess.call(['blastp', '-query', "temp.faa", '-db', args.blastdatabase, '-evalue', str(args.blastevalue), '-outfmt', '6 qseqid sseqid pident length qlen slen qstart qend evalue bitscore stitle', '-out', 'temp_blast.csv', '-max_target_seqs', '10', '-word_size', '2', '-gapopen', '8', '-gapextend', '2', '-matrix', '"PAM70"', '-comp_based_stats', '"0"', "-num_threads", str(args.ncpus)])
-	elif args.ultrafast==True:
+	elif args.noblast==True:
 		eprint("Running DIAMOND to predict the genes according to homology inference in %s using default parameters" % newfile)
 		subprocess.call(['diamond', 'blastp', '-q', "temp.faa", '-d', args.diamonddatabase, '-e', str(args.blastevalue), '-f', '6', 'qseqid', 'sseqid', 'pident', 'length', 'qlen', 'slen', 'qstart', 'qend', 'evalue', 'bitscore', 'stitle', '-o', 'temp_blast.csv', '-k', '10', "-p", str(args.ncpus), '--quiet'])
 	else:
@@ -309,7 +309,7 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 					information_proteins_blast[row['qseqid']] = infoprot_blast
 
 	## Predicting the function of the proteins based on HMM predictions using phmmer
-	if args.fast == False and args.ultrafast==False:
+	if args.nohmmer == False and args.noblast == False:
 		with open("commands.sh", "w") as commands:
 			for singleprot in sorted(glob.glob("SEQ_*.faa")):
 				hhmtable = "%s.tbl" % singleprot
@@ -394,7 +394,7 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 	# Creation of table
 	debugtable = "%s.csv" % newfile
 	with open(debugtable, "w") as tablefile:
-		if args.fast == False and args.ultrafast==False:
+		if args.noblast == False and args.nohmmer == False:
 			print("\t".join(["Identifier", "Start", "Stop", "Strand", "size_aa", "pI", "Mol_weight_kDa", "Instability_index", "ID_BLAST", "Descr_BLAST", "evalue_BLAST", "%ID_BLAST", "%Cover_BLAST", "ID_HMMER", "Descr_HMMER", "evalue_HMMER", "%ID_HMMER", "%Cover_HMMER"]), file=tablefile)
 			keylist = information_proteins_hmmer.keys()
 			keylist.sort()
@@ -423,7 +423,7 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 	# Algorithm of decisions (which one: BLAST/HMMER?)
 	multipleprots = {}
 	Hypotheticalpat = re.compile(r'(((H|h)ypothetical)|((U|u)ncharacteri(z|s)ed)) protein')
-	if args.fast == False and args.ultrafast==False:
+	if args.nohmmer == False and args.noblast == False:
 		keylist = information_proteins_hmmer.keys()
 		keylist.sort()
 		for keyB in keylist:
@@ -560,24 +560,55 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 	num_tRNA = len(list(SeqIO.parse("trnafile.fasta", "fasta")))
 	eprint("ARAGORN was able to predict %i tRNAs in %s\n" % (num_tRNA, newfile))
 
-	#Storing tRNA information in memory
+	#Storing tRNA and tmRNA information in memory
 	with open("trnafile.fasta", "rU") as trnafile:
 		tRNAdict = {}
+		tmRNAdict = {}
 		for tRNAseq in SeqIO.parse(trnafile, "fasta"):
 			indtRNA = {}
+			indtmRNA = {}
 			tRNA_information = tRNAseq.description.split(" ")
-			indtRNA['product'] = re.sub("\(\w{3}\)", "",  tRNA_information[1])
-			tRNA_coords = tRNA_information[2]
-			Beginningrevcomppat = re.compile("^c")
-			if re.match(Beginningrevcomppat, tRNA_coords):
-				indtRNA['strand'] = -1
-				tRNA_coords = tRNA_coords.replace("c[","").replace("]","").split(",")
-			else:
-				indtRNA['strand'] = 1
-				tRNA_coords = tRNA_coords.replace("[","").replace("]","").split(",")
-			indtRNA['begin'] = int(tRNA_coords[0])
-			indtRNA['end'] = int(tRNA_coords[1])
-			tRNAdict[tRNAseq.id] = indtRNA
+			tRNApat = re.compile("^tRNA-")
+			if tRNA_information[1] == "tmRNA":
+				if tRNA_information[2] == "(Permuted)":
+					indtmRNA['product'] = "tmRNA"
+					tmRNA_coords = tRNA_information[3]
+					Beginningrevcomppat = re.compile("^c")
+					if re.match(Beginningrevcomppat, tRNA_coords):
+						indtRNA['strand'] = -1
+						tmRNA_coords = tmRNA_coords.replace("c[","").replace("]","").split(",")
+					else:
+						indtRNA['strand'] = 1
+						tmRNA_coords = tmRNA_coords.replace("[","").replace("]","").split(",")
+					indtmRNA['begin'] = int(tmRNA_coords[0])
+					indtmRNA['end'] = int(tmRNA_coords[1])
+					tmRNAdict[tRNAseq.id] = indtmRNA
+				else:
+					indtmRNA['product'] = "tmRNA"
+					tmRNA_coords = tRNA_information[2]
+					Beginningrevcomppat = re.compile("^c")
+					if re.match(Beginningrevcomppat, tRNA_coords):
+						indtRNA['strand'] = -1
+						tmRNA_coords = tmRNA_coords.replace("c[","").replace("]","").split(",")
+					else:
+						indtRNA['strand'] = 1
+						tmRNA_coords = tmRNA_coords.replace("[","").replace("]","").split(",")
+					indtmRNA['begin'] = int(tmRNA_coords[0])
+					indtmRNA['end'] = int(tmRNA_coords[1])
+					tmRNAdict[tRNAseq.id] = indtmRNA
+			elif re.match(tRNApat, tRNA_information[1]):
+				indtRNA['product'] = re.sub("\(\w{3}\)", "",  tRNA_information[1])
+				tRNA_coords = tRNA_information[2]
+				Beginningrevcomppat = re.compile("^c")
+				if re.match(Beginningrevcomppat, tRNA_coords):
+					indtRNA['strand'] = -1
+					tRNA_coords = tRNA_coords.replace("c[","").replace("]","").split(",")
+				else:
+					indtRNA['strand'] = 1
+					tRNA_coords = tRNA_coords.replace("[","").replace("]","").split(",")
+				indtRNA['begin'] = int(tRNA_coords[0])
+				indtRNA['end'] = int(tRNA_coords[1])
+				tRNAdict[tRNAseq.id] = indtRNA
 
 	#Predicting CRISPR repeats and others
 	eprint("Running PILERCR to predict CRISPR repeats in %s" % newfile)
@@ -690,6 +721,16 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 				feature_qualifiers = OrderedDict(qualifiers)
 				new_data_tRNA = SeqFeature.SeqFeature(feature_location, type = "tRNA", strand = tRNAdict[tRNA]['strand'], qualifiers = feature_qualifiers)
 				whole_sequence.features.append(new_data_tRNA)
+			for tmRNA in sorted(tmRNAdict, key = stringSplitByNumbers):
+				start_pos = SeqFeature.ExactPosition(tmRNAdict[tmRNA]['begin'])
+				end_pos = SeqFeature.ExactPosition(tmRNAdict[tmRNA]['end'])
+				feature_location = SeqFeature.FeatureLocation(start_pos, end_pos, strand=tmRNAdict[tRNA]['strand'])
+				new_data_gene = SeqFeature.SeqFeature(feature_location, type = "gene", strand = tmRNAdict[tRNA]['strand'])
+				whole_sequence.features.append(new_data_gene)
+				qualifiers = [('product', tmRNAdict[tmRNA]['product'])]
+				feature_qualifiers = OrderedDict(qualifiers)
+				new_data_tmRNA = SeqFeature.SeqFeature(feature_location, type = "tmRNA", strand = tmRNAdict[tmRNA]['strand'], qualifiers = feature_qualifiers)
+				whole_sequence.features.append(new_data_tmRNA)
 			for CRISPR in sorted(information_CRISPR, key = stringSplitByNumbers):
 				start_pos = SeqFeature.ExactPosition(information_CRISPR[CRISPR]['start'])
 				end_pos = SeqFeature.ExactPosition(information_CRISPR[CRISPR]['end'])
