@@ -47,31 +47,20 @@ python $__tool_directory__/virannot.py
 #if $blastexh
     --blastexh
 #end if
-#if str($method.use_diamond) == "yes"
---ultrafast
---diamonddb $method.diamonddb.fields.path
+#if str($use_diamond)
+   --noblast
+   --diamonddb $homologysearch.diamonddb.fields.path
 #else
---blastdb $blastdb.fields.path
-  #if str($method.use_phmmer) == "yes"
-  --hmmdb $method.hmmdb.fields.path
-  --hmmerevalue $method.hmmerevalue
-  #else
-  --fast
-  #end if
+   --blastdb $homologysearch.blastdb.fields.path
 #end if
-
-#else:
---fast
+#if str($use_phmmer)
+   --nohmmer
+  --hmmdb $hmmsearch.hmmdb.fields.path
+  --hmmerevalue $hmmsearch.hmmerevalue
 #end if
 ]]></command>
     <inputs>
         <param name="input" type="data" format="fasta" label="(Viral) contigs to annotate" help="Input file as a FASTA file. It can contain multiple sequences (e.g. metagenomic contigs)" />
-        <param name="blastdb" type="select" label="BLAST Database" help="BLAST Protein Database that will be used for the protein function prediction">
-            <options from_data_table="virannot_blastdb">
-                <filter type="sort_by" column="2"/>
-                <validator type="no_options" message="No indexes are available for the selected input dataset"/>
-            </options>
-        </param>
         <param name="rfamdb" type="select" label="RFAM database used for ribosomal RNA prediction">
             <options from_data_table="virannot_rfamdb">
                 <filter type="sort_by" column="2"/>
@@ -116,7 +105,7 @@ python $__tool_directory__/virannot.py
         <param name="gffprint" type="boolean" checked="false" optional="true" label="Print the output also as GFF3 file" help="Printing the output as GFF3 file (Default: FALSE)" />
         <param name="blastevalue" type="float" value="1e-5" min="0" optional="true" label="Blast e-value threshold" />
 
-	<conditional name="method">
+	<conditional name="hmmsearch">
 	  <param name="use_phmmer" type="select" label="Use PHMMER to predict protein function using HMM">
 	    <option value="yes" selected="True">Yes (slow, more accurate)</option>
 	    <option value="no">No (fast, less accurate)</option>
@@ -129,17 +118,27 @@ python $__tool_directory__/virannot.py
 	      </options>
 	    </param>
 	    <param name="hmmerevalue" type="float" value="0.001" label="PHMMER e-value threshold"/>
-	  <param name="use_diamond" type="select" label="Use DIAMOND instead of BLAST to predict protein function">
+	</conditional>
+	<conditional name="homologysearch">
+ 	  <param name="use_diamond" type="select" label="Use DIAMOND instead of BLAST to predict protein function">
 	    <option value="yes" selected="True">Yes (fast, less accurate)</option>
 	    <option value="no">No (slow, more accurate)</option>
 	  </param>
 	  <when value="yes">
-	    <param name="diamonddb" type="select" label="DIAMOND database to use for protein function prediction">
+	    <param name="diamonddb" type="select" label="DIAMOND database" help="DIAMOND Protein Database that will be used for the protein function prediction">
 	      <options from_data_table="virannot_diamonddb">
 		<filter type="sort_by" column="2"/>
 		<validator type="no_options" message="No indexes are available for the selected input dataset"/>
 	      </options>
 	    </param>
+ 	  </when>
+	  <when value="no">
+            <param name="blastdb" type="select" label="BLAST Database" help="BLAST Protein Database that will be used for the protein function prediction">
+              <options from_data_table="virannot_blastdb">
+                <filter type="sort_by" column="2"/>
+                <validator type="no_options" message="No indexes are available for the selected input dataset"/>
+              </options>
+            </param>
 	  </when>
 	</conditional>
 	<param name="mincontigsize" type="integer" value="200" min="1" optional="true" label="Minimum contig length to be considered in the output" />
