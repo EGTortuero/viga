@@ -130,7 +130,7 @@ if args.noblast == False and args.blastdatabase == None:
 if args.noblast == True and args.diamonddatabase == None:
     sys.exit('You MUST specify DIAMOND database using the parameter --diamonddb if you are using --noblast option')
 
-if args.nohmmer == False and args.noblast == False and args.hmmdatabase == None:
+if args.nohmmer == False and args.hmmdatabase == None:
 		sys.exit('You MUST specify HMMER database using the parameter --hmmdb if you are not using --nohmmer option')
 
 # Printing the header of the program 
@@ -309,7 +309,7 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 					information_proteins_blast[row['qseqid']] = infoprot_blast
 
 	## Predicting the function of the proteins based on HMM predictions using phmmer
-	if args.nohmmer == False and args.noblast == False:
+	if args.nohmmer == False:
 		with open("commands.sh", "w") as commands:
 			for singleprot in sorted(glob.glob("SEQ_*.faa")):
 				hhmtable = "%s.tbl" % singleprot
@@ -394,7 +394,7 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 	# Creation of table
 	debugtable = "%s.csv" % newfile
 	with open(debugtable, "w") as tablefile:
-		if args.noblast == False and args.nohmmer == False:
+		if args.nohmmer == False:
 			print("\t".join(["Identifier", "Start", "Stop", "Strand", "size_aa", "pI", "Mol_weight_kDa", "Instability_index", "ID_BLAST", "Descr_BLAST", "evalue_BLAST", "%ID_BLAST", "%Cover_BLAST", "ID_HMMER", "Descr_HMMER", "evalue_HMMER", "%ID_HMMER", "%Cover_HMMER"]), file=tablefile)
 			keylist = information_proteins_hmmer.keys()
 			keylist.sort()
@@ -423,7 +423,7 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 	# Algorithm of decisions (which one: BLAST/HMMER?)
 	multipleprots = {}
 	Hypotheticalpat = re.compile(r'(((H|h)ypothetical)|((U|u)ncharacteri(z|s)ed)) protein')
-	if args.nohmmer == False and args.noblast == False:
+	if args.nohmmer == False:
 		keylist = information_proteins_hmmer.keys()
 		keylist.sort()
 		for keyB in keylist:
@@ -574,11 +574,11 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 					indtmRNA['product'] = "tmRNA"
 					tmRNA_coords = tRNA_information[3]
 					Beginningrevcomppat = re.compile("^c")
-					if re.match(Beginningrevcomppat, tRNA_coords):
-						indtRNA['strand'] = -1
+					if re.match(Beginningrevcomppat, tmRNA_coords):
+						indtmRNA['strand'] = -1
 						tmRNA_coords = tmRNA_coords.replace("c[","").replace("]","").split(",")
 					else:
-						indtRNA['strand'] = 1
+						indtmRNA['strand'] = 1
 						tmRNA_coords = tmRNA_coords.replace("[","").replace("]","").split(",")
 					indtmRNA['begin'] = int(tmRNA_coords[0])
 					indtmRNA['end'] = int(tmRNA_coords[1])
@@ -587,11 +587,11 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 					indtmRNA['product'] = "tmRNA"
 					tmRNA_coords = tRNA_information[2]
 					Beginningrevcomppat = re.compile("^c")
-					if re.match(Beginningrevcomppat, tRNA_coords):
-						indtRNA['strand'] = -1
+					if re.match(Beginningrevcomppat, tmRNA_coords):
+						indtmRNA['strand'] = -1
 						tmRNA_coords = tmRNA_coords.replace("c[","").replace("]","").split(",")
 					else:
-						indtRNA['strand'] = 1
+						indtmRNA['strand'] = 1
 						tmRNA_coords = tmRNA_coords.replace("[","").replace("]","").split(",")
 					indtmRNA['begin'] = int(tmRNA_coords[0])
 					indtmRNA['end'] = int(tmRNA_coords[1])
