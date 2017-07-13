@@ -66,8 +66,8 @@ The program has the following two kind of arguments:
 <tr><td>--diamonddb DIAMONDDB</td><td>DIAMOND database that will be used for the protein function prediction. The database MUST be for amino acids. This is only mandatory when "ultrafast" mode is active</td></tr>
 <tr><td>--blastevalue FLOAT</td><td>BLAST e-value threshold. By default, the threshold will be 1e-05.</td></tr>
 
-<tr><td>--fast</td><td>Running the program without using PHMMER to predict protein function. In this case, the program will be as fast as Prokka (Seemann 2014) but the annotations will not be accurate. By default, this program had this flag disabled.</td></tr>
-<tr><td>--ultrafast</td><td>Running the program without using PHMMER to predict protein function and replacing BLAST by DIAMOND. In this case, the program will be faster than the "fast" mode but the annotations will not be accurate. By default, this program had this flag disabled.</td></tr>
+<tr><td>--nohmmer</td><td>Running the program without using PHMMER to predict protein function. In this case, the program will be as fast as Prokka (Seemann 2014) but the annotations will not be accurate. By default, this program had this flag disabled.</td></tr>
+<tr><td>--noblast</td><td>Running the program replacing BLAST by DIAMOND. In this case, the program will be fast but the annotations will not be accurate. By default, this program had this flag disabled.</td></tr>
 <tr><td>--hmmdb HMMDB</td><td>PHMMER Database that will be used for the protein function prediction according to Hidden Markov Models. In this case, HMMDB must be in FASTA format (e.g. UniProt). This parameter is mandatory if the "--fast" option is disabled. "</td></tr>
 <tr><td>--hmmerevalue FLOAT</td><td>PHMMER e-value threshold. By default, the threshold is 1e-03.</td></tr>
 <tr><td>--typedata BCT|CON|VRL|PHG</td><td>GenBank Division: One of the following codes:
