@@ -16,7 +16,7 @@ Before using this script, the following Python modules and programs should be in
 	- LASTZ (Harris 2007): it is used to predict the circularity of the contigs. The program is publicly available at https://github.com/lastz/lastz under the MIT licence.
 	- Prodigal (Hyatt et al. 2010): it is used to predict the ORFs. When the contig is smaller than 20,000 bp, MetaProdigal (Hyatt et al. 2012) is automatically activated instead of normal Prodigal. This program is publicly available at https://github.com/hyattpd/prodigal/releases/ under the GPLv3 licence.
 	- BLAST+ (Camacho et al. 2008): it is used to predict the function of the predicted proteins according to homology. This suite is publicly available at ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/ under the GPLv2 licence. Databases are available at ftp://ftp.ncbi.nlm.nih.gov/blast/db/
-	- DIAMOND (Buchfink et al. 2015): it is used to preduct the function of the predicted proteins according to homology when "--ultrafast" parameter is used. This program is publicly available at https://github.com/bbuchfink/diamond under the GPLv3 licence. Databases must to be created from FASTA files according to their instructions before running.
+	- DIAMOND (Buchfink et al. 2015): it is used to preduct the function of the predicted proteins according to homology when "--noblast" parameter is used. This program is publicly available at https://github.com/bbuchfink/diamond under the GPLv3 licence. Databases must to be created from FASTA files according to their instructions before running.
 	- HMMER (Finn et al. 2011): it is used to predict the function of the predicted proteins according to Hidden Markov Models. This suite is publicly available at http://hmmer.org/ under the GPLv3 licence. Databases must be in FASTA format and examples of potential databases are UniProtKB (ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/complete/uniprot_trembl.fasta.gz) or PFAM (http://ftp.ebi.ac.uk/pub/databases/Pfam/current_release/Pfam-A.fasta.gz).
 	- INFERNAL (Nawrocki and Eddy 2013): it is used to predict ribosomal RNA in the contigs when using the RFAM database (Nawrocki et al. 2015). This program is publicly available at http://eddylab.org/infernal/ under the BSD licence and RFAM database is available at ftp://ftp.ebi.ac.uk/pub/databases/Rfam/
 	- ARAGORN (Laslett and Canback 2004): it is used to predict tRNA sequences in the contig. This program is publicly available at http://mbio-serv2.mbioekol.lu.se/ARAGORN/ under the GPLv2 licence.
@@ -40,7 +40,7 @@ Additionally, before running the "ultrafast" mode, you need to convert the FASTA
 
 When using this program, you must to cite their use:
 
-	<In construction>
+	VirAnnot v. 0.8.0 (https://github.com/EGTortuero/virannot)
 
 ## PARAMETERS:
 
