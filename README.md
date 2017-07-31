@@ -177,6 +177,7 @@ using the wrapper included in this repository.
 
 ## HISTORY OF THE SOURCE CODE:
 
+* v 0.8.1 - The program is able to deal with tmRNA sequences in a proper way. There were an error due to the "(Permuted)" flag in ARAGORN files in some cases. Additionally, the name of the "--fast" and "--ultrafast" parameters were changed to "--nohmmer" and "--noblast" as their descriptions are more accurate.
 * v 0.8.0 - Added the "--ultrafast" parameter. In this case, DIAMOND (Buchfink et al. 2015) will be launch to predict protein function according to homology instead of BLAST. It is faster than the "fast" mode but the sensitivity of the annotations will not be the highest.
 * v 0.7.1 - Fixed error on the "--fast" parameter. All proteins that had no hits in BLAST analyses were not parsed properly. By now, these are identified as "Hypothetical proteins" in all files.
 * v 0.7.0 - Added the "--fast" parameter. In this case, the program will launch BLAST (but not PHMMER) to annotate protein function. In this case, the program will be as fast as Prokka (Seemann 2014) but the annotations will not be accurate. As a consequence of this new parameter, the "--hmmdb" parameter is only mandatory when this flag is NOT used (as by default).
