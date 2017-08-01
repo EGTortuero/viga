@@ -76,7 +76,7 @@ def stringSplitByNumbers(x):
 	return [int(y) if y.isdigit() else y for y in l]
 
 # Defining the program version
-version = "0.8.2"
+version = "0.9.0"
 
 # Processing the parameters
 parser = argparse.ArgumentParser(description='Virannot is a automatic de novo viral genome annotator.')
@@ -94,9 +94,9 @@ advanced_group.add_argument("--gff", dest="gffprint", action='store_true', defau
 advanced_group.add_argument("--threads", dest="ncpus", default=1, help='Number of threads/cpus (Default: %(default)s cpu)', metavar="INT")
 advanced_group.add_argument("--nohmmer", dest="nohmmer", action='store_true', default=False, help='Running only BLAST to predict protein function. (Default: False)')
 advanced_group.add_argument("--noblast", dest="noblast", action='store_true', default=False, help='Running DIAMOND instead of BLAST to predict protein function according to homology. This will be less sensitive but faster than BLAST. (Default: False)')
-advanced_group.add_argument("--blastevalue", dest="blastevalue", default=0.00001, help='Blast e-value threshold (Default: 0.00001)', metavar="FLOAT")
-advanced_group.add_argument("--blastdb", dest="blastdatabase", type=str, help='BLAST Database that will be used for the protein function prediction. The database must be an amino acid one, not  nucleotidic', metavar="BLASTDB")
-advanced_group.add_argument("--diamonddb", dest="diamonddatabase", type=str, help='DIAMOND Database that will be used for the protein function prediction. The database must be created from a amino acid FASTA file as indicated in https://github.com/bbuchfink/diamond. This argument is mandatory when --ultrafast option is enabled', metavar="DIAMONDDB")
+advanced_group.add_argument("--blastdb", dest="blastdatabase", type=str, help='BLAST Database that will be used for the protein function prediction. The database must be an amino acid one, not nucleotidic. This argument is mandatory if --noblast option is disabled', metavar="BLASTDB")
+advanced_group.add_argument("--diamonddb", dest="diamonddatabase", type=str, help='DIAMOND Database that will be used for the protein function prediction. The database must be created from a amino acid FASTA file as indicated in https://github.com/bbuchfink/diamond. This argument is mandatory when --noblast option is enabled', metavar="DIAMONDDB")
+advanced_group.add_argument("--blastevalue", dest="blastevalue", default=0.00001, help='BLAST/DIAMOND e-value threshold (Default: 0.00001)', metavar="FLOAT")
 advanced_group.add_argument("--hmmdb", dest="hmmdatabase", type=str, help='PHMMER Database that will be used for the protein function prediction according to Hidden Markov Models. In this case, HMMDB must be in FASTA format (e.g. UniProt: "', metavar="HMMDB")
 advanced_group.add_argument("--hmmerevalue", dest="hmmerevalue", default=0.001, help='PHMMER e-value threshold (Default: 0.001)', metavar="FLOAT")
 
@@ -177,13 +177,15 @@ for i, batch in enumerate(batch_iterator(record_iter, 1)):
 	with open(filename, "w") as handle:
 		count = SeqIO.write(batch, filename, "fasta")
 
-	with open(filename, "rU") as original, open(newfilename, "w") as corrected:
+	with open(filename, "rU") as original, open(newfilename, "w") as corrected, open("logfile.txt", "w") as logfile:
 		sequences = SeqIO.parse(original, "fasta", IUPAC.ambiguous_dna)
+		logfile.write("#Original\tNew\n")
 		for record in sequences:
 			original_name = record.id
 			record.id = "%s_%i" % (args.locus, counter)
 			record.description = record.description
 			counter += 1
+			logfile.write("%s\t%s\n" % (original_name, record.id))
 			eprint("WARNING: The name of the sequence %s was corrected as %s" % (original_name, record.id))
 		SeqIO.write(record, corrected, "fasta")
 	os.remove(filename)
@@ -212,7 +214,7 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 					strand2 = resultlastz.split()[6]
 					identity = resultlastz.split()[7]
 					length = int(resultlastz.split()[9])
-					if strand1 == strand2 and length > 0.4 * args.read_length and float(fractions.Fraction(identity)) > 0.95 and int(start1) < 5 and int(start2) > args.read_length and int(end1) < args.read_length and int(end2) > args.read_length * 2 * 0.9:
+					if strand1 == strand2 and int(length) > 0.4 * int(args.read_length) and float(fractions.Fraction(identity)) > 0.95 and int(start1) < 5 and int(start2) > int(args.read_length) and int(end1) < int(args.read_length) and int(end2) > int(args.read_length) * 2 * 0.9:
 						genomeshape['genomeshape'] = "circular"
 						try:
 							if genomeshape['identity'] >= float(fractions.Fraction(identity)):
@@ -274,6 +276,8 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 		eprint("Running BLAST to predict the genes according to homology inference in %s using exhaustive mode (see Fozo et al. (2010) Nucleic Acids Res for details)" % newfile)
 		subprocess.call(['blastp', '-query', "temp.faa", '-db', args.blastdatabase, '-evalue', str(args.blastevalue), '-outfmt', '6 qseqid sseqid pident length qlen slen qstart qend evalue bitscore stitle', '-out', 'temp_blast.csv', '-max_target_seqs', '10', '-word_size', '2', '-gapopen', '8', '-gapextend', '2', '-matrix', '"PAM70"', '-comp_based_stats', '"0"', "-num_threads", str(args.ncpus)])
 		eprint("Done. BLAST was done to predict the genes by homology\n")
+		blast_log = "%s.blast.log" % newfile # TO DEBUG
+		shutil.copyfile("temp_blast.csv", blast_log) # TO DEBUG
 	elif args.noblast==True:
 		eprint("Running DIAMOND to predict the genes according to homology inference in %s using default parameters" % newfile)
 		with open("temp.faa", "r") as tempfile:
@@ -282,17 +286,19 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 				subprocess.call(['diamond', 'blastp', '-q', 'temp.faa', '-d', args.diamonddatabase, '-e', str(args.blastevalue), '-f', '6', 'qseqid', 'sseqid', 'pident', 'length', 'qlen', 'slen', 'qstart', 'qend', 'evalue', 'bitscore', 'stitle', '-o', 'temp_blast.csv', '-k', '10', "-p", str(args.ncpus), '--quiet'])
 			else:
 				open("temp_blast.csv", 'a').close()
+		blast_log = "%s.blast.log" % newfile # TO DEBUG
+		shutil.copyfile("temp_blast.csv", blast_log) # TO DEBUG
 		eprint("Done. DIAMOND was done to predict the genes by homology\n")
 	else:
 		eprint("Running BLAST to predict the genes according to homology inference in %s using default parameters" % newfile)
 		subprocess.call(['blastp', '-query', "temp.faa", '-db', args.blastdatabase, '-evalue', str(args.blastevalue), '-outfmt', '6 qseqid sseqid pident length qlen slen qstart qend evalue bitscore stitle', '-out', 'temp_blast.csv', '-max_target_seqs', '10', "-num_threads", str(args.ncpus)])
-		eprint("Done. BLAST was done to predict the genes by homology\n")
-
-	#blast_log = "%s.blast.log" % newfile
-	#shutil.copyfile("temp_blast.csv", blast_log)
+		blast_log = "%s.blast.log" % newfile
+		shutil.copyfile("temp_blast.csv", blast_log) # TO DEBUG
+		eprint("Done. BLAST was done to predict the genes by homology\n") # TO DEBUG
 
 	# Parsing the results from BLAST
 	with open("temp_blast.csv", "rU") as blastresults:
+		hypotheticalpat = re.compile(r'(((((?i)hypothetical)|(?i)uncharacteri(z|s)ed)) protein)|((?i)ORF)')
 		reader = csv.DictReader(blastresults, delimiter='\t', fieldnames=['qseqid','sseqid','pident','length','qlen','slen','qstart','qend','evalue','bitscore','stitle'])
 		information_proteins_blast = {}
 		for row in reader:
@@ -306,12 +312,14 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 			infoprot_blast['descr'] = row['stitle']
 			try:
 				data = information_proteins_blast[row['qseqid']]
-			except KeyError:		
-				if (float(perc_id) >= float(args.idthreshold)) and (float(perc_cover) >= float(args.covthreshold)) and (float(row['evalue']) <= float(args.blastevalue)):
-					information_proteins_blast[row['qseqid']] = infoprot_blast
+			except KeyError:
+				if not re.search(hypotheticalpat, infoprot_blast['descr']) and float(perc_id) >= float(args.idthreshold) and float(perc_cover) >= float(args.covthreshold) and float(row['evalue']) <= float(args.blastevalue):
+						information_proteins_blast[row['qseqid']] = infoprot_blast
+				else:
+					continue
 			else:
-				if (float(perc_cover) > float(data['pcover'])) and (float(perc_cover) >= float(args.covthreshold)) and (float(row['evalue']) <= float(args.blastevalue) and (float(row['evalue']) <= float(data['evalue']))):
-					information_proteins_blast[row['qseqid']] = infoprot_blast
+				if not re.search(hypotheticalpat, infoprot_blast['descr']) and float(perc_id) >= float(args.idthreshold) and float(perc_id) >= float(infoprot_blast['pident']) and float(perc_cover) >= float(args.covthreshold) and float(perc_cover) >= float(infoprot_blast['pcover']) and float(row['evalue']) <= float(args.blastevalue):
+						information_proteins_blast[row['qseqid']] = infoprot_blast
 
 	## Predicting the function of the proteins based on HMM predictions using phmmer
 	if args.nohmmer == False:
@@ -330,6 +338,7 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 
 		# Parsing the results from HMMER
 		information_proteins_hmmer = {}
+		hypotheticalpat = re.compile(r'(((((?i)hypothetical)|(?i)uncharacteri(z|s)ed)) protein)|((?i)ORF)')
 		for singletbl in sorted(glob.glob("*.faa.tbl")):
 			rootname = singletbl.replace(".faa.tbl", "")
 			with open(singletbl) as tblfile:
@@ -350,7 +359,7 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 							try:
 								data2 = infoprot_hmmer['lociname']
 							except KeyError:
-								if float(protarea) >= float(args.covthreshold) and (float(evaluehh) <= float(args.hmmerevalue)) and (float(pident) >= 50.00):
+								if not re.search(hypotheticalpat, description) and float(protarea) >= float(args.covthreshold) and float(evaluehh) <= float(args.hmmerevalue) and float(pident) >= 50.00:
 									infoprot_hmmer['lociname'] = lociname
 									infoprot_hmmer['name'] = matchname
 									infoprot_hmmer['evalue'] = float(evaluehh)
@@ -359,7 +368,7 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 									infoprot_hmmer['descr'] = description
 								else:
 									try:
-										if (float(protarea) >= float(args.covthreshold)) and (float(protarea) >= float(infoprot_hmmer['pcover'])) and (float(evaluehh) <= float(args.hmmerevalue)) and (float(evaluehh) <= float(infoprot_hmmer['evalue'])) and (float(pident) >= 50.00) and (float(pident) >= infoprot_hmmer['pident']) :
+										if not re.search(hypotheticalpat, description) and float(protarea) >= float(args.covthreshold) and float(evaluehh) <= float(args.hmmerevalue) and float(pident) >= 50.00 and float(pident) >= infoprot_hmmer['pident']:
 											infoprot_hmmer['lociname'] = lociname
 											infoprot_hmmer['name'] = matchname
 											infoprot_hmmer['evalue'] = float(evaluehh)
@@ -369,7 +378,7 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 									except KeyError:
 											continue
 							else:
-								if (float(protarea) >= float(args.covthreshold)) and (float(protarea) >= float(infoprot_hmmer['pcover'])) and (float(evaluehh) <= float(args.hmmerevalue)) and (float(evaluehh) <= float(infoprot_hmmer['evalue'])) and (float(pident) >= 50.00):
+								if not re.search(hypotheticalpat, description) and float(protarea) >= float(args.covthreshold) and float(evaluehh) <= float(args.hmmerevalue) and float(pident) >= 50.00 and float(pident) >= infoprot_hmmer['pident']:
 									infoprot_hmmer['lociname'] = lociname
 									infoprot_hmmer['name'] = matchname
 									infoprot_hmmer['evalue'] = float(evaluehh)
@@ -427,7 +436,7 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 
 	# Algorithm of decisions (which one: BLAST/HMMER?)
 	multipleprots = {}
-	Hypotheticalpat = re.compile(r'(((H|h)ypothetical)|((U|u)ncharacteri(z|s)ed)) protein')
+	Hypotheticalpat = re.compile(r'(((((?i)hypothetical)|(?i)uncharacteri(z|s)ed)) protein)|((?i)ORF)')
 	if args.nohmmer == False:
 		keylist = information_proteins_hmmer.keys()
 		keylist.sort()
@@ -436,9 +445,9 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 			singleprot = {}
 			singleprot['name'] = equivalence[keyB]
 			if (equivalence[keyB] in information_proteins_blast) and (keyB in information_proteins_hmmer):
-				if re.match(Hypotheticalpat, information_proteins_blast[equivalence[keyB]]['descr']):
+				if re.search(Hypotheticalpat, information_proteins_blast[equivalence[keyB]]['descr']):
 					try:
-						if re.match(Hypotheticalpat, information_proteins_hmmer[keyB]['descr']):
+						if re.search(Hypotheticalpat, information_proteins_hmmer[keyB]['descr']):
 							singleprot['descr'] = information_proteins_blast[equivalence[keyB]]['descr']
 						else:
 							singleprot['descr'] = information_proteins_hmmer[keyB]['descr']
@@ -487,6 +496,8 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 			try:
 				if information_proteins_blast[keyB]['descr'] == None:
 					singleprot['descr'] = 'Hypothetical protein'
+				elif re.search(Hypotheticalpat, information_proteins_blast[keyB]['descr']):
+					singleprot['descr'] = 'Conserved hypothetical protein'
 				else:
 					singleprot['descr'] = information_proteins_blast[keyB]['descr']
 			except KeyError:
@@ -575,9 +586,9 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 			tRNA_information = tRNAseq.description.split(" ")
 			tRNApat = re.compile("^tRNA-")
 			if tRNA_information[1] == "tmRNA":
-				if tRNA_information[2] == "(Permuted)":
+				if str(tRNA_information[2]) == "(Permuted)":
 					indtmRNA['product'] = "tmRNA"
-					tmRNA_coords = tRNA_information[3]
+					tmRNA_coords = str(tRNA_information[3])
 					Beginningrevcomppat = re.compile("^c")
 					if re.match(Beginningrevcomppat, tmRNA_coords):
 						indtmRNA['strand'] = -1
@@ -590,7 +601,7 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 					tmRNAdict[tRNAseq.id] = indtmRNA
 				else:
 					indtmRNA['product'] = "tmRNA"
-					tmRNA_coords = tRNA_information[2]
+					tmRNA_coords = str(tRNA_information[2])
 					Beginningrevcomppat = re.compile("^c")
 					if re.match(Beginningrevcomppat, tmRNA_coords):
 						indtmRNA['strand'] = -1
@@ -841,7 +852,7 @@ with open(args.modifiers, "rU") as modifiers, open(gbkoutputfile, "r") as genban
 	wholelist = list(SeqIO.parse(genbank_fh, 'genbank'))
 	for record in wholelist:
 		if len(record) <= args.mincontigsize:
-			eprint("WARNING: Skipping small contig %s" % rec.id)
+			eprint("WARNING: Skipping small contig %s" % record.id)
 			continue
 		record.description = "%s %s" % (record.id, info)
 		SeqIO.write([record], fasta_fh, 'fasta')
