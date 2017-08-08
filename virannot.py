@@ -185,14 +185,14 @@ for i, batch in enumerate(batch_iterator(record_iter, 1)):
 			record.id = "%s_%i" % (args.locus, counter)
 			record.description = record.description
 			counter += 1
-			newnamessequences[original_name] = record.id
+			newnamessequences[record.id] = original_name
 			eprint("WARNING: The name of the sequence %s was corrected as %s" % (original_name, record.id))
 		SeqIO.write(record, corrected, "fasta")
 
 	with open("logfile.txt", "w") as logfile:
 		logfile.write("#Original\tNew\n")
-		for newname in sorted(newnamessequences, key = stringSplitByNumbers):
-			logfile.write("%s\t%s\n" % (newname, newnamessequences[newname]))
+		for oldname in sorted(newnamessequences, key = stringSplitByNumbers):
+			logfile.write("%s\t%s\n" % (oldname, newnamessequences[oldname]))
 	os.remove(filename)
 
 for newfile in sorted(glob.glob("CONTIG_*.fna")):
