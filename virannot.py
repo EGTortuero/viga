@@ -76,7 +76,7 @@ def stringSplitByNumbers(x):
 	return [int(y) if y.isdigit() else y for y in l]
 
 # Defining the program version
-version = "0.9.0"
+version = "0.9.1"
 
 # Processing the parameters
 parser = argparse.ArgumentParser(description='Virannot is a automatic de novo viral genome annotator.')
@@ -170,6 +170,7 @@ eprint("Data type is {0} and GenBank translation table no is {1}\n".format(args.
 # Correcting the original file (long headers problem + multiple FASTA files)
 record_iter = SeqIO.parse(open(args.inputfile, "rU"),"fasta")
 counter = 1
+newnamessequences = {}
 for i, batch in enumerate(batch_iterator(record_iter, 1)):
 	seq_index = "CONTIG_%i" % (i + 1)
 	filename = "%s.temp.fna" % seq_index
@@ -177,17 +178,21 @@ for i, batch in enumerate(batch_iterator(record_iter, 1)):
 	with open(filename, "w") as handle:
 		count = SeqIO.write(batch, filename, "fasta")
 
-	with open(filename, "rU") as original, open(newfilename, "w") as corrected, open("logfile.txt", "w") as logfile:
+	with open(filename, "rU") as original, open(newfilename, "w") as corrected:
 		sequences = SeqIO.parse(original, "fasta", IUPAC.ambiguous_dna)
-		logfile.write("#Original\tNew\n")
 		for record in sequences:
 			original_name = record.id
 			record.id = "%s_%i" % (args.locus, counter)
 			record.description = record.description
 			counter += 1
-			logfile.write("%s\t%s\n" % (original_name, record.id))
+			newnamessequences[original_name] = record.id
 			eprint("WARNING: The name of the sequence %s was corrected as %s" % (original_name, record.id))
 		SeqIO.write(record, corrected, "fasta")
+
+	with open("logfile.txt", "w") as logfile:
+		logfile.write("#Original\tNew\n")
+		for newname in sorted(newnamessequences, key = stringSplitByNumbers):
+			logfile.write("%s\t%s\n" % (newname, newnamessequences[newname]))
 	os.remove(filename)
 
 for newfile in sorted(glob.glob("CONTIG_*.fna")):
