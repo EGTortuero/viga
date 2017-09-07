@@ -42,7 +42,7 @@ Additionally, before running the "ultrafast" mode, you need to convert the FASTA
 
 When using this program, you must to cite their use:
 
-	VirAnnot v. 0.9.0 (https://github.com/EGTortuero/virannot)
+	VirAnnot v. 0.10.0 (https://github.com/EGTortuero/virannot)
 
 ## PARAMETERS:
 
