@@ -23,6 +23,12 @@ python $__tool_directory__/virannot.py
 #if $readlength
     --readlength $readlength
 #end if
+#if $windowlength
+    --windowlength $windowlength
+#end if
+#if $slidelength
+    --slidelength $slidelength
+#end if
 #if $locus
     --locus $locus
 #end if
@@ -101,6 +107,8 @@ python $__tool_directory__/virannot.py
 	  <option value="31">Blastocrithidia nuclear code</option>
 	</param>
         <param name="readlength" type="integer" value="101" min="1" optional="true" label="Read length (--readlength)" help="Read length for the circularity prediction"/>
+        <param name="windowlength" type="integer" value="100" min="2" optional="true" label="Window length (--windowlength)" help="Window length for the origin of replication prediction"/>
+        <param name="slidelength" type="integer" value="10" min="1" optional="true" label="sliding window length (--slidelength)" help="Slidind window length for the origin of replication prediction"/>	    
         <param name="locus" type="text" value="LOC" optional="true" label="Locus tag prefix (--locustag)" help="Name of the sequences. If the input is a multifasta file, please put a general name"/>
         <param name="gffprint" type="boolean" checked="false" optional="true" label="Print the output also as GFF3 file" help="Printing the output as GFF3 file (Default: FALSE)" />
         <param name="blastevalue" type="float" value="1e-5" min="0" optional="true" label="Blast e-value threshold" />
