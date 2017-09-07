@@ -27,6 +27,7 @@ import csv
 import fileinput
 import fractions
 import glob
+import numpy
 import os
 import re
 import sys
@@ -41,6 +42,8 @@ from Bio.SeqFeature import FeatureLocation
 from Bio.SeqRecord import SeqRecord
 from Bio.SeqUtils.ProtParam import ProteinAnalysis
 from collections import OrderedDict, defaultdict
+from itertools import product
+from scipy import signal
 from time import strftime
 
 # Preparing functions
@@ -59,16 +62,74 @@ def batch_iterator(iterator, batch_size):
 		if batch:
 			yield batch
 
+def check_peaks(peaks, length):
+	# Checking if origin/terminus peaks are too close or too far apart. In that case, they are probably wrong
+    closest, farthest = int(length * float(0.45)), int(length * float(0.55))
+    pairs = []
+    for pair in list(product(*peaks)):
+        ### added this to make sure gets origin and ter right
+        tr, pk = sorted(list(pair), key = lambda x: x[1], reverse = False) # trough and peak
+        a = (tr[0] - pk[0]) % length
+        b = (pk[0] - tr[0]) % length
+        pt = abs(tr[1] - pk[1]) # distance between values
+        if (a <= farthest and a >= closest) or (b <=farthest and b >= closest):
+            pairs.append([pt, tr, pk])
+    if len(pairs) == 0:
+        return [False, False]
+    pt, tr, pk = sorted(pairs, reverse = True)[0]
+    return [tr[0], pk[0]]
+
 def cmd_exists(cmd):
 	return subprocess.call("type " + cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE) == 0
+
+def GCskew(name, length, seq, window, slide):
+	replacements = {'G':1, 'C':-1, 'A':0, 'T':0, 'N':0}
+	gmc = [] # G - C
+	for base in seq:
+		try:
+			gmc.append(replacements[base])
+		except:
+			gmc.append(0)
+	# convert to G + C
+	gpc = [abs(i) for i in gmc] # G + C
+	# calculate sliding windows for (G - C) and (G + C)
+	weights = numpy.ones(window)/window
+	gmc = [[i, c] for i, c in enumerate(signal.fftconvolve(gmc, weights, 'same').tolist())]
+	gpc = [[i, c] for i, c in enumerate(signal.fftconvolve(gpc, weights, 'same').tolist())]
+	# calculate gc skew and cummulative gc skew sum
+	skew = [[], []] # x and y for gc skew
+	c_skew = [[], []] # x and y for gc skew cummulative sums
+	cs = 0 # cummulative sum
+	# select windows to use based on slide
+	for i, m in gmc[0::slide]:
+		p = gpc[i][1]
+		if p == 0:
+			gcs = 0
+		else:
+			gcs = m/p
+		cs += gcs
+		skew[0].append(i)
+		c_skew[0].append(i)
+		skew[1].append(gcs)
+		c_skew[1].append(cs)
+	ori, ter = find_ori_ter(c_skew, length)
+	return ori, ter, skew, c_skew
 
 def eprint(*args, **kwargs):
 	print(*args, file=sys.stderr, **kwargs)
 
-#def find(name, path):
-#	for root, dirs, files in os.walk(path):
-#		if name in files:
-#			return os.path.join(root, name)
+def find_ori_ter(c_skew, length):
+    # Find origin and terminus of replication based on cumulative GC skew min and max peaks
+    c_skew_min = signal.argrelextrema(numpy.asarray(c_skew[1]), numpy.less, order = 1)[0].tolist()
+    c_skew_max = signal.argrelextrema(numpy.asarray(c_skew[1]), numpy.greater, order = 1)[0].tolist()
+    # return False if no peaks were detected
+    if len(c_skew_min) == 0 or len(c_skew_min) == 0:
+        return [False, False]
+    else:
+        c_skew_min = [[c_skew[0][i], c_skew[1][i]] for i in c_skew_min]
+        c_skew_max = [[c_skew[0][i], c_skew[1][i]] for i in c_skew_max]
+        ori, ter = check_peaks([c_skew_min, c_skew_max], length)
+    return ori, ter
 
 def stringSplitByNumbers(x):
 	r = re.compile('(\d+)')
@@ -76,7 +137,7 @@ def stringSplitByNumbers(x):
 	return [int(y) if y.isdigit() else y for y in l]
 
 # Defining the program version
-version = "0.9.1"
+version = "0.10.0"
 
 # Processing the parameters
 parser = argparse.ArgumentParser(description='Virannot is a automatic de novo viral genome annotator.')
@@ -88,6 +149,8 @@ basic_group.add_argument("--modifiers", dest="modifiers", type=str, required=Tru
 
 advanced_group = parser.add_argument_group('Advanced options for virannot [OPTIONAL]')
 advanced_group.add_argument("--readlength", dest="read_length", type=int, default=101, help='Read length for the circularity prediction (default: 101 bp)', metavar="INT")
+advanced_group.add_argument("--windowsize", dest="window", type=int, default=100, help='Window size used to determine the origin of replication in circular contigs according to the cumulative GC skew (default: 100 bp)', metavar="INT")
+advanced_group.add_argument("--slidingsize", dest="slide", type=int, default=10, help='Sliding size used to determine the origin of replication in circular contigs according to the cumulative GC skew (default: 10 bp)', metavar="INT")
 advanced_group.add_argument("--out", dest="rootoutput", type=str, help='Name of the outputs files (without extension)', metavar="OUTPUTNAME")
 advanced_group.add_argument("--locus", dest="locus", type=str, default='LOC', help='Name of the sequences. If the input is a multiFASTA file, please put a general name as the program will add the number of the contig at the end of the name (Default: %(default)s)', metavar="STRING")
 advanced_group.add_argument("--gff", dest="gffprint", action='store_true', default=False, help='Printing the output as GFF3 file (Default: False)')
@@ -205,7 +268,7 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 		for record in Sequence:
 			seq_beginning = str(record.seq[0:args.read_length])
 			seq_ending = str(record.seq[len(record.seq)-args.read_length:len(record.seq)])
-			combined_seqs = SeqRecord(Seq(seq_beginning + seq_ending, IUPAC.ambiguous_dna), id = "test")
+			combined_seqs = SeqRecord(Seq(seq_beginning + seq_ending, IUPAC.ambiguous_dna), id = record.description)
 			SeqIO.write(combined_seqs, "temporal_circular.fasta", "fasta")
 			outputlastz = subprocess.check_output(["lastz", "temporal_circular.fasta", "--self", "--notrivial", "--nomirror", "--format=general-:start1,end1,start2,end2,score,strand1,strand2,identity,length1"]);
 			resultslastz = outputlastz.split("\n")
@@ -239,10 +302,39 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 				genomeshape['genomeshape'] = "circular"
 				with open("temp.fasta", "w") as correctedcircular:
 					Corrseq = str(record.seq[int(genomeshape['length'])//2:-int(genomeshape['length'])//2])
-					Newseq = SeqRecord(Seq(Corrseq, IUPAC.ambiguous_dna), id = record.id)
+					Newseq = SeqRecord(Seq(Corrseq, IUPAC.ambiguous_dna), id = record.description)
 					SeqIO.write(Newseq, correctedcircular, "fasta")
-				os.rename("temp.fasta", newfile)
+				os.rename("temp.fasta", "temp2.fasta")
 		eprint("LASTZ predicted that %s is %s\n" % (newfile, genomeshape['genomeshape']))
+		os.remove("temporal_circular.fasta")
+
+	# Calculate the cumulative GCskew in circular contigs to determine the origin of replication (Based on iRep -- Brown CT, Olm MR, Thomas BC, Banfield JF (2016) Measurement of bacterial replication rates in microbial communities. Nature Biotechnology 34: 1256-63.)
+	if genomeshape['genomeshape'] == "circular":
+		for record in SeqIO.parse("temp2.fasta", "fasta"):
+			length_contig = len(record.seq)
+			#if length < min_len:
+			#    print('%s: Too Short' % (name), file=sys.stderr)
+			#    continue
+			oric, term, gcskew, cgcskew = GCskew(record.id, length_contig, record.seq, args.window, args.slide)
+			valoric = oric
+			if oric == False:
+				oric, term = 'n/a', 'n/a'
+			else:
+				oric, term = '{:,}'.format(oric), '{:,}'.format(term)
+			eprint('%s -> Origin: %s Terminus: %s' % (record.id, oric, term))
+			#print('\t'.join(['# Name', 'Position', 'GC Skew', 'Cumulative GC Skew']))
+			#for i, pos in enumerate(gcskew[0]):
+			#	out = [record.id, pos, gcskew[1][i], cgcskew[1][i]]
+			#	print('\t'.join([str(i) for i in out]))
+			if valoric != False:
+				firstpartseq = str(record.seq[valoric:-1])
+				secondpartseq = str(record.seq[0:(valoric-1)])
+				combinedcorrectedseq = SeqRecord(Seq(firstpartseq + secondpartseq, IUPAC.ambiguous_dna), id = record.description)
+				SeqIO.write(combinedcorrectedseq, newfile, "fasta")
+			else:
+				eprint("As the program was unable to predict the origin of replication, %s was considered as is without correcting!" % record.id)
+				os.rename("temp2.fasta", newfile)
+		os.remove("temp2.fasta")
 
 	# Predicting genes using PRODIGAL
 	eprint("\nRunning Prodigal to predict the genes in %s" % newfile)
@@ -259,6 +351,7 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 			else:
 				subprocess.call(["prodigal", "-a", "pretemp.faa", "-i", newfile, "-o", "/dev/null", "-p", "meta", "-g", args.gcode, "-q"])
 	num_seqs = len(list(SeqIO.parse("pretemp.faa", "fasta")))
+	eprint("PRODIGAL was able to predict %i genes in %s\n" % (num_seqs, newfile))
 	
 	with open("pretemp.faa", "rU") as originalfaa, open("temp.faa", "w") as correctedfaa:
 		sequences = SeqIO.parse(originalfaa, "fasta")
@@ -705,12 +798,13 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 			whole_sequence.annotations['data_file_division'] = args.typedata.upper()
 			whole_sequence.annotations['date'] = strftime("%d-%b-%Y").upper()
 			for protein in sorted(protsdict, key = stringSplitByNumbers):
-				start_pos = SeqFeature.ExactPosition(protsdict[protein]['begin'])
+				start_pos = SeqFeature.ExactPosition(int(protsdict[protein]['begin'])-1)
 				end_pos = SeqFeature.ExactPosition(protsdict[protein]['end'])
 				feature_location = SeqFeature.FeatureLocation(start_pos, end_pos, strand=protsdict[protein]['strand'])
-				new_data_gene = SeqFeature.SeqFeature(feature_location, type = "gene", strand = protsdict[protein]['strand'])
+				qualifiersgene = OrderedDict([('locus_tag', protsdict[protein]['protein_id'])])
+				new_data_gene = SeqFeature.SeqFeature(feature_location, type = "gene", strand = protsdict[protein]['strand'], qualifiers = qualifiersgene)
 				whole_sequence.features.append(new_data_gene)
-				qualifiers = [('product', protsdict[protein]['product']), ('protein_id', protsdict[protein]['protein_id']), ('translation', protsdict[protein]['translation'])]
+				qualifiers = [('locus_tag', protsdict[protein]['protein_id']), ('product', protsdict[protein]['product']), ('protein_id', protsdict[protein]['protein_id']), ('translation', protsdict[protein]['translation'])]
 				feature_qualifiers = OrderedDict(qualifiers)
 				new_data_cds = SeqFeature.SeqFeature(feature_location, type = "CDS", strand = protsdict[protein]['strand'], qualifiers = feature_qualifiers)
 				whole_sequence.features.append(new_data_cds)
@@ -722,7 +816,7 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 					continue
 				else:
 					while i < lengthlist:
-						start_pos = SeqFeature.ExactPosition(subunits[rRNA]['listdata'][i]['begin'])
+						start_pos = SeqFeature.ExactPosition(int(subunits[rRNA]['listdata'][i]['begin'])-1)
 						end_pos = SeqFeature.ExactPosition(subunits[rRNA]['listdata'][i]['end'])
 						feature_location = SeqFeature.FeatureLocation(start_pos, end_pos, strand=subunits[rRNA]['listdata'][i]['strand'])
 						new_data_gene = SeqFeature.SeqFeature(feature_location, type = "gene", strand = subunits[rRNA]['listdata'][i]['strand'])
@@ -733,7 +827,7 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 						whole_sequence.features.append(new_data_rRNA)
 						i += 1
 			for tRNA in sorted(tRNAdict, key = stringSplitByNumbers):
-				start_pos = SeqFeature.ExactPosition(tRNAdict[tRNA]['begin'])
+				start_pos = SeqFeature.ExactPosition(int(tRNAdict[tRNA]['begin'])-1)
 				end_pos = SeqFeature.ExactPosition(tRNAdict[tRNA]['end'])
 				feature_location = SeqFeature.FeatureLocation(start_pos, end_pos, strand=tRNAdict[tRNA]['strand'])
 				new_data_gene = SeqFeature.SeqFeature(feature_location, type = "gene", strand = tRNAdict[tRNA]['strand'])
@@ -743,7 +837,7 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 				new_data_tRNA = SeqFeature.SeqFeature(feature_location, type = "tRNA", strand = tRNAdict[tRNA]['strand'], qualifiers = feature_qualifiers)
 				whole_sequence.features.append(new_data_tRNA)
 			for tmRNA in sorted(tmRNAdict, key = stringSplitByNumbers):
-				start_pos = SeqFeature.ExactPosition(tmRNAdict[tmRNA]['begin'])
+				start_pos = SeqFeature.ExactPosition(int(tmRNAdict[tmRNA]['begin'])-1)
 				end_pos = SeqFeature.ExactPosition(tmRNAdict[tmRNA]['end'])
 				feature_location = SeqFeature.FeatureLocation(start_pos, end_pos, strand=tmRNAdict[tmRNA]['strand'])
 				new_data_gene = SeqFeature.SeqFeature(feature_location, type = "gene", strand = tmRNAdict[tmRNA]['strand'])
@@ -753,7 +847,7 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 				new_data_tmRNA = SeqFeature.SeqFeature(feature_location, type = "tmRNA", strand = tmRNAdict[tmRNA]['strand'], qualifiers = feature_qualifiers)
 				whole_sequence.features.append(new_data_tmRNA)
 			for CRISPR in sorted(information_CRISPR, key = stringSplitByNumbers):
-				start_pos = SeqFeature.ExactPosition(information_CRISPR[CRISPR]['start'])
+				start_pos = SeqFeature.ExactPosition(int(information_CRISPR[CRISPR]['start'])-1)
 				end_pos = SeqFeature.ExactPosition(information_CRISPR[CRISPR]['end'])
 				feature_location = SeqFeature.FeatureLocation(start_pos, end_pos)
 				qualifiers = [('rpt_family', 'CRISPR'), ('rpt_type', 'direct'), ('rpt_unit_range', "%i..%i" % (int(information_CRISPR[CRISPR]['start']), int(information_CRISPR[CRISPR]['repeatend']))), ('rpt_unit_seq', information_CRISPR[CRISPR]['repeatseq'])]
@@ -761,7 +855,7 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 				new_data_CRISPRrepeat = SeqFeature.SeqFeature(feature_location, type = "repeat_region", qualifiers = feature_qualifiers)
 				whole_sequence.features.append(new_data_CRISPRrepeat)
 			for tandem in sorted(information_TRF):
-				start_pos = SeqFeature.ExactPosition(information_TRF[tandem]['start'])
+				start_pos = SeqFeature.ExactPosition(int(information_TRF[tandem]['start'])-1)
 				end_pos = SeqFeature.ExactPosition(information_TRF[tandem]['end'])
 				feature_location = SeqFeature.FeatureLocation(start_pos, end_pos)
 				qualifiers = [('rpt_type', 'direct')]
@@ -769,7 +863,7 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 				new_data_tandemrepeat = SeqFeature.SeqFeature(feature_location, type = "repeat_region", qualifiers = feature_qualifiers)
 				whole_sequence.features.append(new_data_tandemrepeat)
 			for inverted in sorted(information_IRF):
-				start_pos = SeqFeature.ExactPosition(information_IRF[inverted]['start'])
+				start_pos = SeqFeature.ExactPosition(int(information_IRF[inverted]['start'])-1)
 				end_pos = SeqFeature.ExactPosition(information_IRF[inverted]['end'])
 				feature_location = SeqFeature.FeatureLocation(start_pos, end_pos)
 				qualifiers = [('rpt_type', 'inverted')]
@@ -801,7 +895,6 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 
 	# Removing intermediate files
 	os.remove(newfile)
-	os.remove("temporal_circular.fasta")
 	os.remove("temp.faa")
 	os.remove("temp_blast.csv")
 	os.remove("crisprfile.txt")
