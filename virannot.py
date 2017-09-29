@@ -137,7 +137,7 @@ def stringSplitByNumbers(x):
 	return [int(y) if y.isdigit() else y for y in l]
 
 # Defining the program version
-version = "0.10.0"
+version = "0.10.1"
 
 # Processing the parameters
 parser = argparse.ArgumentParser(description='Virannot is a automatic de novo viral genome annotator.')
@@ -150,7 +150,7 @@ basic_group.add_argument("--modifiers", dest="modifiers", type=str, required=Tru
 advanced_group = parser.add_argument_group('Advanced options for virannot [OPTIONAL]')
 advanced_group.add_argument("--readlength", dest="read_length", type=int, default=101, help='Read length for the circularity prediction (default: 101 bp)', metavar="INT")
 advanced_group.add_argument("--windowsize", dest="window", type=int, default=100, help='Window size used to determine the origin of replication in circular contigs according to the cumulative GC skew (default: 100 bp)', metavar="INT")
-advanced_group.add_argument("--slidingsize", dest="slide", type=int, default=10, help='Sliding size used to determine the origin of replication in circular contigs according to the cumulative GC skew (default: 10 bp)', metavar="INT")
+advanced_group.add_argument("--slidingsize", dest="slide", type=int, default=10, help='Window size used to determine the origin of replication in circular contigs according to the cumulative GC skew (default: 10 bp)', metavar="INT")
 advanced_group.add_argument("--out", dest="rootoutput", type=str, help='Name of the outputs files (without extension)', metavar="OUTPUTNAME")
 advanced_group.add_argument("--locus", dest="locus", type=str, default='LOC', help='Name of the sequences. If the input is a multiFASTA file, please put a general name as the program will add the number of the contig at the end of the name (Default: %(default)s)', metavar="STRING")
 advanced_group.add_argument("--gff", dest="gffprint", action='store_true', default=False, help='Printing the output as GFF3 file (Default: False)')
@@ -396,7 +396,7 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 
 	# Parsing the results from BLAST
 	with open("temp_blast.csv", "rU") as blastresults:
-		hypotheticalpat = re.compile(r'(((((?i)hypothetical)|(?i)uncharacteri(z|s)ed)) protein)|((?i)ORF)')
+		hypotheticalpat = re.compile(r'(((((?i)hypothetical)|(?i)uncharacteri(z|s)ed|(?i)predicted)) protein)|((?i)ORF|((?i)unnamed protein product|(?i)gp\d+))')
 		reader = csv.DictReader(blastresults, delimiter='\t', fieldnames=['qseqid','sseqid','pident','length','qlen','slen','qstart','qend','evalue','bitscore','stitle'])
 		information_proteins_blast = {}
 		for row in reader:
@@ -436,7 +436,7 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 
 		# Parsing the results from HMMER
 		information_proteins_hmmer = {}
-		hypotheticalpat = re.compile(r'(((((?i)hypothetical)|(?i)uncharacteri(z|s)ed)) protein)|((?i)ORF)')
+		hypotheticalpat = re.compile(r'(((((?i)hypothetical)|(?i)uncharacteri(z|s)ed|(?i)predicted)) protein)|((?i)ORF|((?i)unnamed protein product|(?i)gp\d+))')
 		for singletbl in sorted(glob.glob("*.faa.tbl")):
 			rootname = singletbl.replace(".faa.tbl", "")
 			with open(singletbl) as tblfile:
@@ -534,7 +534,7 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 
 	# Algorithm of decisions (which one: BLAST/HMMER?)
 	multipleprots = {}
-	Hypotheticalpat = re.compile(r'(((((?i)hypothetical)|(?i)uncharacteri(z|s)ed)) protein)|((?i)ORF)')
+	Hypotheticalpat = re.compile(r'(((((?i)hypothetical)|(?i)uncharacteri(z|s)ed|(?i)predicted)) protein)|((?i)ORF|((?i)unnamed protein product|(?i)gp\d+))')
 	if args.nohmmer == False:
 		keylist = information_proteins_hmmer.keys()
 		keylist.sort()
@@ -798,7 +798,11 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 			whole_sequence.annotations['data_file_division'] = args.typedata.upper()
 			whole_sequence.annotations['date'] = strftime("%d-%b-%Y").upper()
 			for protein in sorted(protsdict, key = stringSplitByNumbers):
-				start_pos = SeqFeature.ExactPosition(int(protsdict[protein]['begin'])-1)
+				putative_start = int(protsdict[protein]['begin'])
+				if putative_start == 1:
+					start_pos = SeqFeature.ExactPosition(putative_start)
+				else:
+					start_pos = SeqFeature.ExactPosition(putative_start-1)
 				end_pos = SeqFeature.ExactPosition(protsdict[protein]['end'])
 				feature_location = SeqFeature.FeatureLocation(start_pos, end_pos, strand=protsdict[protein]['strand'])
 				qualifiersgene = OrderedDict([('locus_tag', protsdict[protein]['protein_id'])])
@@ -816,7 +820,11 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 					continue
 				else:
 					while i < lengthlist:
-						start_pos = SeqFeature.ExactPosition(int(subunits[rRNA]['listdata'][i]['begin'])-1)
+						putative_start = int(subunits[rRNA]['listdata'][i]['begin'])
+						if putative_start == 1:
+							start_pos = SeqFeature.ExactPosition(putative_start)
+						else:
+							start_pos = SeqFeature.ExactPosition(putative_start-1)
 						end_pos = SeqFeature.ExactPosition(subunits[rRNA]['listdata'][i]['end'])
 						feature_location = SeqFeature.FeatureLocation(start_pos, end_pos, strand=subunits[rRNA]['listdata'][i]['strand'])
 						new_data_gene = SeqFeature.SeqFeature(feature_location, type = "gene", strand = subunits[rRNA]['listdata'][i]['strand'])
@@ -827,7 +835,11 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 						whole_sequence.features.append(new_data_rRNA)
 						i += 1
 			for tRNA in sorted(tRNAdict, key = stringSplitByNumbers):
-				start_pos = SeqFeature.ExactPosition(int(tRNAdict[tRNA]['begin'])-1)
+				putative_start = int(tRNAdict[tRNA]['begin'])
+				if putative_start == 1:
+					start_pos = SeqFeature.ExactPosition(putative_start)
+				else:
+					start_pos = SeqFeature.ExactPosition(putative_start-1)
 				end_pos = SeqFeature.ExactPosition(tRNAdict[tRNA]['end'])
 				feature_location = SeqFeature.FeatureLocation(start_pos, end_pos, strand=tRNAdict[tRNA]['strand'])
 				new_data_gene = SeqFeature.SeqFeature(feature_location, type = "gene", strand = tRNAdict[tRNA]['strand'])
@@ -837,7 +849,11 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 				new_data_tRNA = SeqFeature.SeqFeature(feature_location, type = "tRNA", strand = tRNAdict[tRNA]['strand'], qualifiers = feature_qualifiers)
 				whole_sequence.features.append(new_data_tRNA)
 			for tmRNA in sorted(tmRNAdict, key = stringSplitByNumbers):
-				start_pos = SeqFeature.ExactPosition(int(tmRNAdict[tmRNA]['begin'])-1)
+				putative_start = int(tmRNAdict[tmRNA]['begin'])
+				if putative_start == 1:
+					start_pos = SeqFeature.ExactPosition(putative_start)
+				else:
+					start_pos = SeqFeature.ExactPosition(putative_start-1)
 				end_pos = SeqFeature.ExactPosition(tmRNAdict[tmRNA]['end'])
 				feature_location = SeqFeature.FeatureLocation(start_pos, end_pos, strand=tmRNAdict[tmRNA]['strand'])
 				new_data_gene = SeqFeature.SeqFeature(feature_location, type = "gene", strand = tmRNAdict[tmRNA]['strand'])
@@ -847,7 +863,11 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 				new_data_tmRNA = SeqFeature.SeqFeature(feature_location, type = "tmRNA", strand = tmRNAdict[tmRNA]['strand'], qualifiers = feature_qualifiers)
 				whole_sequence.features.append(new_data_tmRNA)
 			for CRISPR in sorted(information_CRISPR, key = stringSplitByNumbers):
-				start_pos = SeqFeature.ExactPosition(int(information_CRISPR[CRISPR]['start'])-1)
+				putative_start = int(information_CRISPR[CRISPR]['begin'])
+				if putative_start == 1:
+					start_pos = SeqFeature.ExactPosition(putative_start)
+				else:
+					start_pos = SeqFeature.ExactPosition(putative_start-1)
 				end_pos = SeqFeature.ExactPosition(information_CRISPR[CRISPR]['end'])
 				feature_location = SeqFeature.FeatureLocation(start_pos, end_pos)
 				qualifiers = [('rpt_family', 'CRISPR'), ('rpt_type', 'direct'), ('rpt_unit_range', "%i..%i" % (int(information_CRISPR[CRISPR]['start']), int(information_CRISPR[CRISPR]['repeatend']))), ('rpt_unit_seq', information_CRISPR[CRISPR]['repeatseq'])]
@@ -855,7 +875,11 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 				new_data_CRISPRrepeat = SeqFeature.SeqFeature(feature_location, type = "repeat_region", qualifiers = feature_qualifiers)
 				whole_sequence.features.append(new_data_CRISPRrepeat)
 			for tandem in sorted(information_TRF):
-				start_pos = SeqFeature.ExactPosition(int(information_TRF[tandem]['start'])-1)
+				putative_start = int(information_TRF[tandem]['begin'])
+				if putative_start == 1:
+					start_pos = SeqFeature.ExactPosition(putative_start)
+				else:
+					start_pos = SeqFeature.ExactPosition(putative_start-1)
 				end_pos = SeqFeature.ExactPosition(information_TRF[tandem]['end'])
 				feature_location = SeqFeature.FeatureLocation(start_pos, end_pos)
 				qualifiers = [('rpt_type', 'direct')]
@@ -863,7 +887,11 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 				new_data_tandemrepeat = SeqFeature.SeqFeature(feature_location, type = "repeat_region", qualifiers = feature_qualifiers)
 				whole_sequence.features.append(new_data_tandemrepeat)
 			for inverted in sorted(information_IRF):
-				start_pos = SeqFeature.ExactPosition(int(information_IRF[inverted]['start'])-1)
+				putative_start = int(information_IRF[inverted]['begin'])
+				if putative_start == 1:
+					start_pos = SeqFeature.ExactPosition(putative_start)
+				else:
+					start_pos = SeqFeature.ExactPosition(putative_start-1)
 				end_pos = SeqFeature.ExactPosition(information_IRF[inverted]['end'])
 				feature_location = SeqFeature.FeatureLocation(start_pos, end_pos)
 				qualifiers = [('rpt_type', 'inverted')]
