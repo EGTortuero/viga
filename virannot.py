@@ -863,7 +863,7 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 				new_data_tmRNA = SeqFeature.SeqFeature(feature_location, type = "tmRNA", strand = tmRNAdict[tmRNA]['strand'], qualifiers = feature_qualifiers)
 				whole_sequence.features.append(new_data_tmRNA)
 			for CRISPR in sorted(information_CRISPR, key = stringSplitByNumbers):
-				putative_start = int(information_CRISPR[CRISPR]['begin'])
+				putative_start = int(information_CRISPR[CRISPR]['start'])
 				if putative_start == 1:
 					start_pos = SeqFeature.ExactPosition(putative_start)
 				else:
@@ -875,7 +875,7 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 				new_data_CRISPRrepeat = SeqFeature.SeqFeature(feature_location, type = "repeat_region", qualifiers = feature_qualifiers)
 				whole_sequence.features.append(new_data_CRISPRrepeat)
 			for tandem in sorted(information_TRF):
-				putative_start = int(information_TRF[tandem]['begin'])
+				putative_start = int(information_TRF[tandem]['start'])
 				if putative_start == 1:
 					start_pos = SeqFeature.ExactPosition(putative_start)
 				else:
@@ -887,7 +887,7 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 				new_data_tandemrepeat = SeqFeature.SeqFeature(feature_location, type = "repeat_region", qualifiers = feature_qualifiers)
 				whole_sequence.features.append(new_data_tandemrepeat)
 			for inverted in sorted(information_IRF):
-				putative_start = int(information_IRF[inverted]['begin'])
+				putative_start = int(information_IRF[inverted]['start'])
 				if putative_start == 1:
 					start_pos = SeqFeature.ExactPosition(putative_start)
 				else:
