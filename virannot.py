@@ -270,7 +270,7 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 			seq_ending = str(record.seq[len(record.seq)-args.read_length:len(record.seq)])
 			combined_seqs = SeqRecord(Seq(seq_beginning + seq_ending, IUPAC.ambiguous_dna), id = record.description)
 			SeqIO.write(combined_seqs, "temporal_circular.fasta", "fasta")
-			outputlastz = subprocess.check_output(["lastz", "temporal_circular.fasta", "--self", "--notrivial", "--nomirror", "--format=general-:start1,end1,start2,end2,score,strand1,strand2,identity,length1"]);
+			outputlastz = subprocess.check_output(["lastz", "temporal_circular.fasta", "--self", "--notrivial", "--nomirror", "--format=general-:start1,end1,start2,end2,score,strand1,strand2,identity,length1"])
 			resultslastz = outputlastz.split("\n")
 			for resultlastz in resultslastz:
 				if resultlastz != '':
@@ -282,7 +282,7 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 					strand2 = resultlastz.split()[6]
 					identity = resultlastz.split()[7]
 					length = int(resultlastz.split()[9])
-					if strand1 == strand2 and int(length) > 0.4 * int(args.read_length) and float(fractions.Fraction(identity)) > 0.95 and int(start1) < 5 and int(start2) > int(args.read_length) and int(end1) < int(args.read_length) and int(end2) > int(args.read_length) * 2 * 0.9:
+					if strand1 == strand2 and length > 0.4 * args.read_length and float(fractions.Fraction(identity)) > 0.95 and int(start1) < 5 and int(start2) > args.read_length and int(end1) < args.read_length and int(end2) > args.read_length * 2 * 0.9:
 						genomeshape['genomeshape'] = "circular"
 						try:
 							if genomeshape['identity'] >= float(fractions.Fraction(identity)):
@@ -293,6 +293,15 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 							genomeshape['length'] = length
 					else:
 						continue
+					if strand1 == strand2 and length > 0.4 * args.read_length and float(fractions.Fraction(identity)) > 0.95 and int(start1) < 5 and int(start2) > args.read_length and int(end1) < args.read_length and int(end2) > args.read_length * 2 * 0.9:
+						genomeshape['genomeshape'] = "circular"
+						try:
+							if genomeshape['identity'] >= float(fractions.Fraction(identity)):
+								genomeshape['identity'] = float(fractions.Fraction(identity))
+								genomeshape['length'] = length
+						except KeyError:
+							genomeshape['identity'] = float(fractions.Fraction(identity))
+							genomeshape['length'] = length
 			try:
 				if genomeshape['genomeshape'] == "":
 						genomeshape['genomeshape'] = "linear"
@@ -799,10 +808,7 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 			whole_sequence.annotations['date'] = strftime("%d-%b-%Y").upper()
 			for protein in sorted(protsdict, key = stringSplitByNumbers):
 				putative_start = int(protsdict[protein]['begin'])
-				if putative_start == 1:
-					start_pos = SeqFeature.ExactPosition(putative_start)
-				else:
-					start_pos = SeqFeature.ExactPosition(putative_start-1)
+				start_pos = SeqFeature.ExactPosition(putative_start)
 				end_pos = SeqFeature.ExactPosition(protsdict[protein]['end'])
 				feature_location = SeqFeature.FeatureLocation(start_pos, end_pos, strand=protsdict[protein]['strand'])
 				qualifiersgene = OrderedDict([('locus_tag', protsdict[protein]['protein_id'])])
@@ -821,10 +827,7 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 				else:
 					while i < lengthlist:
 						putative_start = int(subunits[rRNA]['listdata'][i]['begin'])
-						if putative_start == 1:
-							start_pos = SeqFeature.ExactPosition(putative_start)
-						else:
-							start_pos = SeqFeature.ExactPosition(putative_start-1)
+						start_pos = SeqFeature.ExactPosition(putative_start)
 						end_pos = SeqFeature.ExactPosition(subunits[rRNA]['listdata'][i]['end'])
 						feature_location = SeqFeature.FeatureLocation(start_pos, end_pos, strand=subunits[rRNA]['listdata'][i]['strand'])
 						new_data_gene = SeqFeature.SeqFeature(feature_location, type = "gene", strand = subunits[rRNA]['listdata'][i]['strand'])
@@ -836,10 +839,7 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 						i += 1
 			for tRNA in sorted(tRNAdict, key = stringSplitByNumbers):
 				putative_start = int(tRNAdict[tRNA]['begin'])
-				if putative_start == 1:
-					start_pos = SeqFeature.ExactPosition(putative_start)
-				else:
-					start_pos = SeqFeature.ExactPosition(putative_start-1)
+				start_pos = SeqFeature.ExactPosition(putative_start)
 				end_pos = SeqFeature.ExactPosition(tRNAdict[tRNA]['end'])
 				feature_location = SeqFeature.FeatureLocation(start_pos, end_pos, strand=tRNAdict[tRNA]['strand'])
 				new_data_gene = SeqFeature.SeqFeature(feature_location, type = "gene", strand = tRNAdict[tRNA]['strand'])
@@ -850,10 +850,7 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 				whole_sequence.features.append(new_data_tRNA)
 			for tmRNA in sorted(tmRNAdict, key = stringSplitByNumbers):
 				putative_start = int(tmRNAdict[tmRNA]['begin'])
-				if putative_start == 1:
-					start_pos = SeqFeature.ExactPosition(putative_start)
-				else:
-					start_pos = SeqFeature.ExactPosition(putative_start-1)
+				start_pos = SeqFeature.ExactPosition(putative_start)
 				end_pos = SeqFeature.ExactPosition(tmRNAdict[tmRNA]['end'])
 				feature_location = SeqFeature.FeatureLocation(start_pos, end_pos, strand=tmRNAdict[tmRNA]['strand'])
 				new_data_gene = SeqFeature.SeqFeature(feature_location, type = "gene", strand = tmRNAdict[tmRNA]['strand'])
@@ -864,10 +861,7 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 				whole_sequence.features.append(new_data_tmRNA)
 			for CRISPR in sorted(information_CRISPR, key = stringSplitByNumbers):
 				putative_start = int(information_CRISPR[CRISPR]['start'])
-				if putative_start == 1:
-					start_pos = SeqFeature.ExactPosition(putative_start)
-				else:
-					start_pos = SeqFeature.ExactPosition(putative_start-1)
+				start_pos = SeqFeature.ExactPosition(putative_start)
 				end_pos = SeqFeature.ExactPosition(information_CRISPR[CRISPR]['end'])
 				feature_location = SeqFeature.FeatureLocation(start_pos, end_pos)
 				qualifiers = [('rpt_family', 'CRISPR'), ('rpt_type', 'direct'), ('rpt_unit_range', "%i..%i" % (int(information_CRISPR[CRISPR]['start']), int(information_CRISPR[CRISPR]['repeatend']))), ('rpt_unit_seq', information_CRISPR[CRISPR]['repeatseq'])]
@@ -876,10 +870,7 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 				whole_sequence.features.append(new_data_CRISPRrepeat)
 			for tandem in sorted(information_TRF):
 				putative_start = int(information_TRF[tandem]['start'])
-				if putative_start == 1:
-					start_pos = SeqFeature.ExactPosition(putative_start)
-				else:
-					start_pos = SeqFeature.ExactPosition(putative_start-1)
+				start_pos = SeqFeature.ExactPosition(putative_start)
 				end_pos = SeqFeature.ExactPosition(information_TRF[tandem]['end'])
 				feature_location = SeqFeature.FeatureLocation(start_pos, end_pos)
 				qualifiers = [('rpt_type', 'direct')]
@@ -888,10 +879,7 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 				whole_sequence.features.append(new_data_tandemrepeat)
 			for inverted in sorted(information_IRF):
 				putative_start = int(information_IRF[inverted]['start'])
-				if putative_start == 1:
-					start_pos = SeqFeature.ExactPosition(putative_start)
-				else:
-					start_pos = SeqFeature.ExactPosition(putative_start-1)
+				start_pos = SeqFeature.ExactPosition(putative_start)
 				end_pos = SeqFeature.ExactPosition(information_IRF[inverted]['end'])
 				feature_location = SeqFeature.FeatureLocation(start_pos, end_pos)
 				qualifiers = [('rpt_type', 'inverted')]
