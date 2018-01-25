@@ -1,5 +1,5 @@
-<tool id="virannot" name="virannot" version="0.7.1">
-    <description>de novo viral genome annotator</description>
+<tool id="viga" name="viga" version="0.7.1">
+    <description>de novo VIral Genome Annotator</description>
     <requirements>
         <container type="docker">vimalkvn/virannot</container>
     </requirements>
@@ -205,33 +205,33 @@ function of their proteins using BLAST and HMMER.
    working on the server where this Galaxy instance is setup. The
    **galaxy** user should be part of the **docker** group.
 
-#. Download or clone the VirAnnot_ Github repository (as a submodule)
+#. Download or clone the VIGA_ Github repository (as a submodule)
    in to the ``tools`` directory.
 
 #. Update ``config/tool_conf.xml`` like this::
 
      <section id="annotation" name="Annotation">
-       <tool file="virannot/wrapper.xml" />
+       <tool file="viga/wrapper.xml" />
      </section>
 
 #. Update ``config/tool_data_table_conf.xml`` to add location of loc
    files::
 
      <!-- virannot databases -->
-     <table name="virannot_blastdb" comment_char="#">
+     <table name="viga_blastdb" comment_char="#">
        <columns>value, dbkey, name, path</columns>
-       <file path="tool-data/virannot_blastdb.loc" />
+       <file path="tool-data/viga_blastdb.loc" />
      </table>
-     <table name="virannot_rfamdb" comment_char="#">
+     <table name="viga_rfamdb" comment_char="#">
        <columns>value, dbkey, name, path</columns>
-       <file path="tool-data/virannot_rfamdb.loc" />
+       <file path="tool-data/viga_rfamdb.loc" />
      </table>
-     <table name="virannot_hmmdb" comment_char="#">
+     <table name="viga_hmmdb" comment_char="#">
        <columns>value, dbkey, name, path</columns>
-       <file path="tool-data/virannot_hmmdb.loc" />
+       <file path="tool-data/viga_hmmdb.loc" />
      </table>
 
-#. Copy ``.loc`` files from ``virannot/tool-data`` to
+#. Copy ``.loc`` files from ``viga/tool-data`` to
    ``galaxy/tool-data`` and update the database paths within those
    files.
 
@@ -241,7 +241,7 @@ function of their proteins using BLAST and HMMER.
 
 **Output files**
 
-VirAnnot creates the following output files:
+VIGA creates the following output files:
 
 * tbl - Table file with all protein information.
 * gbk - GenBank format file with annotations.
@@ -253,7 +253,7 @@ VirAnnot creates the following output files:
 
 **License and citation**
 
-VirAnnot_ and this Galaxy wrapper - `GPLv3 <https://www.gnu.org/copyleft/gpl.html>`_.
+VIGA_ and this Galaxy wrapper - `GPLv3 <https://www.gnu.org/copyleft/gpl.html>`_.
 
 
 Galaxy
@@ -275,7 +275,7 @@ Galaxy
 
 You can use this tool only if you agree to the license terms of: `virannot`_.
 
-.. _VirAnnot: https://github.com/EGTortuero/virannot
+.. _VIGA: https://github.com/EGTortuero/viga
 
 ]]></help>
 <!--    <citations>
