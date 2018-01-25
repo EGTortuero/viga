@@ -124,15 +124,15 @@ By default, the program will use the translation table no. 11</td></tr>
 ## Examples
 An example of execution (using BLAST and HMMER) is:
 
-	python virannot.py --input eukarya.fasta --blastdb databases/blast/nr/nr --hmmdb databases/UniProt/uniprot_trembl.fasta --rfamdb databases/rfam/Rfam.cm --gcode 1 --out eukarya_BENCHMARK --modifiers ../modifiers.txt --threads 10
+	python VIGA.py --input eukarya.fasta --blastdb databases/blast/nr/nr --hmmdb databases/UniProt/uniprot_trembl.fasta --rfamdb databases/rfam/Rfam.cm --gcode 1 --out eukarya_BENCHMARK --modifiers ../modifiers.txt --threads 10
 
 Another example (but this time using BLAST but not HMMER - "fast mode") is:
 
-	python virannot.py --input bacteria.fasta --blastdb databases/blast/nr/nr --nohmmer --rfamdb databases/rfam/Rfam.cm --out bacteria_BENCHMARK --modifiers ../modifiers.txt --threads 10
+	python VIGA.py --input bacteria.fasta --blastdb databases/blast/nr/nr --nohmmer --rfamdb databases/rfam/Rfam.cm --out bacteria_BENCHMARK --modifiers ../modifiers.txt --threads 10
 	
 Finally, an example using DIAMOND and not HMMER ("ultrafast mode") is:
 
-	python virannot.py --input archaea.fasta --noblast --diamonddb databases/diamond/nr --nohmmer --rfamdb databases/rfam/Rfam.cm --out archaea_BENCHMARK --modifiers ../modifiers.txt --threads 10
+	python VIGA.py --input archaea.fasta --noblast --diamonddb databases/diamond/nr --nohmmer --rfamdb databases/rfam/Rfam.cm --out archaea_BENCHMARK --modifiers ../modifiers.txt --threads 10
 
 ## Galaxy wrapper
 VIGA can be integrated into [Galaxy](https://galaxyproject.org) using the wrapper included in this repository.
@@ -153,18 +153,18 @@ VIGA can be integrated into [Galaxy](https://galaxyproject.org) using the wrappe
 
 4. Update ``config/tool_data_table_conf.xml`` to add location of loc files
 
-		<!-- virannot databases -->
-		<table name="virannot_blastdb" comment_char="#">
+		<!-- VIGA databases -->
+		<table name="viga_blastdb" comment_char="#">
 			<columns>value, dbkey, name, path</columns>
-			<file path="tool-data/virannot_blastdb.loc" />
+			<file path="tool-data/viga_blastdb.loc" />
 		</table>
-		<table name="virannot_rfamdb" comment_char="#">
+		<table name="viga_rfamdb" comment_char="#">
 			<columns>value, dbkey, name, path</columns>
-			<file path="tool-data/virannot_rfamdb.loc" />
+			<file path="tool-data/viga_rfamdb.loc" />
 		</table>
-		<table name="virannot_hmmdb" comment_char="#">
+		<table name="viga_hmmdb" comment_char="#">
 			<columns>value, dbkey, name, path</columns>
-			<file path="tool-data/virannot_hmmdb.loc" />
+			<file path="tool-data/viga_hmmdb.loc" />
 		</table>
 
 5. Copy ``.loc`` files from ``virannot/tool-data`` to ``galaxy/tool-data`` and update the database paths within those
