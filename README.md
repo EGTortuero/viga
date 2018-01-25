@@ -1,7 +1,7 @@
-# VirAnnot
-De novo automatic Viral Annotation
+# VIGA
+De novo Viral Genome Annotator
 
-VirAnnot is a script written in Python 2.7 that annotates viral genomes automatically (using a de novo algorithm) and predict the function of their proteins using BLAST and HMMER.
+VIGA is a script written in Python 2.7 that annotates viral genomes automatically (using a de novo algorithm) and predict the function of their proteins using BLAST and HMMER.
 
 ## REQUIREMENTS:
 
@@ -42,7 +42,7 @@ Additionally, before running the "ultrafast" mode, you need to convert the FASTA
 
 When using this program, you must to cite their use:
 
-	VirAnnot v. 0.10.1 (https://github.com/EGTortuero/virannot)
+	VIGA v. 0.10.1 (https://github.com/EGTortuero/virannot)
 
 ## PARAMETERS:
 
@@ -135,7 +135,7 @@ Finally, an example using DIAMOND and not HMMER ("ultrafast mode") is:
 	python virannot.py --input archaea.fasta --noblast --diamonddb databases/diamond/nr --nohmmer --rfamdb databases/rfam/Rfam.cm --out archaea_BENCHMARK --modifiers ../modifiers.txt --threads 10
 
 ## Galaxy wrapper
-VirAnnot can be integrated into [Galaxy](https://galaxyproject.org) using the wrapper included in this repository.
+VIGA can be integrated into [Galaxy](https://galaxyproject.org) using the wrapper included in this repository.
 
 
 ### Installation
