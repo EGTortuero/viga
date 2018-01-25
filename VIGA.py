@@ -2,7 +2,7 @@
 
 # -*- coding: utf-8 -*-
 
-# Virannot - De-novo viral genome annotator
+# VIGA - De-novo VIral Genome Annotator
 #
 # Copyright (C) 2017 - Enrique Gonzalez-Tortuero
 #                      Vimalkumar Velayudhan
@@ -197,7 +197,7 @@ if args.nohmmer == False and args.hmmdatabase == None:
 		sys.exit('You MUST specify HMMER database using the parameter --hmmdb if you are not using --nohmmer option')
 
 # Printing the header of the program 
-eprint("This is VirAnnot %s" % str(version))
+eprint("This is VIGA %s" % str(version))
 eprint("Written by Enrique Gonzalez Tortuero & Vimalkumar Velayudhan")
 eprint("Homepage is https://github.com/EGTortuero/virannot")
 eprint("Local time: ", strftime("%a, %d %b %Y %H:%M:%S"))
