@@ -26,7 +26,7 @@ Before using this script, the following Python modules and programs should be in
 	- Tandem Repeats Finder (TRF; Benson 1999): it is used to predict the tandem repeats in your contig. This program is freely available at https://tandem.bu.edu/trf/trf.html under a custom licence.
 	- Inverted Repeats Finder (IRF; Warburton et al. 2004): it is used to predict the inverted repeats in your contig. This program is freely available at https://tandem.bu.edu/irf/irf.download.html under a custom licence.
 
-Although you can install the programs manually, we strongly recommend the use of the Docker image to create an environment for virannot. The link to the Docker image is https://github.com/vimalkvn/sysadminbio/tree/master/docker-images/virannot
+Although you can install the programs manually, we strongly recommend the use of the Docker image to create an environment for VIGA. The link to the Docker image is https://hub.docker.com/r/vimalkvn/viga/
 
 However, you will need to download the databases for BLAST, HHMER and INFERNAL:
 * BLAST DBs: https://ftp.ncbi.nlm.nih.gov/blast/db/
@@ -42,7 +42,7 @@ Additionally, before running the "ultrafast" mode, you need to convert the FASTA
 
 When using this program, you must to cite their use:
 
-	VIGA v. 0.10.1 (https://github.com/EGTortuero/virannot)
+	VIGA v. 0.10.1 (https://github.com/EGTortuero/viga)
 
 ## PARAMETERS:
 
@@ -148,7 +148,7 @@ VIGA can be integrated into [Galaxy](https://galaxyproject.org) using the wrappe
 3. Update ``config/tool_conf.xml`` like this
 
 		<section id="annotation" name="Annotation">
-			<tool file="virannot/wrapper.xml" />
+			<tool file="viga/wrapper.xml" />
 		</section>
 
 4. Update ``config/tool_data_table_conf.xml`` to add location of loc files
@@ -167,7 +167,7 @@ VIGA can be integrated into [Galaxy](https://galaxyproject.org) using the wrappe
 			<file path="tool-data/viga_hmmdb.loc" />
 		</table>
 
-5. Copy ``.loc`` files from ``virannot/tool-data`` to ``galaxy/tool-data`` and update the database paths within those
+5. Copy ``.loc`` files from ``viga/tool-data`` to ``galaxy/tool-data`` and update the database paths within those
    files.
 
 6. Restart Galaxy. The tool will be available under the "Annotation" section.
