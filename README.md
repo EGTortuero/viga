@@ -18,7 +18,7 @@ Before using this script, the following Python modules and programs should be in
 	- LASTZ (Harris 2007): it is used to predict the circularity of the contigs. The program is publicly available at https://github.com/lastz/lastz under the MIT licence.
 	- Prodigal (Hyatt et al. 2010): it is used to predict the ORFs. When the contig is smaller than 20,000 bp, MetaProdigal (Hyatt et al. 2012) is automatically activated instead of normal Prodigal. This program is publicly available at https://github.com/hyattpd/prodigal/releases/ under the GPLv3 licence.
 	- BLAST+ (Camacho et al. 2008): it is used to predict the function of the predicted proteins according to homology. This suite is publicly available at ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/ under the GPLv2 licence. Databases are available at ftp://ftp.ncbi.nlm.nih.gov/blast/db/
-	- DIAMOND (Buchfink et al. 2015): it is used to preduct the function of the predicted proteins according to homology when "--noblast" parameter is used. This program is publicly available at https://github.com/bbuchfink/diamond under the GPLv3 licence. Databases must to be created from FASTA files according to their instructions before running.
+	- DIAMOND (Buchfink et al. 2015): it is used to predict the function of proteins according to homology when "--noblast" parameter is used. This program is publicly available at https://github.com/bbuchfink/diamond under the GPLv3 licence. Databases must be created from FASTA files according to their instructions before running.
 	- HMMER (Finn et al. 2011): it is used to predict the function of the predicted proteins according to Hidden Markov Models. This suite is publicly available at http://hmmer.org/ under the GPLv3 licence. Databases must be in FASTA format and examples of potential databases are UniProtKB (ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/complete/uniprot_trembl.fasta.gz) or PFAM (http://ftp.ebi.ac.uk/pub/databases/Pfam/current_release/Pfam-A.fasta.gz).
 	- INFERNAL (Nawrocki and Eddy 2013): it is used to predict ribosomal RNA in the contigs when using the RFAM database (Nawrocki et al. 2015). This program is publicly available at http://eddylab.org/infernal/ under the BSD licence and RFAM database is available at ftp://ftp.ebi.ac.uk/pub/databases/Rfam/
 	- ARAGORN (Laslett and Canback 2004): it is used to predict tRNA sequences in the contig. This program is publicly available at http://mbio-serv2.mbioekol.lu.se/ARAGORN/ under the GPLv2 licence.
@@ -28,7 +28,7 @@ Before using this script, the following Python modules and programs should be in
 
 Although you can install the programs manually, we strongly recommend the use of the Docker image to create an environment for VIGA. The link to the Docker image is https://hub.docker.com/r/vimalkvn/viga/
 
-However, you will need to download the databases for BLAST, HHMER and INFERNAL:
+However, you will need to download the databases for BLAST, HMMER, and INFERNAL:
 * BLAST DBs: https://ftp.ncbi.nlm.nih.gov/blast/db/
 * BLAST FASTA (DIAMOND): https://ftp.ncbi.nlm.nih.gov/blast/db/FASTA
 * RFAM (INFERNAL): http://ftp.ebi.ac.uk/pub/databases/Rfam/
@@ -40,13 +40,13 @@ Additionally, before running the "ultrafast" mode, you need to convert the FASTA
 
 	diamond makedb --in nr -d nr
 
-When using this program, you must to cite their use:
+When using this program, you must cite their use:
 
 	VIGA v. 0.10.1 (https://github.com/EGTortuero/viga)
 
 ## PARAMETERS:
 
-The program has the following two kind of arguments:
+The program has the following two types of arguments:
 
 ### Mandatory parameters:
 
@@ -186,9 +186,9 @@ VIGA can be integrated into [Galaxy](https://galaxyproject.org) using the wrappe
 * v 0.7.0 - Added the "--fast" parameter. In this case, the program will launch BLAST (but not PHMMER) to annotate protein function. In this case, the program will be as fast as Prokka (Seemann 2014) but the annotations will not be accurate. As a consequence of this new parameter, the "--hmmdb" parameter is only mandatory when this flag is NOT used (as by default).
 * v 0.6.2 - Removed the "--noparallel" parameter. After doing time benchmarks to test the speed of BLAST and HMMER when they are run using the multithreading option and as a parallel program, we found that BLAST tends to be faster using multithreading option while HMMER had the opposite behavior. For that, we decided to consider only the parallelization of HMMER and to run BLAST using multiple threads. 
 * v 0.6.1 - Fixed issue with parallel HMMER (the program tend to take all available CPUs independently of the parsed arguments) and with the BLAST/HMMER decision trees (typos).
-* v 0.6.0 - Replaced HHSUITE by HMMER 3.1 to predict protein function according to Hidden Markov Models. In a recent benchmark (as well as internal ones), we found that HHPred tends to be the slowest program to predict protein function (compared with PHMMER and BLASTP). Additionally, HMMER had a high accuracy when proteins are annotated (Saripella et al. 2016). Moreover, it has the advantage that the databases must be in FASTA format (such UniProt and, even, PFAM), which it is a standard format. For all these reasons, we replaced HHSUITE by HMMER 3.1. Additionally, fixed small issues related with the Genbank file (omission of the contig topology as well as the name of the locus).
-* v 0.5.0 - Implemented PILERCR to predict CRISPR repeats regions. Additionally, fixed errors in the rRNA prediction and inverted and tandem repeats.
-* v 0.4.0 - Replaced RNAmmer v 1.2. by INFERNAL 1.1 + RFAM to predict rRNA in the contigs. In this case, you must to specify where you have downloaded the RFAM database using the "--rfamdb" option.
+* v 0.6.0 - Replaced HHSUITE by HMMER 3.1 to predict protein function according to Hidden Markov Models. In a recent benchmark (as well as internal ones), we found that HHPred tends to be the slowest program to predict protein function (compared with PHMMER and BLASTP). Additionally, HMMER had a high accuracy when proteins are annotated (Saripella et al. 2016). Moreover, it has the advantage that the databases must be in FASTA format (such UniProt and, even, PFAM), which it is a standard format. For all these reasons, we replaced HHSUITE by HMMER 3.1. Additionally, fixed small issues related to the GenBank file (omission of the contig topology as well as the name of the locus).
+* v 0.5.0 - Implemented PILER-CR to predict CRISPR repeats regions. Additionally, fixed errors in the rRNA prediction and inverted and tandem repeats.
+* v 0.4.0 - Replaced RNAmmer v 1.2. by INFERNAL 1.1 + RFAM to predict rRNA in the contigs. In this case, you must specify where you have downloaded the RFAM database using the "--rfamdb" option.
 * v 0.3.0 - Implemented RNAmmer v 1.2 to predict rRNA in the contigs. If such program is able to predict ribosomal genes, a warning is printed (as viral sequences do not have ribosomal genes).
 * v 0.2.0 - Added parallelization of BLAST and HHSUITE. To do that, GNU Parallel (Tange 2011) is required. To disable this option, run the program with the "--noparallel" option.
 * v 0.1.0 - Original version of the program.
