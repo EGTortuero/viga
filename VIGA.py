@@ -29,6 +29,7 @@ import fractions
 import glob
 import numpy
 import os
+import os.path
 import re
 import sys
 import shutil
@@ -137,17 +138,17 @@ def stringSplitByNumbers(x):
 	return [int(y) if y.isdigit() else y for y in l]
 
 # Defining the program version
-version = "0.10.1"
+version = "0.10.2"
 
 # Processing the parameters
-parser = argparse.ArgumentParser(description='Virannot is a automatic de novo viral genome annotator.')
-basic_group = parser.add_argument_group('Basic options for virannot [REQUIRED]')
+parser = argparse.ArgumentParser(description='VIGA is an automatic de novo VIral Genome Annotator.')
+basic_group = parser.add_argument_group('Basic options for VIGA [REQUIRED]')
 
 basic_group.add_argument("--input", dest="inputfile", type=str, required=True, help='Input file as a FASTA file', metavar="FASTAFILE")
 basic_group.add_argument("--rfamdb", dest="rfamdatabase", type=str, required=True, help='RFAM Database that will be used for the ribosomal RNA prediction. RFAMDB should be in the format "/full/path/to/rfamdb/Rfam.cm" and must be compressed accordingly (see INFERNAL manual) before running the script.', metavar="RFAMDB")
 basic_group.add_argument("--modifiers", dest="modifiers", type=str, required=True, help='Input file as a plain text file with the modifiers per every FASTA header according to SeqIn (https://www.ncbi.nlm.nih.gov/Sequin/modifiers.html). All modifiers must be written in a single line and are separated by a single space character. No space should be placed besides the = sign. For example: [organism=Serratia marcescens subsp. marcescens] [sub-species=marcescens] [strain=AH0650_Sm1] [topology=linear] [moltype=DNA] [tech=wgs] [gcode=11] [country=Australia] [isolation-source=sputum]. This line will be copied and printed along with the record name as the definition line of every contig sequence.', metavar="TEXTFILE")
 
-advanced_group = parser.add_argument_group('Advanced options for virannot [OPTIONAL]')
+advanced_group = parser.add_argument_group('Advanced options for VIGA [OPTIONAL]')
 advanced_group.add_argument("--readlength", dest="read_length", type=int, default=101, help='Read length for the circularity prediction (default: 101 bp)', metavar="INT")
 advanced_group.add_argument("--windowsize", dest="window", type=int, default=100, help='Window size used to determine the origin of replication in circular contigs according to the cumulative GC skew (default: 100 bp)', metavar="INT")
 advanced_group.add_argument("--slidingsize", dest="slide", type=int, default=10, help='Window size used to determine the origin of replication in circular contigs according to the cumulative GC skew (default: 10 bp)', metavar="INT")
@@ -343,7 +344,8 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 			else:
 				eprint("As the program was unable to predict the origin of replication, %s was considered as is without correcting!" % record.id)
 				os.rename("temp2.fasta", newfile)
-		os.remove("temp2.fasta")
+		if os.path.isfile("temp2.fasta"):
+			os.remove("temp2.fasta")
 
 	# Predicting genes using PRODIGAL
 	eprint("\nRunning Prodigal to predict the genes in %s" % newfile)
