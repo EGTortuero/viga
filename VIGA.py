@@ -138,7 +138,7 @@ def stringSplitByNumbers(x):
 	return [int(y) if y.isdigit() else y for y in l]
 
 # Defining the program version
-version = "0.10.2"
+version = "0.10.3"
 
 # Processing the parameters
 parser = argparse.ArgumentParser(description='VIGA is an automatic de novo VIral Genome Annotator.')
@@ -369,6 +369,9 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 		for record in sequences:
 			record.seq = record.seq.rstrip("*")
 			SeqIO.write(record, correctedfaa, "fasta")
+			
+	faa_file = "%s.faa" % newfile # TO DEBUG
+	shutil.copyfile("temp.faa", faa_file) # TO DEBUG
 	os.remove("pretemp.faa")
 
 	# Predicting the function of the proteins based on homology using BLAST
