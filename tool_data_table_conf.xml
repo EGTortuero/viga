@@ -12,8 +12,8 @@
         <columns>value, dbkey, name, path</columns>
         <file path="tool-data/viga_rfamdb.loc" />
     </table>
-    <table name="viga_phmmdb" comment_char="#">
+    <table name="viga_hmmdb" comment_char="#">
         <columns>value, dbkey, name, path</columns>
-        <file path="tool-data/viga_phmmdb.loc" />
+        <file path="tool-data/viga_hmmdb.loc" />
     </table>
 </tables>
