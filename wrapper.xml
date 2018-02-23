@@ -1,13 +1,13 @@
-<tool id="viga" name="viga" version="0.7.1">
+<tool id="viga" name="viga" version="0.10.3">
     <description>de novo VIral Genome Annotator</description>
     <requirements>
-        <container type="docker">vimalkvn/virannot</container>
+        <container type="docker">vimalkvn/viga</container>
     </requirements>
     <stdio>
         <exit_code range="1:" />
     </stdio>
     <command><![CDATA[
-python $__tool_directory__/virannot.py
+python $__tool_directory__/VIGA.py
 --input $input
 --rfamdb $rfamdb.fields.path
 --modifiers $modifiers
@@ -68,7 +68,7 @@ python $__tool_directory__/virannot.py
     <inputs>
         <param name="input" type="data" format="fasta" label="(Viral) contigs to annotate" help="Input file as a FASTA file. It can contain multiple sequences (e.g. metagenomic contigs)" />
         <param name="rfamdb" type="select" label="RFAM database used for ribosomal RNA prediction">
-            <options from_data_table="virannot_rfamdb">
+            <options from_data_table="viga_rfamdb">
                 <filter type="sort_by" column="2"/>
                 <validator type="no_options" message="No indexes are available for the selected input dataset"/>
             </options>
@@ -120,7 +120,7 @@ python $__tool_directory__/virannot.py
 	  </param>
 	  <when value="yes">
 	    <param name="hmmdb" type="select" label="PHMMER database to use for protein function prediction">
-	      <options from_data_table="virannot_hmmdb">
+	      <options from_data_table="viga_hmmdb">
 		<filter type="sort_by" column="2"/>
 		<validator type="no_options" message="No indexes are available for the selected input dataset"/>
 	      </options>
@@ -134,7 +134,7 @@ python $__tool_directory__/virannot.py
 	  </param>
 	  <when value="yes">
 	    <param name="diamonddb" type="select" label="DIAMOND database" help="DIAMOND Protein Database that will be used for the protein function prediction">
-	      <options from_data_table="virannot_diamonddb">
+	      <options from_data_table="viga_diamonddb">
 		<filter type="sort_by" column="2"/>
 		<validator type="no_options" message="No indexes are available for the selected input dataset"/>
 	      </options>
@@ -142,7 +142,7 @@ python $__tool_directory__/virannot.py
  	  </when>
 	  <when value="no">
             <param name="blastdb" type="select" label="BLAST Database" help="BLAST Protein Database that will be used for the protein function prediction">
-              <options from_data_table="virannot_blastdb">
+              <options from_data_table="viga_blastdb">
                 <filter type="sort_by" column="2"/>
                 <validator type="no_options" message="No indexes are available for the selected input dataset"/>
               </options>
@@ -189,9 +189,9 @@ python $__tool_directory__/virannot.py
         </test>
     </tests>
     <help><![CDATA[
-**About VirAnnot**
+**About VIGA**
 
-VirAnnot_ is a script written in Python 2.7 that annotates viral
+VIGA_ is a script written in Python 2.7 that annotates viral
 genomes automatically (using a de novo algorithm) and predict the
 function of their proteins using BLAST and HMMER.
 
@@ -199,43 +199,60 @@ function of their proteins using BLAST and HMMER.
 
 **About this Galaxy wrapper**
 
-*Installation*
+**Requirements**
 
-#. `Docker <https://www.docker.com>`_ should first be installed and
-   working on the server where this Galaxy instance is setup. The
-   **galaxy** user should be part of the **docker** group.
+`Docker <https://www.docker.com>`_ should first be installed and working on the
+server where this Galaxy instance is setup. The user running Galaxy should be
+part of the **docker** user group.
 
 #. Download or clone the VIGA_ Github repository (as a submodule)
    in to the ``tools`` directory.
 
-#. Update ``config/tool_conf.xml`` like this::
+**Configuration**
 
-     <section id="annotation" name="Annotation">
-       <tool file="viga/wrapper.xml" />
-     </section>
+**Update database paths in .loc files**
 
-#. Update ``config/tool_data_table_conf.xml`` to add location of loc
-   files::
+Edit the following files in the **tool-data** directory and add paths to
+corresponding databases:
 
-     <!-- virannot databases -->
-     <table name="viga_blastdb" comment_char="#">
-       <columns>value, dbkey, name, path</columns>
-       <file path="tool-data/viga_blastdb.loc" />
-     </table>
-     <table name="viga_rfamdb" comment_char="#">
-       <columns>value, dbkey, name, path</columns>
-       <file path="tool-data/viga_rfamdb.loc" />
-     </table>
-     <table name="viga_hmmdb" comment_char="#">
-       <columns>value, dbkey, name, path</columns>
-       <file path="tool-data/viga_hmmdb.loc" />
-     </table>
+* viga_blastdb.loc
+* viga_diamonddb.loc
+* viga_rfamdb.loc
+* viga_hmmdb.loc
 
-#. Copy ``.loc`` files from ``viga/tool-data`` to
-   ``galaxy/tool-data`` and update the database paths within those
-   files.
+**Create or update the Galaxy job configuration file**
 
-#. Restart Galaxy.
+If the file **config/job_conf.xml** does not exist, create it by copying the
+template **config/job_conf.xml.sample_basic** in the Galaxy directory. Then
+add a Docker destination for viga. Change ``/data/databases`` under
+``docker_volumes`` to the location where your databases are stored. Here is
+an example::
+
+	<?xml version="1.0"?>
+	<!-- A sample job config that explicitly configures job running the way it is configured by default (if there is no explicit config). -->
+	<job_conf>
+	    <plugins>
+		<plugin id="local" type="runner" load="galaxy.jobs.runners.local:LocalJobRunner" workers="4"/>
+	    </plugins>
+	    <handlers>
+		<handler id="main"/>
+	    </handlers>
+	    <destinations default="local">
+		<destination id="local" runner="local"/>
+		<destination id="docker" runner="local">
+			<param id="docker_enabled">true</param>
+			<param id="docker_sudo">false</param>
+			<param id="docker_auto_rm">true</param>
+			<param id="docker_volumes">$defaults,/data/databases:ro</param>
+		</destination>
+	    </destinations>
+	    <tools>
+	      <tool id="viga" destination="docker"/>
+	    </tools>
+	</job_conf>
+
+
+**Restart Galaxy**. The tool will now be ready to use.
    
 ----
 
@@ -273,7 +290,7 @@ Galaxy
   a platform for interactive large-scale genome analysis." 
   Genome Research. 2005 Oct; 15(10):1451-5.
 
-You can use this tool only if you agree to the license terms of: `virannot`_.
+You can use this tool only if you agree to the license terms of: `VIGA`_.
 
 .. _VIGA: https://github.com/EGTortuero/viga
 
