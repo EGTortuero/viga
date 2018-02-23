@@ -148,41 +148,40 @@ part of the **docker** user group.
 1. Download or clone this repository (as a submodule) in the **tools**
    directory of the Galaxy installation.
 
-2. Update **config/tool_conf.xml** to add the VIGA wrapper in the "Annotation"
-   section of the tool panel.
+2. Update **config/tool_conf.xml** to add the VIGA wrapper in a relevant section of the tool panel. For example, "Annotation".
 
-	<section id="annotation" name="Annotation">
-		<tool file="viga/wrapper.xml" />
-	</section>
+		<section id="annotation" name="Annotation">
+			<tool file="viga/wrapper.xml" />
+		</section>
 
 3. Copy (or update the file if it is already present) the included
    **tool_data_table_conf.xml.sample** file to
    **config/tool_data_table_conf.xml**.
 
-	<!-- VIGA databases -->
-	<tables>
-	    <table name="viga_blastdb" comment_char="#">
-	        <columns>value, dbkey, name, path</columns>
-	        <file path="tool-data/viga_blastdb.loc" />
-	    </table>
-	    <table name="viga_diamonddb" comment_char="#">
-	        <columns>value, dbkey, name, path</columns>
-	        <file path="tool-data/viga_diamonddb.loc" />
-	    </table>
-	    <table name="viga_rfamdb" comment_char="#">
-	        <columns>value, dbkey, name, path</columns>
-	        <file path="tool-data/viga_rfamdb.loc" />
-	    </table>
-	    <table name="viga_hmmdb" comment_char="#">
-	        <columns>value, dbkey, name, path</columns>
-	        <file path="tool-data/viga_hmmdb.loc" />
-	    </table>
-	</tables>
+		<!-- VIGA databases -->
+		<tables>
+		    <table name="viga_blastdb" comment_char="#">
+			<columns>value, dbkey, name, path</columns>
+			<file path="tool-data/viga_blastdb.loc" />
+		    </table>
+		    <table name="viga_diamonddb" comment_char="#">
+			<columns>value, dbkey, name, path</columns>
+			<file path="tool-data/viga_diamonddb.loc" />
+		    </table>
+		    <table name="viga_rfamdb" comment_char="#">
+			<columns>value, dbkey, name, path</columns>
+			<file path="tool-data/viga_rfamdb.loc" />
+		    </table>
+		    <table name="viga_hmmdb" comment_char="#">
+			<columns>value, dbkey, name, path</columns>
+			<file path="tool-data/viga_hmmdb.loc" />
+		    </table>
+		</tables>
 
 4. Copy the **.loc.sample** files from **viga/tool-data** to **galaxy/tool-data**
    and rename them as **.loc**. For example:
 
-	viga_blastdb.loc.sample -> viga_blastdb.loc
+		viga_blastdb.loc.sample -> viga_blastdb.loc
 
 #### Update database paths in .loc files
 
@@ -226,7 +225,7 @@ an example:
 	</job_conf>
 
 
-Restart Galaxy. The tool will now be ready to use.
+**Restart Galaxy**. The tool will now be ready to use.
 
 
 ## HISTORY OF THE SOURCE CODE:
