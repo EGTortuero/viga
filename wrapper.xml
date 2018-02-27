@@ -23,11 +23,11 @@ python $__tool_directory__/VIGA.py
 #if $readlength
     --readlength $readlength
 #end if
-#if $windowlength
-    --windowlength $windowlength
+#if $windowsize
+    --windowsize $windowsize
 #end if
-#if $slidelength
-    --slidelength $slidelength
+#if $slidingsize
+    --slidingsize $slidingsize
 #end if
 #if $locus
     --locus $locus
@@ -53,16 +53,17 @@ python $__tool_directory__/VIGA.py
 #if $blastexh
     --blastexh
 #end if
-#if str($use_diamond)
+#if str($homologysearch.use_diamond) == "yes":
    --noblast
    --diamonddb $homologysearch.diamonddb.fields.path
 #else
    --blastdb $homologysearch.blastdb.fields.path
 #end if
-#if str($use_phmmer)
-   --nohmmer
+#if str($hmmsearch.use_phmmer) == "yes":
   --hmmdb $hmmsearch.hmmdb.fields.path
   --hmmerevalue $hmmsearch.hmmerevalue
+#else
+  --nohmmer
 #end if
 ]]></command>
     <inputs>
@@ -107,8 +108,8 @@ python $__tool_directory__/VIGA.py
 	  <option value="31">Blastocrithidia nuclear code</option>
 	</param>
         <param name="readlength" type="integer" value="101" min="1" optional="true" label="Read length (--readlength)" help="Read length for the circularity prediction"/>
-        <param name="windowlength" type="integer" value="100" min="2" optional="true" label="Window length (--windowlength)" help="Window length for the origin of replication prediction"/>
-        <param name="slidelength" type="integer" value="10" min="1" optional="true" label="sliding window length (--slidelength)" help="Slidind window length for the origin of replication prediction"/>	    
+        <param name="windowsize" type="integer" value="100" min="2" optional="true" label="Window size (--windowsize)" help="Window size used to determine the origin of replication in circular contigs according to the cumulative GC skew"/>
+        <param name="slidingsize" type="integer" value="10" min="1" optional="true" label="sliding window size (--slidingsize)" help="Sliding window size for the origin of replication prediction"/>
         <param name="locus" type="text" value="LOC" optional="true" label="Locus tag prefix (--locustag)" help="Name of the sequences. If the input is a multifasta file, please put a general name"/>
         <param name="gffprint" type="boolean" checked="false" optional="true" label="Print the output also as GFF3 file" help="Printing the output as GFF3 file (Default: FALSE)" />
         <param name="blastevalue" type="float" value="1e-5" min="0" optional="true" label="Blast e-value threshold" />
@@ -126,6 +127,7 @@ python $__tool_directory__/VIGA.py
 	      </options>
 	    </param>
 	    <param name="hmmerevalue" type="float" value="0.001" label="PHMMER e-value threshold"/>
+		</when>
 	</conditional>
 	<conditional name="homologysearch">
  	  <param name="use_diamond" type="select" label="Use DIAMOND instead of BLAST to predict protein function">
