@@ -143,7 +143,7 @@ VIGA can be integrated into [Galaxy](https://galaxyproject.org) using the wrappe
 server where this Galaxy instance is setup. The user running Galaxy should be
 part of the **docker** user group.
 
-#### Manual installation of the wrapper from Github
+### Installation
 
 1. Download or clone this repository (as a submodule) in the **tools**
    directory of the Galaxy installation.
@@ -183,49 +183,49 @@ part of the **docker** user group.
 
 		viga_blastdb.loc.sample -> viga_blastdb.loc
 
-#### Update database paths in .loc files
+5. Update database paths in .loc files
+   Edit the following files in the **tool-data** directory and add paths to
+   corresponding databases
 
-Edit the following files in the **tool-data** directory and add paths to
-corresponding databases
-
-* viga_blastdb.loc
-* viga_diamonddb.loc
-* viga_rfamdb.loc
-* viga_hmmdb.loc
-
-#### Create or update the Galaxy job configuration file
-
-If the file **config/job_conf.xml** does not exist, create it by copying the
-template **config/job_conf.xml.sample_basic** in the Galaxy directory. Then
-add a Docker destination for viga. Change ``/data/databases`` under
-``docker_volumes`` to the location where your databases are stored. Here is
-an example:
-
-	<?xml version="1.0"?>
-	<!-- A sample job config that explicitly configures job running the way it is configured by default (if there is no explicit config). -->
-	<job_conf>
-	    <plugins>
-		<plugin id="local" type="runner" load="galaxy.jobs.runners.local:LocalJobRunner" workers="4"/>
-	    </plugins>
-	    <handlers>
-		<handler id="main"/>
-	    </handlers>
-	    <destinations default="local">
-		<destination id="local" runner="local"/>
-		<destination id="docker" runner="local">
-			<param id="docker_enabled">true</param>
-			<param id="docker_sudo">false</param>
-			<param id="docker_auto_rm">true</param>
-			<param id="docker_volumes">$defaults,/data/databases:ro</param>
-		</destination>
-	    </destinations>
-	    <tools>
-	      <tool id="viga" destination="docker"/>
-	    </tools>
-	</job_conf>
+   * viga_blastdb.loc
+   * viga_diamonddb.loc
+   * viga_rfamdb.loc
+   * viga_hmmdb.loc
 
 
-**Restart Galaxy**. The tool will now be ready to use.
+6. Create or update the Galaxy job configuration file
+
+   If the file **config/job_conf.xml** does not exist, create it by copying the
+   template **config/job_conf.xml.sample_basic** in the Galaxy directory. Then
+   add a Docker destination for viga. Change ``/data/databases`` under
+   ``docker_volumes`` to the location where your databases are stored. Here is
+   an example:
+
+		<?xml version="1.0"?>
+		<!-- A sample job config that explicitly configures job running the way it is configured by default (if there is no explicit config). -->
+		<job_conf>
+		    <plugins>
+			<plugin id="local" type="runner" load="galaxy.jobs.runners.local:LocalJobRunner" workers="4"/>
+		    </plugins>
+		    <handlers>
+			<handler id="main"/>
+		    </handlers>
+		    <destinations default="local">
+			<destination id="local" runner="local"/>
+			<destination id="docker" runner="local">
+				<param id="docker_enabled">true</param>
+				<param id="docker_sudo">false</param>
+				<param id="docker_auto_rm">true</param>
+				<param id="docker_volumes">$defaults,/data/databases:ro</param>
+			</destination>
+		    </destinations>
+		    <tools>
+		      <tool id="viga" destination="docker"/>
+		    </tools>
+		</job_conf>
+
+
+7. **Restart Galaxy**. The tool will now be ready to use.
 
 
 ## HISTORY OF THE SOURCE CODE:
