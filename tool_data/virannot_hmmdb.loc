@@ -1,5 +1,0 @@
-# <unique_build_id>	<dbkey>	<display_name>	<file_base_path>
-#
-uniprot_trembl	uniprot_trembl	UniProt TrEMBL	/data/databases/SwissProt_UniProt/uniprot_trembl.fasta
-uniprot_sprot	uniprot_sprot	UniProt Swiss-Prot	/data/databases/SwissProt_UniProt/uniprot_sprot.fasta
-

@@ -137,40 +137,95 @@ Finally, an example using DIAMOND and not HMMER ("ultrafast mode") is:
 ## Galaxy wrapper
 VIGA can be integrated into [Galaxy](https://galaxyproject.org) using the wrapper included in this repository.
 
+### Requirements
+
+[Docker](https://www.docker.com) should first be installed and working on the
+server where this Galaxy instance is setup. The user running Galaxy should be
+part of the **docker** user group.
 
 ### Installation
 
-1. [Docker](https://www.docker.com) should first be installed and working on the server where this Galaxy instance is setup. The
-   **galaxy** user should be part of the **docker** group.
+1. Download or clone this repository (as a submodule) in the **tools**
+   directory of the Galaxy installation.
 
-2. Download or clone this repository (as a submodule) in to the ``tools`` directory.
-
-3. Update ``config/tool_conf.xml`` like this
+2. Update **config/tool_conf.xml** to add the VIGA wrapper in a relevant section of the tool panel. For example, "Annotation".
 
 		<section id="annotation" name="Annotation">
 			<tool file="viga/wrapper.xml" />
 		</section>
 
-4. Update ``config/tool_data_table_conf.xml`` to add location of loc files
+3. Copy (or update the file if it is already present) the included
+   **tool_data_table_conf.xml.sample** file to
+   **config/tool_data_table_conf.xml**.
 
 		<!-- VIGA databases -->
-		<table name="viga_blastdb" comment_char="#">
+		<tables>
+		    <table name="viga_blastdb" comment_char="#">
 			<columns>value, dbkey, name, path</columns>
 			<file path="tool-data/viga_blastdb.loc" />
-		</table>
-		<table name="viga_rfamdb" comment_char="#">
+		    </table>
+		    <table name="viga_diamonddb" comment_char="#">
+			<columns>value, dbkey, name, path</columns>
+			<file path="tool-data/viga_diamonddb.loc" />
+		    </table>
+		    <table name="viga_rfamdb" comment_char="#">
 			<columns>value, dbkey, name, path</columns>
 			<file path="tool-data/viga_rfamdb.loc" />
-		</table>
-		<table name="viga_hmmdb" comment_char="#">
+		    </table>
+		    <table name="viga_hmmdb" comment_char="#">
 			<columns>value, dbkey, name, path</columns>
 			<file path="tool-data/viga_hmmdb.loc" />
-		</table>
+		    </table>
+		</tables>
 
-5. Copy ``.loc`` files from ``viga/tool-data`` to ``galaxy/tool-data`` and update the database paths within those
-   files.
+4. Copy the **.loc.sample** files from **viga/tool-data** to **galaxy/tool-data**
+   and rename them as **.loc**. For example:
 
-6. Restart Galaxy. The tool will be available under the "Annotation" section.
+		viga_blastdb.loc.sample -> viga_blastdb.loc
+
+5. Update database paths in .loc files
+   Edit the following files in the **tool-data** directory and add paths to
+   corresponding databases
+
+   * viga_blastdb.loc
+   * viga_diamonddb.loc
+   * viga_rfamdb.loc
+   * viga_hmmdb.loc
+
+
+6. Create or update the Galaxy job configuration file
+
+   If the file **config/job_conf.xml** does not exist, create it by copying the
+   template **config/job_conf.xml.sample_basic** in the Galaxy directory. Then
+   add a Docker destination for viga. Change ``/data/databases`` under
+   ``docker_volumes`` to the location where your databases are stored. Here is
+   an example:
+
+		<?xml version="1.0"?>
+		<!-- A sample job config that explicitly configures job running the way it is configured by default (if there is no explicit config). -->
+		<job_conf>
+		    <plugins>
+			<plugin id="local" type="runner" load="galaxy.jobs.runners.local:LocalJobRunner" workers="4"/>
+		    </plugins>
+		    <handlers>
+			<handler id="main"/>
+		    </handlers>
+		    <destinations default="local">
+			<destination id="local" runner="local"/>
+			<destination id="docker" runner="local">
+				<param id="docker_enabled">true</param>
+				<param id="docker_sudo">false</param>
+				<param id="docker_auto_rm">true</param>
+				<param id="docker_volumes">$defaults,/data/databases:ro</param>
+			</destination>
+		    </destinations>
+		    <tools>
+		      <tool id="viga" destination="docker"/>
+		    </tools>
+		</job_conf>
+
+
+7. **Restart Galaxy**. The tool will now be ready to use.
 
 
 ## HISTORY OF THE SOURCE CODE:
