@@ -42,7 +42,7 @@ Additionally, before running the "ultrafast" mode, you need to convert the FASTA
 
 When using this program, you must cite their use:
 
-	VIGA v. 0.10.3 (https://github.com/EGTortuero/viga)
+	González-Tortuero E, Sutton TDS, Velayudhan V, Shkoporov AN, Draper LA, Stockdale SR, Ross RP, Hill C (2018) VIGA: a sensitive, precise and automatic de noco VIral Genome Annotator. bioRxiv 277509; doi: https://doi.org/10.1101/277509 
 
 ## PARAMETERS:
 
