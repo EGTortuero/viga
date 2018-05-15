@@ -8,7 +8,7 @@ VIGA is a script written in Python 2.7 that annotates viral genomes automaticall
 Before using this script, the following Python modules and programs should be installed:
 
 * Python modules:
-	- BCBio (https://github.com/chapmanb/bcbio-nextgen)
+	- BCBio.GFF (https://github.com/chapmanb/bcbb/tree/master/gff)
 	- Biopython (Bio module; Cock et al. 2009)
 	- Numpy (https://github.com/numpy/numpy)
 	- Scipy (https://github.com/scipy/scipy)
@@ -230,6 +230,7 @@ part of the **docker** user group.
 
 ## HISTORY OF THE SOURCE CODE:
 
+* v 0.10.4 - Fixed error when the module BCBio is invoked. Now it is required the module BCBio.GFF instead of the BCBio one.
 * v 0.10.3 - New output: all protein sequences per contig.
 * v 0.10.1 - Fixed error when the start coordinate of a gene is equal to one. In these cases, genes were annotated as if they started in the position zero (which it has no biological logic). Now, the program should be able to deal with these genes, annotate them from the position 1. Moreover, added new terms to reduce all non-informative protein descriptions before running the decision tree.
 * v 0.10.0 - Added the prediction of the origin and terminus of replication for circular contigs based on the cumulative GC skew (based on the iRep software - Brown et al (2016)). After detecting the origin coordinate, the chromosome is realigned from the origin. As a consequence of that, two new parameters ("--windowsize" and "--slidingsize") were added to determine the window size and the sliding window size respectively. Moreover, fixed error with the start position of the genes in the GenBank files, which were not related to the amino acid sequences and made that the sequence length was not multiple of three. Finally, added "/locus_tag" in the putative genes in the GenBank files
