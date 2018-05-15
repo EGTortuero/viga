@@ -23,6 +23,7 @@
 # Importing python libraries
 from __future__ import print_function
 import argparse
+import BCBio.GFF
 import csv
 import fileinput
 import fractions
@@ -34,7 +35,6 @@ import re
 import sys
 import shutil
 import subprocess
-from BCBio import GFF
 from Bio import SeqIO
 from Bio import SeqFeature
 from Bio.Alphabet import IUPAC
@@ -138,7 +138,7 @@ def stringSplitByNumbers(x):
 	return [int(y) if y.isdigit() else y for y in l]
 
 # Defining the program version
-version = "0.10.3"
+version = "0.10.4"
 
 # Processing the parameters
 parser = argparse.ArgumentParser(description='VIGA is an automatic de novo VIral Genome Annotator.')
@@ -912,7 +912,7 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 	if args.gffprint==True:
 		newgff = "%s.gff" % newfile
 		with open(newgff, "w") as outgff, open(newgbk, "rU") as ingbk:
-			GFF.write(SeqIO.parse(ingbk, "genbank"), outgff)
+			BCBio.GFF.write(SeqIO.parse(ingbk, "genbank"), outgff)
 
 	# Removing intermediate files
 	os.remove(newfile)
