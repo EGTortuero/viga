@@ -33,10 +33,8 @@ However, you will need to download the databases for BLAST, HMMER, and INFERNAL:
 * BLAST FASTA (DIAMOND): https://ftp.ncbi.nlm.nih.gov/blast/db/FASTA
 * RFAM (INFERNAL): http://ftp.ebi.ac.uk/pub/databases/Rfam/
 * UniProtKB (HMMER): ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/complete/uniprot_trembl.fasta.gz
-* PFAM (HMMER): http://ftp.ebi.ac.uk/pub/databases/Pfam/current_release/Pfam-A.fasta.gz
 
-Note that this bioinformatic pipeline only takes protein databases (i.e. "nr", "swissprot"...)!
-Additionally, before running the "ultrafast" mode, you need to convert the FASTA file to the DIAMOND DB format using the following command:
+To use this pipeline, it is highly recommended the use of the protein databases "nr" for BLAST and DIAMOND and "UniProt_TREMBL" for HMMER. Moreover, before running the "ultrafast" mode, you need to convert the FASTA file to the DIAMOND DB format using the following command:
 
 	diamond makedb --in nr -d nr
 
