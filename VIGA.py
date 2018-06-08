@@ -138,7 +138,7 @@ def stringSplitByNumbers(x):
 	return [int(y) if y.isdigit() else y for y in l]
 
 # Defining the program version
-version = "0.10.4"
+version = "0.10.5"
 
 # Processing the parameters
 parser = argparse.ArgumentParser(description='VIGA is an automatic de novo VIral Genome Annotator.')
@@ -271,7 +271,7 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 			seq_ending = str(record.seq[len(record.seq)-args.read_length:len(record.seq)])
 			combined_seqs = SeqRecord(Seq(seq_beginning + seq_ending, IUPAC.ambiguous_dna), id = record.description)
 			SeqIO.write(combined_seqs, "temporal_circular.fasta", "fasta")
-			outputlastz = subprocess.check_output(["lastz", "temporal_circular.fasta", "--self", "--notrivial", "--nomirror", "--format=general-:start1,end1,start2,end2,score,strand1,strand2,identity,length1"])
+			outputlastz = subprocess.check_output(["lastz", "temporal_circular.fasta", "--self", "--notrivial", "--nomirror", "--ambiguous=iupac", "--format=general-:start1,end1,start2,end2,score,strand1,strand2,identity,length1"])
 			resultslastz = outputlastz.split("\n")
 			for resultlastz in resultslastz:
 				if resultlastz != '':
