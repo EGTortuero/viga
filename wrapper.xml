@@ -9,6 +9,8 @@
     <command><![CDATA[
 python $__tool_directory__/VIGA.py
 --input $input
+--diamonddb $diamonddb.fields.path
+--blastdb $homologysearch.blastdb.fields.path
 --rfamdb $rfamdb.fields.path
 --modifiers $modifiers
 --threads \${GALAXY_SLOTS:-5}
@@ -53,12 +55,6 @@ python $__tool_directory__/VIGA.py
 #if $blastexh
     --blastexh
 #end if
-#if str($homologysearch.use_diamond) == "yes":
-   --noblast
-   --diamonddb $homologysearch.diamonddb.fields.path
-#else
-   --blastdb $homologysearch.blastdb.fields.path
-#end if
 #if str($hmmsearch.use_phmmer) == "yes":
   --hmmdb $hmmsearch.hmmdb.fields.path
   --hmmerevalue $hmmsearch.hmmerevalue
@@ -66,6 +62,60 @@ python $__tool_directory__/VIGA.py
   --nohmmer
 #end if
 ]]></command>
+	
+	
+
+advanced_general_group = parser.add_argument_group('Advanced general options for VIGA [OPTIONAL]')
+advanced_general_group.add_argument("--out", dest="rootoutput", type=str, help='Name of the outputs files (without extension)', metavar="OUTPUTNAME")
+advanced_general_group.add_argument("--locus", dest="locus", type=str, default='LOC', help='Name of the sequences. If the input is a multiFASTA file, please put a general name as the program will add the number of the contig at the end of the name (Default: %(default)s)', metavar="STRING")
+advanced_general_group.add_argument("--gff", dest="gffprint", action='store_true', default=False, help='Printing the output as GFF3 file (Default: False)')
+advanced_general_group.add_argument("--threads", dest="ncpus", default=multiprocessing.cpu_count(), help='Number of threads/cpus (Default: %(default)s cpu [Max. number of cpus])', metavar="INT")
+advanced_general_group.add_argument('--mincontigsize', dest="mincontigsize", type=int, default = 200, help = 'Minimum contig length to be considered in the final files (Default: 200 bp)', metavar="INT")
+
+advanced_circularity_group = parser.add_argument_group('Advanced options for contig shape prediction in VIGA [OPTIONAL]')
+advanced_circularity_group.add_argument("--readlength", dest="read_length", type=int, default=101, help='Read length for the circularity prediction (default: 101 bp)', metavar="INT")
+advanced_circularity_group.add_argument("--windowsize", dest="window", type=int, default=100, help='Window size used to determine the origin of replication in circular contigs according to the cumulative GC skew (default: 100 bp)', metavar="INT")
+advanced_circularity_group.add_argument("--slidingsize", dest="slide", type=int, default=10, help='Window size used to determine the origin of replication in circular contigs according to the cumulative GC skew (default: 10 bp)', metavar="INT")
+
+advanced_repeats_group = parser.add_argument_group('Advanced options for detection of repeats in VIGA [OPTIONAL]')
+advanced_repeats_group.add_argument("--minrepeat", dest="minrepeat", type=int, default=16, help="Minimum repeat length for CRISPR detection (Default: 16)", metavar="INT")
+advanced_repeats_group.add_argument("--maxrepeat", dest="maxrepeat", type=int, default=64, help="Maximum repeat length for CRISPR detection (Default: 64)")
+advanced_repeats_group.add_argument("--minspacer", dest="minspacer", type=int, default=8, help="Minimum spacer length for CRISPR detection (Default: 8)")
+advanced_repeats_group.add_argument("--maxspacer", dest="maxspacer", type=int, default=64, help="Maximum spacer length for CRISPR detection (Default: 64)")
+
+advanced_gcode_group = parser.add_argument_group('Advanced options for genetic code in VIGA [OPTIONAL]')
+gcode_choices = {'1': 'Standard genetic code [Eukaryotic]', '2': 'Vertebrate mitochondrial code', '3': 'Yeast mitochondrial code', '4': 'Mycoplasma/Spiroplasma and Protozoan/mold/coelenterate mitochondrial code', '5': 'Invertebrate mitochondrial code', '6': 'Ciliate, dasycladacean and hexamita nuclear code', '9': 'Echinoderm/flatworm mitochondrial code', '10': 'Euplotid nuclear code', '11': 'Bacteria/Archaea/Phages/Plant plastid', '12': 'Alternative yeast nuclear code', '13': 'Ascidian mitochondrial code', '14': 'Alternative flatworm mitochondrial code', '16': 'Chlorophycean mitochondrial code', '21': 'Trematode mitochondrial code', '22': 'Scedenesmus obliquus mitochondrial code', '23': 'Thraustochytrium mitochondrial code', '24': 'Pterobranquia mitochondrial code', '25': 'Gracilibacteria & Candidate division SR1', '26': 'Pachysolen tannophilus nuclear code', '27': 'Karyorelict nuclear code', '28': 'Condylostoma nuclear code', '29': 'Mesodinium nuclear code', '30': 'Peritrich nuclear code', '31': 'Blastocrithidia nuclear code'}
+gcode_help = ('Number of GenBank translation table. At this moment, the available options are {0}. (Default: %(default)s)'.format('{}'.format(', '.join('{0} ({1})'.format(k, v) for k, v in sorted(gcode_choices.items())))))
+advanced_gcode_group.add_argument("--gcode", dest="gcode", type=str, default='11', help=gcode_help, metavar="NUMBER")
+
+advanced_type_group = parser.add_argument_group('Advanced options for GenBank division in VIGA [OPTIONAL]')
+type_choices = {'BCT': 'Prokaryotic chromosome', 'CON': 'Contig', 'PHG': 'Phages', 'VRL': 'Eukaryotic/Archaea virus'}
+type_help = ('GenBank Division: One of the following codes - {0}. (Default: %(default)s)'.format(', '.join('{0} ({1})'.format(k, v) for k, v in type_choices.items())))
+advanced_type_group.add_argument("--typedata", dest="typedata", type=str, default='CON', help=type_help, metavar="BCT|CON|VRL|PHG")
+
+advanced_diamond_group = parser.add_argument_group('Advanced options for the first protein function prediction based on homology in VIGA [OPTIONAL]')
+advanced_diamond_group.add_argument("--diamondevalue", dest="diamondevalue", default=0.00001, help='DIAMOND e-value threshold (Default: 0.00001)', metavar="FLOAT")
+advanced_diamond_group.add_argument("--diamondidthr", dest="diamondidthreshold", default=50.00, help='DIAMOND ID threshold (Default: 50.0)', metavar="FLOAT")
+advanced_diamond_group.add_argument("--diamondcoverthr", dest="diamondcovthreshold", default=50.00, help='DIAMOND Coverage threshold (Default: 50.0)', metavar="FLOAT")
+
+advanced_blast_group = parser.add_argument_group('Advanced options for the second protein function prediction based on homology in VIGA [OPTIONAL]')
+advanced_blast_group.add_argument("--blastexh", dest="blastexh", action='store_true', default=False, help='Use of exhaustive BLAST to predict the proteins by homology according to Fozo et al. (2010) Nucleic Acids Res (Default=FALSE)')
+advanced_blast_group.add_argument("--blastevalue", dest="blastevalue", default=0.00001, help='BLAST e-value threshold (Default: 0.00001)', metavar="FLOAT")
+advanced_blast_group.add_argument("--blastidthr", dest="blastidthreshold", default=50.00, help='BLAST ID threshold (Default: 50.0)', metavar="FLOAT")
+advanced_blast_group.add_argument("--blastcoverthr", dest="blastcovthreshold", default=50.00, help='BLAST Coverage threshold (Default: 50.0)', metavar="FLOAT")
+
+advanced_hmm_group = parser.add_argument_group('Advanced options for the third protein function prediction based on HMM in VIGA [OPTIONAL]')
+advanced_hmm_group.add_argument("--nohmmer", dest="nohmmer", action='store_true', default=False, help='Running only BLAST to predict protein function. (Default: False)')
+advanced_hmm_group.add_argument("--hmmerdb", dest="hmmerdatabase", type=str, help='HMMER Database that will be used to add additional information for all proteins according to Hidden Markov Models. This database must be in HMM format and it is mandatory if --nohmmer is disabled', metavar="HMMDB")
+advanced_hmm_group.add_argument("--hmmerevalue", dest="hmmerevalue", default=0.001, help='HMMER e-value threshold (Default: 0.001)', metavar="FLOAT")
+advanced_hmm_group.add_argument("--hmmeridthr", dest="hmmeridthreshold", default=50.00, help='HMMER ID threshold (Default: 50.0)', metavar="FLOAT")
+advanced_hmm_group.add_argument("--hmmercoverthr", dest="hmmercovthreshold", default=50.00, help='HMMER Coverage threshold (Default: 50.0)', metavar="FLOAT")
+
+	
+	
+	
+	
+	
     <inputs>
         <param name="input" type="data" format="fasta" label="(Viral) contigs to annotate" help="Input file as a FASTA file. It can contain multiple sequences (e.g. metagenomic contigs)" />
         <param name="rfamdb" type="select" label="RFAM database used for ribosomal RNA prediction">
