@@ -34,9 +34,7 @@ Although you can install the programs manually, we strongly recommend the use of
 #* RFAM (INFERNAL): http://ftp.ebi.ac.uk/pub/databases/Rfam/
 #* UniProtKB (HMMER): ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/complete/uniprot_trembl.fasta.gz
 
-#To use this pipeline, it is highly recommended the use of the protein databases "nr" for BLAST and DIAMOND and "UniProt_TREMBL" for HMMER. Moreover, before running the "ultrafast" mode, you need to convert the FASTA file to the DIAMOND DB format using the following command:
-#
-#	diamond makedb --in nr -d nr
+#To use this pipeline, it is highly recommended the use of the protein databases "nr" for BLAST and DIAMOND and "UniProt_TREMBL" for HMMER. Moreover, before running the "ultrafast" mode, you need to convert the FASTA file to the DIAMOND DB format using the following command: diamond makedb --in nr -d nr
 
 When using this program, you must cite their use:
 
