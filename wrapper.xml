@@ -62,7 +62,7 @@ python $__tool_directory__/VIGA.py
     --blastcoverthr $blastcoverthr
 #end if
 #if str($hmmsearch.use_hmmer) == "yes":
-  --hmmerdb $hmmsearch.hmmerdb.fields.path
+  --hmmerdb $hmmsearch.hmmdb.fields.path
   --hmmerevalue $hmmsearch.hmmerevalue
   --hmmeridthr $hmmsearch.hmmeridthr
   --hmmercoverthr $hmmsearch.hmmercoverthr
@@ -146,7 +146,7 @@ python $__tool_directory__/VIGA.py
 	    <option value="no">No (fast)</option>
 	  </param>
 	  <when value="yes">
-	    <param name="hmmerdb" type="select" label="HMMER database to use for protein function prediction">
+	    <param name="hmmdb" type="select" label="HMMER database to use for protein function prediction">
 	      <options from_data_table="viga_hmmerdb">
 		<filter type="sort_by" column="2"/>
 		<validator type="no_options" message="No indexes are available for the selected input dataset"/>
