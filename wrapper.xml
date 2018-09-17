@@ -1,4 +1,4 @@
-<tool id="viga" name="viga" version="0.10.3">
+<tool id="viga" name="viga" version="0.11.0">
     <description>de novo VIral Genome Annotator</description>
     <requirements>
         <container type="docker">vimalkvn/viga</container>
@@ -14,7 +14,6 @@ python $__tool_directory__/VIGA.py
 --rfamdb $rfamdb.fields.path
 --modifiers $modifiers
 --threads \${GALAXY_SLOTS:-5}
---typedata $typedata_select
 --gcode $gcode_select
 --out "default"
 --minrepeat $minrepeat
