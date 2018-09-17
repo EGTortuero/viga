@@ -1,5 +1,3 @@
-#
 # <unique_build_id>	<dbkey>	<display_name>	<file_base_path>
-
-#nr	nr	Non_redundant (nr)	/data/databases/diamonddb/nr
-#swissprot	swissprot	Swissprot (swissprot)	/data/databases/diamonddb/swissprot
+#
+#refseq_viral	refseq_viral_prots	RefSeq Viral Proteins (refseq_viral_prots)	/data/databases/refseq/viral_prots

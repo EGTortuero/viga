@@ -26,6 +26,6 @@
 #    -rw-rw-r-- 1 james   james   683M Feb 10 20:45 hg19canon.rev.2.bt2
 #
 # then the viga_blastdb.loc entry could look like this:
+#
+#refseq_viral	refseq_viral_prots	RefSeq Viral Proteins (refseq_viral_prots)	/data/databases/refseq/viral_prots
 
-#nr	nr	Non_redundant (nr)	/data/databases/blast/nr/nr
-#swissprot	swissprot	Swissprot (swissprot)	/data/databases/blast/swissprot/swissprot
