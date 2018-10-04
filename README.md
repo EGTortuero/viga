@@ -27,14 +27,7 @@ Before using this script, the following Python modules and programs should be in
 
 Although you can install the programs manually, we strongly recommend the use of the Docker image to create an environment for VIGA. The link to the Docker image is https://hub.docker.com/r/vimalkvn/viga/
 
-#I need to update this part about DBs!!!
-#However, you will need to download the databases for BLAST, HMMER, and INFERNAL:
-#* BLAST DBs: https://ftp.ncbi.nlm.nih.gov/blast/db/
-#* BLAST FASTA (DIAMOND): https://ftp.ncbi.nlm.nih.gov/blast/db/FASTA
-#* RFAM (INFERNAL): http://ftp.ebi.ac.uk/pub/databases/Rfam/
-#* UniProtKB (HMMER): ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/complete/uniprot_trembl.fasta.gz
-
-#To use this pipeline, it is highly recommended the use of the protein databases "nr" for BLAST and DIAMOND and "UniProt_TREMBL" for HMMER. Moreover, before running the "ultrafast" mode, you need to convert the FASTA file to the DIAMOND DB format using the following command: diamond makedb --in nr -d nr
+Before running this pipeline, you must run the 'create_db.sh' bash script to install all requested databases. In this case, the databases that the program uses are RFAM (Nawrocki et al. 2015), RefSeq Viral Proteins (Brister et al. 2015) and PVOGS (Grazziotin et al. 2017), which will be formatted automatically to be used in BLAST, DIAMOND and HMMER.
 
 When using this program, you must cite their use:
 
@@ -263,7 +256,7 @@ part of the **docker** user group.
 
 ## HISTORY OF THE SOURCE CODE:
 
-* v.0.11.0 - Improved the speed of the code. Now the pipeline have a different strategy: instead of running all analyses per individual contigs, these are applied altogether. Moreover, the pipeline first runs DIAMOND to annotate all proteins according to homology and, later, BLAST is executed to try to improve the annotation of these hypothetical proteins (including those who have no match). Optionally, HMMer could be executed to add more additional information about the proteins based on HMM databases such as PVOGs (Grazziotin et al. 2017). As a consequence of all, the source code was rewritten entirely, as well as there are several changes in the parameters.
+* v.0.11.0 - Improved the speed of the code. Now the pipeline have a different strategy: instead of running all analyses per individual contigs, these are applied altogether. Moreover, the pipeline first runs DIAMOND to annotate all proteins according to homology and, later, BLAST is executed to try to improve the annotation of these hypothetical proteins (including those who have no match). Optionally, HMMer could be executed to add more additional information about the proteins based on HMM databases such as PVOGs (Grazziotin et al. 2017). As a consequence of all, the source code was rewritten entirely, as well as there are several changes in the parameters. Moreover, added a new script to download and create the required databases in a quick a single step.
 * v 0.10.4 - Fixed error when the module BCBio is invoked. Now it is required the module BCBio.GFF instead of the BCBio one.
 * v 0.10.3 - New output: all protein sequences per contig.
 * v 0.10.1 - Fixed error when the start coordinate of a gene is equal to one. In these cases, genes were annotated as if they started in the position zero (which it has no biological logic). Now, the program should be able to deal with these genes, annotate them from the position 1. Moreover, added new terms to reduce all non-informative protein descriptions before running the decision tree.
@@ -287,6 +280,7 @@ part of the **docker** user group.
 ## REFERENCES:
 
 	- Benson G (2008) Tandem repeats finder: a program to analyze DNA sequences. Nucleic Acids Research 27: 573–80.
+	- Brister JR, Ako-Adjei D, Bao Y, Blinkova O (2015) NCBI viral genomes resource. Nucleic Acids Research 43: D571–7.
 	- Brown CT, Olm MR, Thomas BC, Banfield JF (2016) Measurement of bacterial replication rates in microbial communities. Nature Biotechnology 34: 1256-63.
 	- Buchfink B, Xie C, Huson DH (2015) Fast and sensitive protein alignment using DIAMOND. Nature Methods 12: 59-60.
 	- Camacho C, Coulouris G, Avagyan V, Ma N, Papadopoulos J, Bealer K, Madden TL (2008) BLAST+: architecture and applications. BMC Bioinformatics 10: 421.
