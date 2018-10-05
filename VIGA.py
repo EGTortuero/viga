@@ -706,7 +706,7 @@ eprint("\nRunning DIAMOND to predict the protein function according to homology 
 with open("PROTS_FIRST_ROUND.faa", "r") as inputstep:
 	first_line = inputstep.readline()
 	if first_line.startswith(">"):
-		subprocess.call(['diamond', 'blastp', '-q', 'PROTS_FIRST_ROUND.faa', '-d', args.diamonddatabase, '-e', str(args.diamondevalue), '-f', '6', 'qseqid', 'sseqid', 'pident', 'length', 'qlen', 'slen', 'qstart', 'qend', 'evalue', 'bitscore', 'stitle', '-o', 'PROTS_FIRST_ROUND.csv', '-k', '10', "-p", str(args.ncpus), '--quiet'])
+		subprocess.call(['diamond', 'blastp', '-q', 'PROTS_FIRST_ROUND.faa', '-d', args.diamonddatabase, '-e', str(args.diamondevalue), '-f', '6', 'qseqid', 'sseqid', 'pident', 'length', 'qlen', 'slen', 'qstart', 'qend', 'evalue', 'bitscore', 'stitle', '-o', 'PROTS_FIRST_ROUND.csv', "-p", str(args.ncpus), '--quiet'])
 	else:
 		open("PROTS_FIRST_ROUND.csv", 'a').close()
 hypotheticalpat = re.compile(r'(((((?i)hypothetical)|(?i)uncharacteri(z|s)ed|(?i)predicted))( phage)?( membrane)? protein)|((?i)ORF|((?i)unnamed protein product|(?i)gp\d+|protein of unknown function|phage protein))')
@@ -756,10 +756,10 @@ with open("PROTS_SECOND_ROUND.faa", "r") as secondinputstep:
 	first_line = secondinputstep.readline()
 	if first_line.startswith(">") and args.blastexh==True:
 		eprint("\nRunning BLAST to predict the genes according to homology inference using exhaustive mode (see Fozo et al. (2010) Nucleic Acids Res for details)")
-		subprocess.call(['blastp', '-query', "PROTS_SECOND_ROUND.faa", '-db', args.blastdatabase, '-evalue', str(args.blastevalue), '-outfmt', '6 qseqid sseqid pident length qlen slen qstart qend evalue bitscore stitle', '-out', 'PROTS_SECOND_ROUND.csv', '-max_target_seqs', '10', '-word_size', '2', '-gapopen', '8', '-gapextend', '2', '-matrix', 'PAM70', '-comp_based_stats', '"0"', "-num_threads", str(args.ncpus)])
+		subprocess.call(['blastp', '-query', "PROTS_SECOND_ROUND.faa", '-db', args.blastdatabase, '-evalue', str(args.blastevalue), '-outfmt', '6 qseqid sseqid pident length qlen slen qstart qend evalue bitscore stitle', '-out', 'PROTS_SECOND_ROUND.csv', '-word_size', '2', '-gapopen', '8', '-gapextend', '2', '-matrix', 'PAM70', '-comp_based_stats', '"0"', "-num_threads", str(args.ncpus)])
 	elif first_line.startswith(">") and args.blastexh==False:
 		eprint("\nRunning BLAST to predict the genes according to homology inference using default parameters")
-		subprocess.call(['blastp', '-query', "PROTS_SECOND_ROUND.faa", '-db', args.blastdatabase, '-evalue', str(args.blastevalue), '-outfmt', '6 qseqid sseqid pident length qlen slen qstart qend evalue bitscore stitle', '-out', 'PROTS_SECOND_ROUND.csv', '-max_target_seqs', '10', "-num_threads", str(args.ncpus)])
+		subprocess.call(['blastp', '-query', "PROTS_SECOND_ROUND.faa", '-db', args.blastdatabase, '-evalue', str(args.blastevalue), '-outfmt', '6 qseqid sseqid pident length qlen slen qstart qend evalue bitscore stitle', '-out', 'PROTS_SECOND_ROUND.csv', "-num_threads", str(args.ncpus)])
 	else:
 		open("PROTS_SECOND_ROUND.csv", 'a').close()
 with open("PROTS_SECOND_ROUND.csv", "rU") as blastresults:
