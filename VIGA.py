@@ -971,14 +971,12 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 			for locus_rRNA in sorted(subunits):
 				if locus_rRNA == record.id:
 					for rRNA in subunits[locus_rRNA].keys():
-						count = 0
-						try:
-							lengthlist = len(subunits[locus_rRNA][rRNA])
-						except KeyError:
-							continue
-						else:
-							while count < lengthlist:
+						for count in subunits[locus_rRNA][rRNA].keys():
+							try:
 								putative_start = int(subunits[locus_rRNA][rRNA][count]['begin'])
+							except KeyError:
+								continue
+							else:
 								start_pos = SeqFeature.ExactPosition(putative_start)
 								end_pos = SeqFeature.ExactPosition(subunits[locus_rRNA][rRNA][count]['end'])
 								feature_location = SeqFeature.FeatureLocation(start_pos, end_pos, strand=subunits[locus_rRNA][rRNA][count]['strand'])
@@ -987,8 +985,7 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 								qualifiers = [('product', subunits[locus_rRNA][rRNA][count]['product'])]
 								feature_qualifiers = OrderedDict(qualifiers)
 								new_data_rRNA = SeqFeature.SeqFeature(feature_location, type = "rRNA", strand = subunits[locus_rRNA][rRNA][count]['strand'], qualifiers = feature_qualifiers)
-								whole_sequence.features.append(new_data_rRNA)
-								count += 1
+								whole_sequence.features.append(new_data_rRNA)		
 			for locus_tRNA in sorted(tRNAdict):
 				if locus_tRNA == record.id:
 					for tRNA in sorted(tRNAdict[locus_tRNA], key = stringSplitByNumbers):
