@@ -457,35 +457,35 @@ with open("rrnafile.csv", "rU") as rrnafile:
 								subunits[saved_contig]['LSU'][a] = {'type': item_type, 'product': namedict[item_type], 'begin': int(line_splitted[7]), 'end': int(line_splitted[8]), 'score': line_splitted[14], 'strand': 1}
 							else:
 								subunits[saved_contig]['LSU'][a] = {'type': item_type, 'product': namedict[item_type], 'begin': int(line_splitted[8]), 'end': int(line_splitted[7]), 'score': line_splitted[14], 'strand': -1}	
-						a += 1
+							a += 1
 					elif item_type.startswith("SSU"):
 						if item_type == elementsrRNA[contig_id]['SSU']['type']:
 							if line_splitted[9] == "+":
 								subunits[saved_contig]['SSU'][b] = {'type': item_type, 'product': namedict[item_type], 'begin': int(line_splitted[7]), 'end': int(line_splitted[8]), 'score': line_splitted[14], 'strand': 1}
 							else:
 								subunits[saved_contig]['SSU'][b] = {'type': item_type, 'product': namedict[item_type], 'begin': int(line_splitted[8]), 'end': int(line_splitted[7]), 'score': line_splitted[14], 'strand': -1}	
-						b += 1
+							b += 1
 					elif item_type.startswith("5S"):
 						if item_type == elementsrRNA[contig_id]['5S']['type']:
 							if line_splitted[9] == "+":
 								subunits[saved_contig]['5S'][c] = {'type': item_type, 'product': namedict[item_type], 'begin': int(line_splitted[7]), 'end': int(line_splitted[8]), 'score': line_splitted[14], 'strand': 1}
 							else:
 								subunits[saved_contig]['5S'][c] = {'type': item_type, 'product': namedict[item_type], 'begin': int(line_splitted[8]), 'end': int(line_splitted[7]), 'score': line_splitted[14], 'strand': -1}	
-						c += 1
+							c += 1
 with open("logfile.txt", "a") as logfile:
 	logfile.write("\n#Contig\trRNA product\tStart\tEnd\n")
 	for suspectcontig in subunits:
 		for rRNA in subunits[suspectcontig]:
-			count = 0
-			try:
-				lengthlist = len(subunits[suspectcontig][rRNA])
-			except KeyError:
-				continue
-			else:
-				while count < lengthlist:
-					eprint("WARNING: %s: %s (%i ... %i) -> Potential host contamination!" % (suspectcontig, rRNA, int(subunits[suspectcontig][rRNA][count]['begin']), int(subunits[suspectcontig][rRNA][count]['end'])))
-					logfile.write("%s\t%s\t%i\t%i\n" % (suspectcontig, subunits[suspectcontig][rRNA][count]['product'], int(subunits[suspectcontig][rRNA][count]['begin']), int(subunits[suspectcontig][rRNA][count]['end'])))
-					count +=1
+			for F in subunits[suspectcontig][rRNA]:
+				try:
+					itemA = subunits[suspectcontig][rRNA][F]['begin']
+					itemB = subunits[suspectcontig][rRNA][F]['end']
+					itemC = subunits[suspectcontig][rRNA][F]['product']
+				except KeyError:
+					continue
+				else:
+					eprint("WARNING: %s: %s (%i ... %i) -> Potential host contamination!" % (suspectcontig, rRNA, itemA, itemB))
+					logfile.write("%s\t%s\t%i\t%i\n" % (suspectcontig, itemC, itemA, itemB))
 endtime2 = time.time()
 durationtime2 = endtime2 - starttime2
 eprint("Done: rRNA detection took %s seconds" % str(durationtime2))
