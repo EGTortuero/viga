@@ -752,16 +752,22 @@ eprint("Done: function prediction based on DIAMOND took %s seconds" % str(durati
 
 ## Running BLAST to refine the gene annotation
 starttime9 = time.time()
-with open("PROTS_SECOND_ROUND.faa", "r") as secondinputstep:
-	first_line = secondinputstep.readline()
-	if first_line.startswith(">") and args.blastexh==True:
-		eprint("\nRunning BLAST to predict the genes according to homology inference using exhaustive mode (see Fozo et al. (2010) Nucleic Acids Res for details)")
-		subprocess.call(['blastp', '-query', "PROTS_SECOND_ROUND.faa", '-db', args.blastdatabase, '-evalue', str(args.blastevalue), '-outfmt', '6 qseqid sseqid pident length qlen slen qstart qend evalue bitscore stitle', '-out', 'PROTS_SECOND_ROUND.csv', '-word_size', '2', '-gapopen', '8', '-gapextend', '2', '-matrix', 'PAM70', '-comp_based_stats', '"0"', "-num_threads", str(args.ncpus)])
-	elif first_line.startswith(">") and args.blastexh==False:
-		eprint("\nRunning BLAST to predict the genes according to homology inference using default parameters")
-		subprocess.call(['blastp', '-query', "PROTS_SECOND_ROUND.faa", '-db', args.blastdatabase, '-evalue', str(args.blastevalue), '-outfmt', '6 qseqid sseqid pident length qlen slen qstart qend evalue bitscore stitle', '-out', 'PROTS_SECOND_ROUND.csv', "-num_threads", str(args.ncpus)])
-	else:
-		open("PROTS_SECOND_ROUND.csv", 'a').close()
+try:
+	testfh = open('PROTS_SECOND_ROUND.faa', 'r') 
+except IOError:
+	eprint("\nRunning BLAST to predict the genes according to homology inference using default parameters")
+	open("PROTS_SECOND_ROUND.csv", 'a').close() # For these cases where all proteins were identified at once
+else:
+	with open("PROTS_SECOND_ROUND.faa", "r") as secondinputstep:
+		first_line = secondinputstep.readline()
+		if first_line.startswith(">") and args.blastexh==True:
+			eprint("\nRunning BLAST to predict the genes according to homology inference using exhaustive mode (see Fozo et al. (2010) Nucleic Acids Res for details)")
+			subprocess.call(['blastp', '-query', "PROTS_SECOND_ROUND.faa", '-db', args.blastdatabase, '-evalue', str(args.blastevalue), '-outfmt', '6 qseqid sseqid pident length qlen slen qstart qend evalue bitscore stitle', '-out', 'PROTS_SECOND_ROUND.csv', '-word_size', '2', '-gapopen', '8', '-gapextend', '2', '-matrix', 'PAM70', '-comp_based_stats', '"0"', "-num_threads", str(args.ncpus)])
+		elif first_line.startswith(">") and args.blastexh==False:
+			eprint("\nRunning BLAST to predict the genes according to homology inference using default parameters")
+			subprocess.call(['blastp', '-query', "PROTS_SECOND_ROUND.faa", '-db', args.blastdatabase, '-evalue', str(args.blastevalue), '-outfmt', '6 qseqid sseqid pident length qlen slen qstart qend evalue bitscore stitle', '-out', 'PROTS_SECOND_ROUND.csv', "-num_threads", str(args.ncpus)])
+		else:
+			open("PROTS_SECOND_ROUND.csv", 'a').close()
 with open("PROTS_SECOND_ROUND.csv", "rU") as blastresults:
 	reader = csv.DictReader(blastresults, delimiter='\t', fieldnames=['qseqid','sseqid','pident','length','qlen','slen','qstart','qend','evalue','bitscore','stitle'])
 	information_proteins_blast = {}
@@ -985,7 +991,7 @@ for newfile in sorted(glob.glob("CONTIG_*.fna")):
 								qualifiers = [('product', subunits[locus_rRNA][rRNA][count]['product'])]
 								feature_qualifiers = OrderedDict(qualifiers)
 								new_data_rRNA = SeqFeature.SeqFeature(feature_location, type = "rRNA", strand = subunits[locus_rRNA][rRNA][count]['strand'], qualifiers = feature_qualifiers)
-								whole_sequence.features.append(new_data_rRNA)		
+								whole_sequence.features.append(new_data_rRNA)							
 			for locus_tRNA in sorted(tRNAdict):
 				if locus_tRNA == record.id:
 					for tRNA in sorted(tRNAdict[locus_tRNA], key = stringSplitByNumbers):
@@ -1086,8 +1092,14 @@ os.remove("PROTS_FIRST_ROUND.faa")
 os.remove("PROTS_FIRST_ROUND.csv")
 if args.nohmmer == False:
 	os.remove("PROTS_FIRST_ROUND.tbl")
-os.remove("PROTS_SECOND_ROUND.faa")
-os.remove("PROTS_SECOND_ROUND.csv")
+try:
+	testfhA = open('PROTS_SECOND_ROUND.faa', 'r')
+	testfhB = open('PROTS_SECOND_ROUND.csv', 'r') 
+except IOError:
+	pass
+else:
+	os.remove("PROTS_SECOND_ROUND.faa")
+	os.remove("PROTS_SECOND_ROUND.csv")
 for splittedfastafiles in sorted(glob.glob('CONTIG_*.fna')):
 	os.remove(splittedfastafiles)
 for tempgbk in glob.glob("CONTIG_*.gbk"):
