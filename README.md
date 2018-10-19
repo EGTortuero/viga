@@ -168,65 +168,77 @@ VIGA can be integrated into [Galaxy](https://galaxyproject.org) using the wrappe
 
 [Docker](https://www.docker.com) should first be installed and working on the
 server where this Galaxy instance is setup. The user running Galaxy should be
-part of the **docker** user group.
+part of the `docker` user group.
 
 ### Installation
+To install the VIGA Galaxy wrapper, please follow the steps 
+below.
 
-1. Download or clone this repository (as a submodule) in the **tools**
-   directory of the Galaxy installation.
+1. Download or clone this repository to a location in your 
+   HOME directory:
+   
+		cd
+		git clone --depth 1 https://github.com/EGTortuero/viga.git
 
-2. Update **config/tool_conf.xml** to add the VIGA wrapper in a relevant section of the tool panel. For example, "Annotation".
+2. Update `config/tool_conf.xml` to add the VIGA wrapper in a relevant section of the tool panel. 
+   For example — "Annotation". Update path in the 
+   `<tool file="..."/>` section to correspond to the location
+   where you have downloaded or cloned the repository.
 
 		<section id="annotation" name="Annotation">
-			<tool file="viga/wrapper.xml" />
+			<tool file="/home/user/viga/wrapper.xml" />
 		</section>
 
-3. Copy (or update the file if it is already present) the included
-   **tool_data_table_conf.xml.sample** file to
-   **config/tool_data_table_conf.xml**.
+3. Copy the following table definitions in the 
+   `tool_data_table_conf.xml.sample` file to
+   `config/tool_data_table_conf.xml` in the Galaxy installation
+   directory. 
+   If the file does not exist, create it.
 
 		<!-- VIGA databases -->
 		<tables>
-		    <table name="viga_blastdb" comment_char="#">
-			<columns>value, dbkey, name, path</columns>
-			<file path="tool-data/viga_blastdb.loc" />
-		    </table>
-		    <table name="viga_diamonddb" comment_char="#">
-			<columns>value, dbkey, name, path</columns>
-			<file path="tool-data/viga_diamonddb.loc" />
-		    </table>
-		    <table name="viga_rfamdb" comment_char="#">
-			<columns>value, dbkey, name, path</columns>
-			<file path="tool-data/viga_rfamdb.loc" />
-		    </table>
-		    <table name="viga_hmmdb" comment_char="#">
-			<columns>value, dbkey, name, path</columns>
-			<file path="tool-data/viga_hmmdb.loc" />
-		    </table>
+			<table name="viga_blastdb" comment_char="#">
+				<columns>value, dbkey, name, path</columns>
+				<file path="tool-data/viga_blastdb.loc" />
+			</table>
+			<table name="viga_diamonddb" comment_char="#">
+				<columns>value, dbkey, name, path</columns>
+				<file path="tool-data/viga_diamonddb.loc" />
+			</table>
+			<table name="viga_rfamdb" comment_char="#">
+				<columns>value, dbkey, name, path</columns>
+				<file path="tool-data/viga_rfamdb.loc" />
+			</table>
+			<table name="viga_hmmerdb" comment_char="#">
+				<columns>value, dbkey, name, path</columns>
+				<file path="tool-data/viga_hmmerdb.loc" />
+			</table>
 		</tables>
 
-4. Copy the **.loc.sample** files from **viga/tool-data** to **galaxy/tool-data**
-   and rename them as **.loc**. For example:
+4. Copy the `.loc.sample` files from `tool-data` to `tool-data`
+   in the Galaxy installation directory and rename them as 
+   `.loc`. For example:
 
 		viga_blastdb.loc.sample -> viga_blastdb.loc
 
-5. Update database paths in .loc files
-   Edit the following files in the **tool-data** directory and add paths to
-   corresponding databases
+5. Update database paths in `.loc` files.
+   Edit the following files in the `tool-data` directory and 
+   add paths to corresponding databases
 
-   * viga_blastdb.loc
-   * viga_diamonddb.loc
-   * viga_rfamdb.loc
-   * viga_hmmdb.loc
+   * `viga_blastdb.loc`
+   * `viga_diamonddb.loc`
+   * `viga_rfamdb.loc`
+   * `viga_hmmerdb.loc`
+   
+   **Note:** Without this step, the databases will not be 
+   available for selection in the interface.
 
-
-6. Create or update the Galaxy job configuration file
-
-   If the file **config/job_conf.xml** does not exist, create it by copying the
-   template **config/job_conf.xml.sample_basic** in the Galaxy directory. Then
-   add a Docker destination for viga. Change ``/data/databases`` under
-   ``docker_volumes`` to the location where your databases are stored. Here is
+6. Create or update the Galaxy job configuration file.
+   If the file `config/job_conf.xml` does not exist, create it 
+   Change `/data/databases` under `docker_volumes` to the 
+   location where your databases are stored. Here is
    an example:
+   
 
 		<?xml version="1.0"?>
 		<!-- A sample job config that explicitly configures job running the way it is configured by default (if there is no explicit config). -->
@@ -251,8 +263,8 @@ part of the **docker** user group.
 		    </tools>
 		</job_conf>
 
-
-7. **Restart Galaxy**. The tool will now be ready to use.
+7. Restart Galaxy. The tool will now be available in the 
+   "Annotation" section of the tool panel and ready to use.
 
 
 ## HISTORY OF THE SOURCE CODE:
