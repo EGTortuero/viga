@@ -1,7 +1,7 @@
 <tool id="viga" name="viga" version="0.11.0">
     <description>de novo VIral Genome Annotator</description>
     <requirements>
-        <container type="docker">vimalkvn/viga</container>
+        <container type="docker">vimalkvn/viga:0.11.0</container>
     </requirements>
     <stdio>
         <exit_code range="1:" />
@@ -58,7 +58,7 @@ python $__tool_directory__/VIGA.py
 #if str($blastidthr)
     --blastidthr $blastidthr
 #end if
-#if str($cblastoverthr)
+#if str($blastcoverthr)
     --blastcoverthr $blastcoverthr
 #end if
 #if str($hmmsearch.use_hmmer) == "yes":
@@ -186,45 +186,101 @@ python $__tool_directory__/VIGA.py
         </test>
     </tests>
     <help><![CDATA[
-**About VIGA**
-
+About VIGA
+==========
 VIGA_ is a script written in Python 2.7 that annotates viral
 genomes automatically (using a de novo algorithm) and predict the
 function of their proteins using BLAST and HMMER.
 
-----
+This wrapper provides a web interface for VIGA on the
+Galaxy_ platform. For convenience, this wrapper runs the job
+in a docker container which contains VIGA and all the
+dependencies pre-installed. The Docker image itself is
+available from the Docker hub_.
 
-**About this Galaxy wrapper**
+****
 
-**Requirements**
+Installation of the wrapper
+---------------------------
 
-`Docker <https://www.docker.com>`_ should first be installed and working on the
-server where this Galaxy instance is setup. The user running Galaxy should be
-part of the **docker** user group.
+Requirements
+............
+Docker_ should first be installed and working on the server
+where this Galaxy instance is setup. The user running Galaxy
+should be part of the **docker** system user group.
 
-#. Download or clone the VIGA_ Github repository (as a submodule)
-   in to the ``tools`` directory.
+Procedure
+.........
+Please follow the steps below to install the VIGA Galaxy
+wrapper.
 
-**Configuration**
+1. Download or clone this repository to a location in your 
+   HOME directory::
 
-**Update database paths in .loc files**
+       cd
+       git clone --depth 1 https://github.com/EGTortuero/viga.git
 
-Edit the following files in the **tool-data** directory and add paths to
-corresponding databases:
+2. Update :literal:`config/tool_conf.xml` to add the VIGA
+   wrapper in a relevant section of the tool panel. 
+   For example — **Annotation**. Update path in the 
+   :literal:`<tool file="..."/>` section to correspond to the
+   location where you have downloaded or cloned the repository::
 
-* viga_blastdb.loc
-* viga_diamonddb.loc
-* viga_rfamdb.loc
-* viga_hmmdb.loc
+       <section id="annotation" name="Annotation">
+           <tool file="/home/user/viga/wrapper.xml" />
+       </section>
 
-**Create or update the Galaxy job configuration file**
+3. Copy the following table definitions in the 
+   :literal:`tool_data_table_conf.xml.sample` file to
+   :literal:`config/tool_data_table_conf.xml` in the Galaxy
+   installation directory. If the file does not exist,
+   create it::
 
-If the file **config/job_conf.xml** does not exist, create it by copying the
-template **config/job_conf.xml.sample_basic** in the Galaxy directory. Then
-add a Docker destination for viga. Change ``/data/databases`` under
-``docker_volumes`` to the location where your databases are stored. Here is
-an example::
+	    <!-- VIGA databases -->
+	    <tables>
+		<table name="viga_blastdb" comment_char="#">
+		   <columns>value, dbkey, name, path</columns>
+		   <file path="tool-data/viga_blastdb.loc" />
+		</table>
+		<table name="viga_diamonddb" comment_char="#">
+		   <columns>value, dbkey, name, path</columns>
+		   <file path="tool-data/viga_diamonddb.loc" />
+		</table>
+		<table name="viga_rfamdb" comment_char="#">
+		   <columns>value, dbkey, name, path</columns>
+		   <file path="tool-data/viga_rfamdb.loc" />
+		</table>
+		<table name="viga_hmmerdb" comment_char="#">
+		   <columns>value, dbkey, name, path</columns>
+		   <file path="tool-data/viga_hmmerdb.loc" />
+		</table>
+	    </tables>
 
+4. Copy the :literal:`.loc.sample` files from
+   :literal:`tool-data` to :literal:`tool-data` in the Galaxy
+   installation directory and rename them as 
+   :literal:`.loc`. For example::
+
+	viga_blastdb.loc.sample -> viga_blastdb.loc
+
+5. Update database paths in :literal:`.loc` files.
+   Edit the following files in the Galaxy's :literal:`tool-data`
+   directory and add paths to corresponding databases:
+
+   * :literal:`viga_blastdb.loc`
+   * :literal:`viga_diamonddb.loc`
+   * :literal:`viga_rfamdb.loc`
+   * :literal:`viga_hmmerdb.loc`
+   
+   **Important:** Without this step, the databases will not be 
+   available for selection in the interface.
+
+6. Create or update the Galaxy job configuration file.
+   If the file :literal:`config/job_conf.xml` does not exist,
+   create it. Change :literal:`/data/databases` under
+   :literal:`docker_volumes` to the location where your
+   databases are stored. Here is an example::
+   
 	<?xml version="1.0"?>
 	<!-- A sample job config that explicitly configures job running the way it is configured by default (if there is no explicit config). -->
 	<job_conf>
@@ -248,29 +304,37 @@ an example::
 	    </tools>
 	</job_conf>
 
+7. Restart Galaxy. The tool will now be available in the 
+   **Annotation** section of the tool panel and is ready to use.
 
-**Restart Galaxy**. The tool will now be ready to use.
-   
-----
+For documentation on using VIGA itself including information
+on the various options, please check the README file included
+in VIGA or read the online documentation_.
 
-**Output files**
+****
 
+Output files
+------------
 VIGA creates the following output files:
 
-* tbl - Table file with all protein information.
-* gbk - GenBank format file with annotations.
-* fasta - FASTA format file for GenBank submission
-* csv - Table file for GenBank submission.
-* gff - GFF3 format file (if option is selected)
+:tbl: Table file with all protein information.
 
-----
+:gbk: GenBank format file with annotations.
 
-**License and citation**
+:fasta: FASTA format file for GenBank submission
 
+:csv: Table file for GenBank submission.
+
+:gff: GFF3 format file (if this option is selected)
+
+****
+
+License and citation
+--------------------
 VIGA_ and this Galaxy wrapper - `GPLv3 <https://www.gnu.org/copyleft/gpl.html>`_.
 
-
 Galaxy
+......
 
 - Goecks, J, Nekrutenko, A, Taylor, J and The Galaxy Team. "Galaxy: a
   comprehensive approach for supporting accessible, reproducible, and
@@ -289,11 +353,14 @@ Galaxy
 
 You can use this tool only if you agree to the license terms of: `VIGA`_.
 
+.. _Docker: https://www.docker.com
+.. _documentation: https://github.com/EGTortuero/viga/blob/master/README.md
+.. _Galaxy: https://galaxyproject.org
+.. _hub: https://hub.docker.com/u/vimalkvn/viga
 .. _VIGA: https://github.com/EGTortuero/viga
 
 ]]></help>
-<!--    <citations>
-        <citation type="doi">NOT YET</citation>
+   <citations>
+        <citation type="doi">10.1101/277509</citation>
     </citations>
--->
 </tool>

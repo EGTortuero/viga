@@ -25,7 +25,8 @@ Before using this script, the following Python modules and programs should be in
 	- BLAST+ (Camacho et al. 2008): it is used to predict the function of the predicted proteins according to homology when DIAMOND is not able to retrieve any hit or such hit is a 'hypothetical protein'. This suite is publicly available at ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/ under the GPLv2 licence. Databases are available at ftp://ftp.ncbi.nlm.nih.gov/blast/db/ or created using makeblastdb command.
 	- HMMER (Finn et al. 2011): it is used to add more information of the predicted proteins according to Hidden Markov Models. This suite is publicly available at http://hmmer.org/ under the GPLv3 licence. Databases must be in HMM format and an example of potential database is PVOGs (http://dmk-brain.ecn.uiowa.edu/VOG/downloads/All/AllvogHMMprofiles.tar.gz).
 
-Although you can install the programs manually, we strongly recommend the use of the Docker image to create an environment for VIGA. The link to the Docker image is https://hub.docker.com/r/vimalkvn/viga/
+Although you can install these programs manually, we strongly recommend the use of the [Docker image](https://hub.docker.com/r/vimalkvn/viga/) to run VIGA.
+Please check the [documentation](docker/README.md) in the docker directory for information on obtaining and using the Docker image.
 
 Before running this pipeline, you must run the 'create_db.sh' bash script to install all requested databases. In this case, the databases that the program uses are RFAM (Nawrocki et al. 2015), RefSeq Viral Proteins (Brister et al. 2015) and PVOGS (Grazziotin et al. 2017), which will be formatted automatically to be used in BLAST, DIAMOND and HMMER.
 
@@ -167,65 +168,77 @@ VIGA can be integrated into [Galaxy](https://galaxyproject.org) using the wrappe
 
 [Docker](https://www.docker.com) should first be installed and working on the
 server where this Galaxy instance is setup. The user running Galaxy should be
-part of the **docker** user group.
+part of the `docker` user group.
 
 ### Installation
+To install the VIGA Galaxy wrapper, please follow the steps 
+below.
 
-1. Download or clone this repository (as a submodule) in the **tools**
-   directory of the Galaxy installation.
+1. Download or clone this repository to a location in your 
+   HOME directory:
+   
+		cd
+		git clone --depth 1 https://github.com/EGTortuero/viga.git
 
-2. Update **config/tool_conf.xml** to add the VIGA wrapper in a relevant section of the tool panel. For example, "Annotation".
+2. Update `config/tool_conf.xml` to add the VIGA wrapper in a relevant section of the tool panel. 
+   For example — "Annotation". Update path in the 
+   `<tool file="..."/>` section to correspond to the location
+   where you have downloaded or cloned the repository.
 
 		<section id="annotation" name="Annotation">
-			<tool file="viga/wrapper.xml" />
+			<tool file="/home/user/viga/wrapper.xml" />
 		</section>
 
-3. Copy (or update the file if it is already present) the included
-   **tool_data_table_conf.xml.sample** file to
-   **config/tool_data_table_conf.xml**.
+3. Copy the following table definitions in the 
+   `tool_data_table_conf.xml.sample` file to
+   `config/tool_data_table_conf.xml` in the Galaxy installation
+   directory. 
+   If the file does not exist, create it.
 
 		<!-- VIGA databases -->
 		<tables>
-		    <table name="viga_blastdb" comment_char="#">
-			<columns>value, dbkey, name, path</columns>
-			<file path="tool-data/viga_blastdb.loc" />
-		    </table>
-		    <table name="viga_diamonddb" comment_char="#">
-			<columns>value, dbkey, name, path</columns>
-			<file path="tool-data/viga_diamonddb.loc" />
-		    </table>
-		    <table name="viga_rfamdb" comment_char="#">
-			<columns>value, dbkey, name, path</columns>
-			<file path="tool-data/viga_rfamdb.loc" />
-		    </table>
-		    <table name="viga_hmmdb" comment_char="#">
-			<columns>value, dbkey, name, path</columns>
-			<file path="tool-data/viga_hmmdb.loc" />
-		    </table>
+			<table name="viga_blastdb" comment_char="#">
+				<columns>value, dbkey, name, path</columns>
+				<file path="tool-data/viga_blastdb.loc" />
+			</table>
+			<table name="viga_diamonddb" comment_char="#">
+				<columns>value, dbkey, name, path</columns>
+				<file path="tool-data/viga_diamonddb.loc" />
+			</table>
+			<table name="viga_rfamdb" comment_char="#">
+				<columns>value, dbkey, name, path</columns>
+				<file path="tool-data/viga_rfamdb.loc" />
+			</table>
+			<table name="viga_hmmerdb" comment_char="#">
+				<columns>value, dbkey, name, path</columns>
+				<file path="tool-data/viga_hmmerdb.loc" />
+			</table>
 		</tables>
 
-4. Copy the **.loc.sample** files from **viga/tool-data** to **galaxy/tool-data**
-   and rename them as **.loc**. For example:
+4. Copy the `.loc.sample` files from `tool-data` to `tool-data`
+   in the Galaxy installation directory and rename them as 
+   `.loc`. For example:
 
 		viga_blastdb.loc.sample -> viga_blastdb.loc
 
-5. Update database paths in .loc files
-   Edit the following files in the **tool-data** directory and add paths to
-   corresponding databases
+5. Update database paths in `.loc` files.
+   Edit the following files in the `tool-data` directory and 
+   add paths to corresponding databases
 
-   * viga_blastdb.loc
-   * viga_diamonddb.loc
-   * viga_rfamdb.loc
-   * viga_hmmdb.loc
+   * `viga_blastdb.loc`
+   * `viga_diamonddb.loc`
+   * `viga_rfamdb.loc`
+   * `viga_hmmerdb.loc`
+   
+   **Note:** Without this step, the databases will not be 
+   available for selection in the interface.
 
-
-6. Create or update the Galaxy job configuration file
-
-   If the file **config/job_conf.xml** does not exist, create it by copying the
-   template **config/job_conf.xml.sample_basic** in the Galaxy directory. Then
-   add a Docker destination for viga. Change ``/data/databases`` under
-   ``docker_volumes`` to the location where your databases are stored. Here is
+6. Create or update the Galaxy job configuration file.
+   If the file `config/job_conf.xml` does not exist, create it 
+   Change `/data/databases` under `docker_volumes` to the 
+   location where your databases are stored. Here is
    an example:
+   
 
 		<?xml version="1.0"?>
 		<!-- A sample job config that explicitly configures job running the way it is configured by default (if there is no explicit config). -->
@@ -250,8 +263,8 @@ part of the **docker** user group.
 		    </tools>
 		</job_conf>
 
-
-7. **Restart Galaxy**. The tool will now be ready to use.
+7. Restart Galaxy. The tool will now be available in the 
+   "Annotation" section of the tool panel and ready to use.
 
 
 ## HISTORY OF THE SOURCE CODE:
