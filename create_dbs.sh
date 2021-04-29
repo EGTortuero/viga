@@ -1,18 +1,26 @@
 #! /bin/bash
 
 ## Installing databases
+echo "VIGA Databases installation and update script"
+echo "------------------------"
+echo ""
+echo "This script will install and/or update all databases needed to run VIGA before its execution."
+echo "All programs will be installed in:"
+echo $PWD/databases
+#echo "In case that you are running non-Debian-based UNIX distros, please replace all"
+#echo "lines with 'apt' by 'dnf' in this script!"
 
 # Checking if all required programs are installed
 if ! foobar_loc="$(type -p "cmpress")" || [[ -z $foobar_loc ]]; then
-	echo "You need to run first the installer.sh script to download all databases. You need to install INFERNAL!"
+	echo "You need to run first the install.sh script to download all databases. You need to install INFERNAL!"
 	exit
 fi
 if ! foobar_loc="$(type -p "diamond")" || [[ -z $foobar_loc ]]; then
-	echo "You need to run first the installer.sh script to download all databases. You need to install DIAMOND!"
+	echo "You need to run first the install.sh script to download all databases. You need to install DIAMOND!"
 	exit
 fi
 if ! foobar_loc="$(type -p "makeblastdb")" || [[ -z $foobar_loc ]]; then
-	echo "You need to run first the installer.sh script to download all databases. You need to install BLAST+!"
+	echo "You need to run first the install.sh script to download all databases. You need to install BLAST+!"
 	exit
 fi
 
@@ -67,13 +75,19 @@ rm refseq_viral_proteins.faa
 echo "Done"
 echo ""
 
-# Downloading PVOGs and formatting 
-echo "Downloading PVOGs and formatting for its use in HMMer"
-mkdir pvogs
-cd pvogs
-curl -O ftp://ftp.ncbi.nlm.nih.gov/pub/kristensen/pVOGs/downloads/All/AllvogHMMprofiles.tar.gz &> /dev/null
+# Downloading PVOGs and RVDB and formatting 
+echo "Downloading PVOGs and RVDB and formatting for its use in HMMer"
+mkdir pvogs_rvdb
+cd pvogs_rvdb
+curl -O http://dmk-brain.ecn.uiowa.edu/pVOGs/downloads/All/AllvogHMMprofiles.tar.gz &> /dev/null
 tar zxvf AllvogHMMprofiles.tar.gz &> /dev/null
-{ echo AllvogHMMprofiles/*.hmm | xargs cat; } > pvogs.hmm
+{ echo AllvogHMMprofiles/*.hmm | xargs cat; } > pvogs_only.hmm
 rm -rf AllvogHMMprofiles
+curl -O https://rvdb-prot.pasteur.fr/files/U-RVDBv21.0-prot.hmm.bz2 &> /dev/null
+bzip2 -dk U-RVDBv21.0-prot.hmm.bz2
+#hmmconvert U-RVDBv21.0-prot.hmm > U-RVDBv21.0-prot3.hmm
+mv U-RVDBv21.0-prot.hmm RVDB_21.0_only.hmm
+cat pvogs_only.hmm RVDB_21.0_only.hmm > pvogs_RVDB.hmm
+hmmpress -f pvogs_RVDB.hmm &> /dev/null
 cd ../..
 echo "Done"
