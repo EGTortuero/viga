@@ -349,8 +349,14 @@ eprint("Written by Enrique Gonzalez Tortuero & Vimalkumar Velayudhan")
 eprint("Homepage is https://github.com/EGTortuero/viga")
 eprint("Local time: ", strftime("%a, %d %b %Y %H:%M:%S"))
 
-## checking the presence of the programs in the system
-if not cmd_exists("lastz")==True or not cmd_exists("aragorn")==True or (not cmd_exists("cmscan")==True and args.norfam==False) or not cmd_exists("pilercr")==True or not cmd_exists("prodigal")==True or not cmd_exists("diamond")==True or (not cmd_exists("blastp")==True and args.blastswitch==True) or (not cmd_exists("hmmsearch")==True or not cmd_exists("hmmbuild") and args.nohmmer==False):
+## checking the presence of the programs in the system # Need to fix this(!)
+if not cmd_exists("lastz")==True or 
+not cmd_exists("aragorn")==True or 
+(not cmd_exists("cmscan")==True and args.norfam==False) or 
+not cmd_exists("pilercr")==True or not cmd_exists("prodigal")==True or 
+not cmd_exists("diamond")==True or 
+(not cmd_exists("blastp")==True and args.blastswitch==True) or 
+(not cmd_exists("hmmsearch")==True or not cmd_exists("hmmbuild") and args.nohmmer==False):
 	sys.exit("You need to run the installer.sh script before running this pipeline")
 
 eprint("Data type is {0} and GenBank translation table no is {1}\n".format(args.typedata, args.gcode))
