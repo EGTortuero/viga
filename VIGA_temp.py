@@ -663,6 +663,7 @@ for contigfile in sorted(glob.glob("LOC_*.fna")):
 		num_seqs = len(list(SeqIO.parse("pretemp.faa", "fasta")))
 		eprint("Detected %i ORFs in %s" % (num_seqs, contigfile))
 cat_all(sorted(glob.glob('orffile*.faa')), 'PROTS_FIRST_ROUND.faa')
+cat_all(sorted(glob.glob('orffile*.faa')), "%s.genes.faa" % root_output)
 cat_all(sorted(glob.glob('orffile*.fna')), "%s.genes.fna" % root_output)
 endtime7 = time.time()
 durationtime7 = endtime7 - starttime7
