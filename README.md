@@ -23,13 +23,13 @@ Before using this script, the following Python modules and programs should be in
 	- BLAST+ (Camacho et al. 2008): it is used to predict the function of the predicted proteins according to homology when DIAMOND is not able to retrieve any hit or such hit is a 'hypothetical protein'. This suite is publicly available at ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/ under the GPLv2 licence. Databases are available at ftp://ftp.ncbi.nlm.nih.gov/blast/db/ or created using makeblastdb command.
 	- HMMER (Finn et al. 2011): it is used to add more information of the predicted proteins according to Hidden Markov Models. This suite is publicly available at http://hmmer.org/ under the GPLv3 licence. Databases must be in HMM format and an example of potential database is PVOGs (http://dmk-brain.ecn.uiowa.edu/VOG/downloads/All/AllvogHMMprofiles.tar.gz).
 
-Although you can install these programs manually, we strongly recommend the use of the installation bash script 'install.sh' to facilitate the installation of all these dependencies. After running the installation script, and before running VIGA, you must run the 'create_db.sh' bash script to install all requested databases. In this case, the databases that the program uses are RFAM (Nawrocki et al. 2015), RefSeq Viral Proteins (Brister et al. 2015) and PVOGS (Grazziotin et al. 2017), which will be formatted automatically to be used in BLAST, DIAMOND and HMMER.
+Although you can install these programs manually, we strongly recommend the use of the installation bash script 'install.sh' to facilitate the installation of all these dependencies. After running the installation script, and before running VIGA, you must run the 'create_db.sh' bash script to install all requested databases. In this case, the databases that the program uses are RFAM (Nawrocki et al. 2015), RefSeq Viral Proteins (Brister et al. 2015), Prokaryotic Viral Orthologous Genes (PVOGs; Grazziotin et al. 2017), Reference Viral DataBase (RVDB; Bigot et al. 2020) and VOGs (Marz et al. 2014) which will be formatted automatically to be used in BLAST, DIAMOND and HMMER.
 
 When using this program, you must cite their use:
 
 	González-Tortuero E, Sutton TDS, Velayudhan V, Shkoporov AN, Draper LA, Stockdale SR, Ross RP, Hill C (2018) VIGA: a sensitive, precise and automatic de novo VIral Genome Annotator. bioRxiv 277509; doi: https://doi.org/10.1101/277509 
 
-## PARAMETERS (Pending to modify):
+## PARAMETERS:
 
 The program has the following two types of arguments:
 
@@ -37,9 +37,6 @@ The program has the following two types of arguments:
 
 <table>
 <tr><td>--input FASTAFILE</td><td>Input file as a nucleotidic FASTA file. It can contains multiple sequences (e.g. metagenomic contigs)</td></tr>
-<tr><td>--diamonddb DIAMONDDB</td><td>DIAMOND database that will be used for the protein function prediction. The database MUST be for amino acids. The database must be created from a amino acid FASTA file as indicated in https://github.com/bbuchfink/diamond</td></tr>
-<tr><td>--blastdb BLASTDB</td><td>BLAST database that will be used to refine the protein function prediction in hypothetical proteins. The database must be an amino acid one, not nucleotidic.</td></tr>
-<tr><td>--rfamdb RFAMDB</td><td>RFAM database that will be used for the ribosomal RNA prediction. RFAMDB should be in the format "/full/path/to/rfamdb/Rfam.cm" and must be compressed accordingly (see INFERNAL manual) before running the script.</td></tr>
 <tr><td>--modifiers TEXTFILE</td><td>Input file as a plain text file with the modifiers per every FASTA header according to SeqIn (https://www.ncbi.nlm.nih.gov/Sequin/modifiers.html). All modifiers must be written in a single line and are separated by a single space character. No space should be placed besides the = sign. For example: [organism=Serratia marcescens subsp. marcescens] [sub-species=marcescens] [strain=AH0650_Sm1] [moltype=DNA] [tech=wgs] [gcode=11] [country=Australia] [isolation-source=sputum]. This line will be copied and printed along with the record name as the definition line of every contig sequence.</tr></td>
 </table>
 
@@ -48,9 +45,8 @@ The program has the following two types of arguments:
 <table>
 <tr><td>--out OUTPUTNAME</td><td>Name of the outputs files without extensions, as the program will add them automatically. By default, the program will use the input name as the output.</td></tr>
 <tr><td>--locus STRING</td><td>Name of the contigs/sequences. If the input is a multiFASTA file, please put a general name as the program will add the number of the contig at the end of the name. By default, the name of the contigs will be "LOC".</td></tr>
-<tr><td>--gff</td><td>Printing the output as a General Feature Format (GFF) version 3. It is a flat table file with contains 9 columns of data (see http://www.ensembl.org/info/website/upload/gff3.html for more information). By default, the program will not print the GFF3 file (--gff False).</td></tr>
 <tr><td>--threads INT</td><td>Number of threads/CPUs. By default, the program will use all available CPUs.</td></tr>
-<tr><td>--mincontigsize INT</td><td>Minimum contig length to be considered in the final files. By default, the program only consider from 200 bp.</td></tr>
+<tr><td>--mincontigsize INT</td><td>Minimum contig length to be considered in the final files. By default, the program only consider from 200 bp.</td></tr><tr><td>--blast</td><td>Using BLAST to predict protein function based on homology. By default, DIAMOND (fast approach) will be used instead of BLAST, but it is highly recommendable to use BLAST for better results</td></tr>
 </table>
 
 ### Advanced parameters for contig shape prediction:
@@ -99,6 +95,7 @@ The program has the following two types of arguments:
 <tr><td>29</td><td>Mesodinium nuclear code</td></tr>
 <tr><td>30</td><td>Peritrich nuclear code</td></tr>
 <tr><td>31</td><td>Blastocrithidia nuclear code</td></tr>
+<tr><td>33</td><td>Cephalodiscidae mitochondrial code</td></tr>	
 </table>
 By default, the program will use the translation table no. 11</td></tr>
 </table>
@@ -116,9 +113,16 @@ By default, the program will use the translation table no. 11</td></tr>
 By default, the program will consider every sequence as a contig (CON)</td></tr>
 </table>
 
+### Advanced parameters for the ncRNA prediction based on Covariance Models:
+<table>
+<tr><td>--norfam</td><td>Don't run RFAM to predict other ncRNAs, apart of rRNAs and tRNAs. (Default: False)</td></tr>
+<tr><td>--rfamdb RFAMDB</td><td>RFAM Database that will be used for the ncRNA prediction. RFAMDB should be in the format "/full/path/to/rfamdb/Rfam.cm" and must be compressed accordingly (see INFERNAL manual) before running the script. By default, the program will try to search Rfam inside the folder database/ (after running the Create_databases.sh script)</td></tr>
+</table>
+
 ### Advanced parameters for protein function prediction based on homology using DIAMOND:
 
 <table>
+<tr><td>--diamonddb DIAMONDDB</td><td>DIAMOND Database that will be used for the protein function prediction. The database must be created from a amino acid FASTA file as indicated in https://github.com/bbuchfink/diamond. By default, the program will try to search the RefSeq Viral Protein DB formatted for its use in Diamond inside the folder database/ only if --blast parameter is disabled and after running the Create_databases.sh script</td></tr>
 <tr><td>--diamondevalue FLOAT</td><td>DIAMOND e-value threshold. By default, the threshold will be 1e-05.</td></tr>
 <tr><td>--diamondidthr FLOAT</td><td>DIAMOND identity threshold to consider that a protein belong to a specific hit. By default, the threshold is 50.0 %</td></tr>
 <tr><td>--diamondcoverthr FLOAT</td><td>DIAMOND coverage threshold to consider that a protein belong to a specific hit. By default, the threshold is 50.0 %</td></tr>
@@ -127,6 +131,7 @@ By default, the program will consider every sequence as a contig (CON)</td></tr>
 ### Advanced parameters for protein function prediction based on homology using BLAST:
 
 <table>
+<tr><td>--blastdb BLASTDB</td><td>BLAST Database that will be used to refine the protein function prediction in hypothetical proteins. The database must be an amino acid one, not nucleotidic. By default, the program will try to search the RefSeq Viral Protein DB formatted for its use in BLAST inside the folder database/ only if --blast parameter is ensabled and after running the Create_databases.sh script</td></tr>
 <tr><td>--blastexh</td><td>Use of exhaustive BLAST to predict the proteins by homology according to Fozo et al. (2010). In this case, the search will be done using a word size of 2, a gap open penalty of 8, a gap extension penalty of 2, the PAM70 matrix instead of the BLOSUM62 and no compositional based statistics. This method is more accurate to predict the functions of the proteins but it is slower than BLAST default parameters. By default, exhaustive BLAST is disabled.</td></tr>
 <tr><td>--blastevalue FLOAT</td><td>BLAST e-value threshold. By default, the threshold will be 1e-05.</td></tr>
 <tr><td>--blastidthr FLOAT</td><td>BLAST identity threshold to consider that a protein belong to a specific hit. By default, the threshold is 50.0 %</td></tr>
@@ -136,7 +141,7 @@ By default, the program will consider every sequence as a contig (CON)</td></tr>
 ### Advanced parameters for protein function annotation based on Hidden Markov Models using HMMer:
 
 <table>
-<tr><td>--nohmmer</td><td>Running the program without using HMMer to predict protein function. In this case, the program will run fast. By default, this option is DISABLED.</td></tr>
+<tr><td>--nohmmer</td><td>Running only BLAST to predict protein function. In this case, the program will run fast. By default, this option is DISABLED.</td></tr>
 <tr><td>--hmmerdb HMMDB</td><td>HMMer Database that will be used to add additional information for all proteins according to Hidden Markov Models. This database must be in HMM format and it is mandatory if --nohmmer is disabled."</td></tr>
 <tr><td>--hmmerevalue FLOAT</td><td>HMMer e-value threshold. By default, the threshold is 1e-03.</td></tr>
 <tr><td>--hmmeridthr FLOAT</td><td>HMMer identity threshold. By default, the threshold is 50.0 %</td></tr>
@@ -164,6 +169,7 @@ In this branch, there will be program versions with proposed changes. After bein
 
 ## REFERENCES:
 
+	- Bigot T, Temmam S, Pérot P, Eloit M (2020) RVDB-prot, a reference viral protein database and its HMM profiles. F1000Research 8: 530.
 	- Brister JR, Ako-Adjei D, Bao Y, Blinkova O (2015) NCBI viral genomes resource. Nucleic Acids Research 43: D571–7.
 	- Brown CT, Olm MR, Thomas BC, Banfield JF (2016) Measurement of bacterial replication rates in microbial communities. Nature Biotechnology 34: 1256-63.
 	- Buchfink B, Xie C, Huson DH (2015) Fast and sensitive protein alignment using DIAMOND. Nature Methods 12: 59-60.
@@ -175,7 +181,8 @@ In this branch, there will be program versions with proposed changes. After bein
 	- Harris RS (2007) Improved pairwise alignment of genomic DNA. Ph.D. Thesis, The Pennsylvania State University. 
 	- Hyatt D, Chen GL, Locascio PF, Land ML, Larimer FW, Hauser LJ (2010) Prodigal: prokaryotic gene recognition and translation initiation site identification. BMC Bioinformatics 11: 119.
 	- Hyatt D, Locascio PF, Hauser LJ, Uberbacher EC (2012) Gene and translation initiation site prediction in metagenomic sequences. Bioinformatics 28: 2223-30.
-	- Laslett D, Canback B (2004) ARAGORN, a program to detect tRNA genes and tmRNA genes in nucleotide sequences. Nucleic Acids Research 32, 11–16.
+	- Laslett D, Canback B (2004) ARAGORN, a program to detect tRNA genes and tmRNA genes in nucleotide sequences. Nucleic Acids Research 32: 11–16.
+	- Marz M, Beerenwinkel N, Drosten C, Fricke M, Frishman D, Hofacker IL, Hoffmann D, Middendorf M, Rattei T, Stadler PF, Töpfer A (2014) Challenges in RNA virus bioinformatics. Bioinformatics 30: 1793-9.
 	- Moura de Sousa JA, Pfeifer E, Touchon M, Rocha EPC (2021) Causes and consequences of bacteriophage diversification via genetic exchanges across lifestyles and bacterial taxa. Molecular Biology and Evolution, msab044: https://doi.org/10.1093/molbev/msab044
 	- Nawrocki EP, Eddy SR (2013) Infernal 1.1: 100-fold faster RNA homology searches. Bioinformatics 29: 2933-35.
 	- Nawrocki EP, Burge SW, Bateman A, Daub J, Eberhardt RY, Eddy SR, Floden EW, Gardner PP, Jones TA, Tate J, Finn RD (2013) Rfam 12.0: updates to the RNA families database. Nucleic Acids Research 43: D130-7.
