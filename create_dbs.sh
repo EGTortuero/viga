@@ -75,24 +75,32 @@ rm refseq_viral_proteins.faa
 echo "Done"
 echo ""
 
-# Downloading PVOGs and RVDB and formatting 
+# Downloading PVOGs
 echo "Downloading PVOGs, VOGs and RVDB and formatting for its use in HMMer"
 mkdir pvogs_rvdb
 cd pvogs_rvdb
 curl -O http://dmk-brain.ecn.uiowa.edu/pVOGs/downloads/All/AllvogHMMprofiles.tar.gz &> /dev/null
 tar zxvf AllvogHMMprofiles.tar.gz &> /dev/null
 { echo AllvogHMMprofiles/*.hmm | xargs cat; } > pvogs_only.hmm
-rm -rf AllvogHMMprofiles
+sed 's/NAME  VOG/NAME  PVOG/g' < pvogs_only.hmm > pvogs_only_mod.hmm
+rm -rf AllvogHMMprofiles pvogs_only.hmm
+
+# Downloading RVDB 
 curl -O https://rvdb-prot.pasteur.fr/files/U-RVDBv21.0-prot.hmm.bz2 &> /dev/null
 bzip2 -dk U-RVDBv21.0-prot.hmm.bz2
 #hmmconvert U-RVDBv21.0-prot.hmm > U-RVDBv21.0-prot3.hmm
 mv U-RVDBv21.0-prot.hmm RVDB_21.0_only.hmm
+
+# Downloading VOGs
 curl -O http://fileshare.csb.univie.ac.at/vog/latest/vog.hmm.tar.gz &> /dev/null
 tar zxvf vog.hmm.tar.gz &> /dev/null
 mkdir AllVOGHMMprofiles
 mv VOG*hmm AllVOGHMMprofiles
-{ echo AllVOGHMMprofiles/*.hmm | xargs cat; } > vog.hmm
-cat pvogs_only.hmm RVDB_21.0_only.hmm vog.hmm > pvogs_vogs_RVDB.hmm
+{ echo AllVOGHMMprofiles/*.hmm | xargs cat; } > vog_only.hmm
+rm -rf AllVOGHMMprofiles
+
+# Formatting the database
+cat pvogs_only_mod.hmm RVDB_21.0_only.hmm vog_only.hmm > pvogs_vogs_RVDB.hmm
 hmmpress -f pvogs_vogs_RVDB.hmm &> /dev/null
 cd ../..
 echo "Done"
