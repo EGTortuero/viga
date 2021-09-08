@@ -113,6 +113,17 @@ make install &>/dev/null
 echo "Done."
 cd ..
 
+#echo ""
+#echo "Installing HHSuite..."
+#git clone https://github.com/soedinglab/hh-suite.git
+#mkdir -p hh-suite/build
+#cd hh-suite/build
+#cmake -DCMAKE_INSTALL_PREFIX=$PWD/../../ .. &>/dev/null
+#make -j 4 &>/dev/null
+#make install &>/dev/null
+#echo "Done."
+#cd ..
+
 # Cleaning the folder to harbour only the binary files and needed libraries
 echo ""
 echo "Cleaning all temporary folders and downloaded tarballs"
