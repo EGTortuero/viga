@@ -113,23 +113,23 @@ make install &>/dev/null
 echo "Done."
 cd ..
 
-#echo ""
-#echo "Installing HHSuite..."
-#git clone https://github.com/soedinglab/hh-suite.git
-#mkdir -p hh-suite/build
-#cd hh-suite/build
-#cmake -DCMAKE_INSTALL_PREFIX=$PWD/../../ .. &>/dev/null
-#make -j 4 &>/dev/null
-#make install &>/dev/null
-#echo "Done."
-#cd ..
+echo ""
+echo "Installing HHSuite..."
+git clone https://github.com/soedinglab/hh-suite.git
+mkdir -p hh-suite/build
+cd hh-suite/build
+cmake -DCMAKE_INSTALL_PREFIX=$PWD/../../ .. &>/dev/null
+make -j 4 &>/dev/null
+make install &>/dev/null
+echo "Done."
+cd ..
 
 # Cleaning the folder to harbour only the binary files and needed libraries
 echo ""
 echo "Cleaning all temporary folders and downloaded tarballs"
 rm *tar.gz
 rm -rf Prodigal/ aragorn/ diamond-2.0.7/ infernal-1.1.4/ lastz-1.04.03/ pilercr1.06/ 
-rm -rf ncbi-blast-2.11.0+-src/ hmmer-3.3.2/
+rm -rf ncbi-blast-2.11.0+-src/ hmmer-3.3.2/ hh-suite/
 
 # Creating the databases
 #echo ""
