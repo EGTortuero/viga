@@ -99,6 +99,12 @@ mv VOG*hmm AllVOGHMMprofiles
 { echo AllVOGHMMprofiles/*.hmm | xargs cat; } > vog_only.hmm
 rm -rf AllVOGHMMprofiles
 
+## Downloading PHROGs
+#curl -O https://phrogs.lmge.uca.fr/downloads_from_website/HMM_phrog.tar.gz &> /dev/null
+#tar zxvf HMM_phrog.tar.gz &> /dev/null
+#{ echo HMM_phrog/*.hmm | xargs cat; } > phrogs_only.hmm
+#
+
 # Formatting the database
 cat pvogs_only_mod.hmm RVDB_21.0_only.hmm vog_only.hmm > pvogs_vogs_RVDB.hmm
 hmmpress -f pvogs_vogs_RVDB.hmm &> /dev/null
