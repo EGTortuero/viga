@@ -3,6 +3,8 @@ De novo Viral Genome Annotator
 
 VIGA is a script written in Python 2.7 that annotates viral genomes automatically (using a <i>de novo</i> algorithm) and predict the function of their proteins using BLAST and HMMER. This script works in UNIX-based OS, including MacOSX.
 
+Nowadays, it is highly convenient to use the following command for the developer version: git clone https://github.com/EGTortuero/viga.git --branch developer
+
 ## REQUIREMENTS:
 
 Before using this script, the following Python modules and programs should be installed:
