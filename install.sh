@@ -30,7 +30,7 @@ mv src/lastz ../bin/
 mv src/lastz_D ../bin/
 echo "Done."
 cd ..
-	
+
 echo ""
 echo "Installing Aragorn..."
 mkdir aragorn
@@ -88,11 +88,11 @@ cd ../..
 
 echo ""
 echo "Installing BLAST (It will take time)..."
-wget https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/ncbi-blast-2.12.0+-src.tar.gz.md5 &>/dev/null
-wget https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/ncbi-blast-2.12.0+-src.tar.gz &>/dev/null
-md5sum --quiet --check ncbi-blast-2.12.0+-src.tar.gz.md5
-tar xvfz ncbi-blast-2.12.0+-src.tar.gz &>/dev/null
-cd ncbi-blast-2.12.0+-src/c++
+wget https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/ncbi-blast-2.13.0+-src.tar.gz.md5 &>/dev/null
+wget https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/ncbi-blast-2.13.0+-src.tar.gz &>/dev/null
+md5sum --quiet --check ncbi-blast-2.13.0+-src.tar.gz.md5
+tar xvfz ncbi-blast-2.13.0+-src.tar.gz &>/dev/null
+cd ncbi-blast-2.13.0+-src/c++
 ./configure &>/dev/null
 cd ReleaseMT/build
 make all_r &>/dev/null
@@ -127,9 +127,10 @@ cd ..
 # Cleaning the folder to harbour only the binary files and needed libraries
 echo ""
 echo "Cleaning all temporary folders and downloaded tarballs"
-rm *tar.gz
+rm *.tar.gz
+rm ncbi-blast-2.13.0+-src.tar.gz.md5
 rm -rf Prodigal/ aragorn/ diamond-2.0.7/ infernal-1.1.4/ lastz-1.04.03/ pilercr1.06/ 
-rm -rf ncbi-blast-2.12.0+-src/ hmmer-3.3.2/ hh-suite/
+rm -rf ncbi-blast-2.13.0+-src/ hmmer-3.3.2/ hh-suite/
 
 # Creating the databases
 #echo ""

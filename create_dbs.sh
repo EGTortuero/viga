@@ -32,7 +32,7 @@ cd databases
 echo "Downloading RFAM and formatting for its use in INFERNAL"
 mkdir rfam
 cd rfam
-curl -O ftp://ftp.ebi.ac.uk/pub/databases/Rfam/CURRENT/Rfam.cm.gz &> /dev/null
+curl -O ftp://ftp.ebi.ac.uk/pub/databases/Rfam/CURRENT/Rfam.cm.gz
 gunzip Rfam.cm.gz
 cmpress Rfam.cm &> /dev/null
 cd ..
@@ -41,14 +41,16 @@ echo ""
 
 # Downloading all RefSeq_Viral_Proteins db
 echo "Downloading RefSeq Viral Proteins"
-curl -O ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.1.protein.faa.gz &> /dev/null
-curl -O ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.2.protein.faa.gz &> /dev/null
-curl -O ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.3.protein.faa.gz &> /dev/null
+curl -O https://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.1.protein.faa.gz
+curl -O https://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.2.protein.faa.gz
+curl -O https://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.3.protein.faa.gz
+curl -O https://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.4.protein.faa.gz
 gunzip viral.1.protein.faa.gz
 gunzip viral.2.protein.faa.gz
 gunzip viral.3.protein.faa.gz
-cat viral.1.protein.faa viral.2.protein.faa viral.3.protein.faa > refseq_viral_proteins.faa
-rm viral.1.protein.faa viral.2.protein.faa viral.3.protein.faa
+gunzip viral.4.protein.faa.gz
+cat viral.1.protein.faa viral.2.protein.faa viral.3.protein.faa viral.4.protein.faa > refseq_viral_proteins.faa
+rm viral.1.protein.faa viral.2.protein.faa viral.3.protein.faa viral.4.protein.faa
 echo "Done"
 echo ""
 
@@ -79,20 +81,20 @@ echo ""
 echo "Downloading PVOGs, VOGs and RVDB and formatting for its use in HMMer"
 mkdir pvogs_rvdb
 cd pvogs_rvdb
-curl -O http://dmk-brain.ecn.uiowa.edu/pVOGs/downloads/All/AllvogHMMprofiles.tar.gz &> /dev/null
+curl -O https://ftp.ncbi.nlm.nih.gov/pub/kristensen/pVOGs/downloads/All/AllvogHMMprofiles.tar.gz
+#curl -O http://dmk-brain.ecn.uiowa.edu/pVOGs/downloads/All/AllvogHMMprofiles.tar.gz
 tar zxvf AllvogHMMprofiles.tar.gz &> /dev/null
 { echo AllvogHMMprofiles/*.hmm | xargs cat; } > pvogs_only.hmm
 sed 's/NAME  VOG/NAME  PVOG/g' < pvogs_only.hmm > pvogs_only_mod.hmm
 rm -rf AllvogHMMprofiles pvogs_only.hmm
 
 # Downloading RVDB 
-curl -O https://rvdb-prot.pasteur.fr/files/U-RVDBv21.0-prot.hmm.bz2 &> /dev/null
-bzip2 -dk U-RVDBv21.0-prot.hmm.bz2
-#hmmconvert U-RVDBv21.0-prot.hmm > U-RVDBv21.0-prot3.hmm
-mv U-RVDBv21.0-prot.hmm RVDB_21.0_only.hmm
+curl -O https://rvdb-prot.pasteur.fr/files/U-RVDBv23.0-prot.hmm.xz
+unxz U-RVDBv23.0-prot.hmm.xz
+mv U-RVDBv23.0-prot.hmm RVDB_23.0_only.hmm
 
 # Downloading VOGs
-curl -O http://fileshare.csb.univie.ac.at/vog/latest/vog.hmm.tar.gz &> /dev/null
+curl -O http://fileshare.csb.univie.ac.at/vog/latest/vog.hmm.tar.gz
 tar zxvf vog.hmm.tar.gz &> /dev/null
 mkdir AllVOGHMMprofiles
 mv VOG*hmm AllVOGHMMprofiles
@@ -100,13 +102,13 @@ mv VOG*hmm AllVOGHMMprofiles
 rm -rf AllVOGHMMprofiles
 
 ## Downloading PHROGs
-#curl -O https://phrogs.lmge.uca.fr/downloads_from_website/HMM_phrog.tar.gz &> /dev/null
+#curl -O https://phrogs.lmge.uca.fr/downloads_from_website/HMM_phrog.tar.gz
 #tar zxvf HMM_phrog.tar.gz &> /dev/null
 #{ echo HMM_phrog/*.hmm | xargs cat; } > phrogs_only.hmm
 #
 
 # Formatting the database
-cat pvogs_only_mod.hmm RVDB_21.0_only.hmm vog_only.hmm > pvogs_vogs_RVDB.hmm
+cat pvogs_only_mod.hmm RVDB_23.0_only.hmm vog_only.hmm > pvogs_vogs_RVDB.hmm
 hmmpress -f pvogs_vogs_RVDB.hmm &> /dev/null
 cd ../..
 echo "Done"
