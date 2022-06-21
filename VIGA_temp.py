@@ -645,20 +645,20 @@ for contigfile in sorted(glob.glob("LOC_*.fna")):
 		orffile = "orffile_%s.faa" % record.id
 		orffile2 = "orffile_%s.fna" % record.id
 		length_contig = len(record.seq)
-		if genomeshape[record.id]['genomeshape'] == 'linear':
-			subprocess.call(["prodigal", "-a", "pretemp.faa", "-d", orffile2, "-i", contigfile, "-o", "/dev/null", "-g", args.gcode, "-c", "-q"])
-		else:
-			subprocess.call(["prodigal", "-a", "pretemp.faa", "-d", orffile2, "-i", contigfile, "-o", "/dev/null", "-g", args.gcode, "-q"])
-#		if (length_contig >= 100000):
-#			if genomeshape[record.id]['genomeshape'] == 'linear':
-#				subprocess.call(["prodigal", "-a", "pretemp.faa", "-d", orffile2, "-i", contigfile, "-o", "/dev/null", "-g", args.gcode, "-c", "-q"])
-#			else:
-#				subprocess.call(["prodigal", "-a", "pretemp.faa", "-d", orffile2, "-i", contigfile, "-o", "/dev/null", "-g", args.gcode, "-q"])
+#		if genomeshape[record.id]['genomeshape'] == 'linear': # Please, modify the command line after the gene prediction analyses.
+#			subprocess.call(["prodigal", "-a", "pretemp.faa", "-d", orffile2, "-i", contigfile, "-o", "/dev/null", "-g", args.gcode, "-p", "meta", "-c", "-q"])
 #		else:
-#			if genomeshape[record.id]['genomeshape'] == 'linear':
-#				subprocess.call(["prodigal", "-a", "pretemp.faa", "-d", orffile2, "-i", contigfile, "-o", "/dev/null", "-p", "meta", "-g", args.gcode, "-c", "-q"])
-#			else:
-#				subprocess.call(["prodigal", "-a", "pretemp.faa", "-d", orffile2, "-i", contigfile, "-o", "/dev/null", "-p", "meta", "-g", args.gcode, "-q"])
+#			subprocess.call(["prodigal", "-a", "pretemp.faa", "-d", orffile2, "-i", contigfile, "-o", "/dev/null", "-g", args.gcode,  "-p", "meta", "-q"])
+		if (length_contig >= 100000):
+			if genomeshape[record.id]['genomeshape'] == 'linear':
+				subprocess.call(["prodigal", "-a", "pretemp.faa", "-d", orffile2, "-i", contigfile, "-o", "/dev/null", "-g", args.gcode, "-c", "-q"])
+			else:
+				subprocess.call(["prodigal", "-a", "pretemp.faa", "-d", orffile2, "-i", contigfile, "-o", "/dev/null", "-g", args.gcode, "-q"])
+		else:
+			if genomeshape[record.id]['genomeshape'] == 'linear':
+				subprocess.call(["prodigal", "-a", "pretemp.faa", "-d", orffile2, "-i", contigfile, "-o", "/dev/null", "-p", "meta", "-g", args.gcode, "-c", "-q"])
+			else:
+				subprocess.call(["prodigal", "-a", "pretemp.faa", "-d", orffile2, "-i", contigfile, "-o", "/dev/null", "-p", "meta", "-g", args.gcode, "-q"])
 		with open("pretemp.faa", "r") as originalfaa, open(orffile, "w") as correctedfaa:
 			sequences = SeqIO.parse(originalfaa, "fasta")
 			for record in sequences:
