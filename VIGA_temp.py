@@ -51,7 +51,7 @@ from scipy import signal
 from time import strftime
 
 ## Defining the program version
-version = "0.11.1"
+version = "0.11.2"
 
 ## Preparing functions
 # A batch iterator
@@ -350,13 +350,7 @@ eprint("Homepage is https://github.com/EGTortuero/viga")
 eprint("Local time: ", strftime("%a, %d %b %Y %H:%M:%S"))
 
 ## checking the presence of the programs in the system # Need to fix this(!)
-if not cmd_exists("lastz")==True or 
-not cmd_exists("aragorn")==True or 
-(not cmd_exists("cmscan")==True and args.norfam==False) or 
-not cmd_exists("pilercr")==True or not cmd_exists("prodigal")==True or 
-not cmd_exists("diamond")==True or 
-(not cmd_exists("blastp")==True and args.blastswitch==True) or 
-(not cmd_exists("hmmsearch")==True or not cmd_exists("hmmbuild") and args.nohmmer==False):
+if not cmd_exists("lastz")==True or not cmd_exists("aragorn")==True or (not cmd_exists("cmscan")==True and args.norfam==False) or not cmd_exists("pilercr")==True or not cmd_exists("prodigal")==True or not cmd_exists("diamond")==True or (not cmd_exists("blastp")==True and args.blastswitch==True) or (not cmd_exists("hmmsearch")==True or not cmd_exists("hmmbuild") and args.nohmmer==False):
 	sys.exit("You need to run the installer.sh script before running this pipeline")
 
 eprint("Data type is {0} and GenBank translation table no is {1}\n".format(args.typedata, args.gcode))
@@ -557,41 +551,49 @@ eprint("Done: tRNA and tmRNA detection took %s seconds" % str(durationtime3))
 
 ## Predicting all ncRNA sequences (except rRNAs and tRNAs) (OPTIONAL: very SLOW step for genomic data) # Needed some optimisation
 if args.norfam == False:
-	starttime2 = time.time()
-	eprint("\nIdentifying all other ncRNA (except rRNAs and tRNAs) for all contigs")
-	with open("/dev/null", "w") as stderr:
-		subprocess.call(["cmscan", "--rfam", "--cut_ga", "--nohmmonly", "--tblout", "ncrnafile.csv", "--cpu", str(args.ncpus), args.rfamdatabase, "CONTIGS_ALL.fasta"], stdout=stderr)
-	with open("ncrnafile.csv", "r") as ncrnafile:
-		elementsncRNA = {}
-		for line in ncrnafile:
-			if not line.startswith("#"):
-				InfoLINE = re.sub("\s{2,}", ",", line)
-				line_splitted = InfoLINE.split(",")
-				contig_id = line_splitted[2]
-				elementsncRNA[contig_id] = {'Other': {}}
-	with open("ncrnafile.csv", "r") as ncrnafile:
-		count = 0
-		for line in ncrnafile:
-			if not line.startswith("#"):
-				InfoLINE = re.sub("\s{2,}", ",", line)
-				line_splitted = InfoLINE.split(",")
-				item_type = line_splitted[0]
-				contig_id = line_splitted[2]
-				for saved_contig in elementsncRNA:
-					if saved_contig == contig_id:
-						if item_type.startswith(('LSU', 'SSU', '5S', '5_8S', 'tRNA')):
-							next
-						elif item_type.endswith('tmRNA'):
-							next
-						else:
-							count += 1
-							if line_splitted[9] == "+":
-								elementsncRNA[contig_id]['Other'][count] = {'type': item_type, 'product': line_splitted[15].replace("\n", ""), 'begin': int(line_splitted[7]), 'end': int(line_splitted[8]), 'score': float(line_splitted[14].replace(" !", "")), 'rfamcode': line_splitted[1], 'strand': 1}
-							else:
-								elementsncRNA[contig_id]['Other'][count] = {'type': item_type, 'product': line_splitted[15].replace("\n", ""), 'begin': int(line_splitted[8]), 'end': int(line_splitted[7]), 'score': float(line_splitted[14].replace(" !", "")), 'rfamcode': line_splitted[1], 'strand': -1}
-	endtime2 = time.time()
-	durationtime2 = endtime2 - starttime2
-	eprint("Done: ncRNA detection took %s seconds" % str(durationtime2))
+    starttime2 = time.time()
+    eprint("\nIdentifying all other ncRNA (except rRNAs and tRNAs) for all contigs")
+    with open("/dev/null", "w") as stderr:
+        subprocess.call(["cmscan", "--rfam", "--cut_ga", "--nohmmonly", "--tblout", "ncrnafile.csv", "--cpu", str(args.ncpus), args.rfamdatabase, "CONTIGS_ALL.fasta"], stdout=stderr)
+    with open("ncrnafile.csv", "r") as ncrnafile:
+        elementsncRNA = {}
+        for line in ncrnafile:
+            if not line.startswith("#"):
+                InfoLINE = re.sub("\s{2,}", ",", line)
+                line_splitted = InfoLINE.split(",")
+                contig_id = line_splitted[2]
+                elementsncRNA[contig_id] = {'Other': {}}
+    with open("ncrnafile.csv", "r") as ncrnafile:
+        count = 0
+        for line in ncrnafile:
+            if not line.startswith("#"):
+                InfoLINE = re.sub("\s{2,}", ",", line)
+                line_splitted = InfoLINE.split(",")
+                #print(len(line_splitted))
+                item_type = line_splitted[0]
+                contig_id = line_splitted[2]
+                for saved_contig in elementsncRNA:
+                    if saved_contig == contig_id:
+                        if item_type.startswith(('LSU', 'SSU', '5S', '5_8S', 'tRNA')):
+                            next
+                        elif item_type.endswith('tmRNA'):
+                            next
+                        else:
+                            count += 1
+                            if len(line_splitted) == 16:
+                                if line_splitted[9] == "+":
+                                    elementsncRNA[contig_id]['Other'][count] = {'type': item_type, 'product': line_splitted[15].replace("\n", ""), 'begin': int(line_splitted[7]), 'end': int(line_splitted[8]), 'score': float(line_splitted[14].replace(" !", "")), 'rfamcode': line_splitted[1], 'strand': 1}
+                                else:
+                                    elementsncRNA[contig_id]['Other'][count] = {'type': item_type, 'product': line_splitted[15].replace("\n", ""), 'begin': int(line_splitted[8]), 'end': int(line_splitted[7]), 'score': float(line_splitted[14].replace(" !", "")), 'rfamcode': line_splitted[1], 'strand': -1}
+                            elif len(line_splitted) == 15:
+                                if line_splitted[9] == "+":
+                                    elementsncRNA[contig_id]['Other'][count] = {'type': item_type, 'product': line_splitted[14].replace("\n", ""), 'begin': int(line_splitted[7]), 'end': int(line_splitted[8]), 'score': float(line_splitted[13].replace(" !", "")), 'rfamcode': line_splitted[1], 'strand': 1}
+                                else:
+                                    elementsncRNA[contig_id]['Other'][count] = {'type': item_type, 'product': line_splitted[14].replace("\n", ""), 'begin': int(line_splitted[8]), 'end': int(line_splitted[7]), 'score': float(line_splitted[13].replace(" !", "")), 'rfamcode': line_splitted[1], 'strand': -1}
+    #sys.exit()
+    endtime2 = time.time()
+    durationtime2 = endtime2 - starttime2
+    eprint("Done: ncRNA detection took %s seconds" % str(durationtime2))
 
 ## Predicting CRISPR repeats
 starttime4 = time.time()
@@ -645,10 +647,10 @@ for contigfile in sorted(glob.glob("LOC_*.fna")):
 		orffile = "orffile_%s.faa" % record.id
 		orffile2 = "orffile_%s.fna" % record.id
 		length_contig = len(record.seq)
-#		if genomeshape[record.id]['genomeshape'] == 'linear': # Please, modify the command line after the gene prediction analyses.
-#			subprocess.call(["prodigal", "-a", "pretemp.faa", "-d", orffile2, "-i", contigfile, "-o", "/dev/null", "-g", args.gcode, "-p", "meta", "-c", "-q"])
+#		if genomeshape[record.id]['genomeshape'] == 'linear':
+#			subprocess.call(["prodigal", "-a", "pretemp.faa", "-d", orffile2, "-i", contigfile, "-o", "/dev/null", "-g", args.gcode, "-c", "-q"])
 #		else:
-#			subprocess.call(["prodigal", "-a", "pretemp.faa", "-d", orffile2, "-i", contigfile, "-o", "/dev/null", "-g", args.gcode,  "-p", "meta", "-q"])
+#			subprocess.call(["prodigal", "-a", "pretemp.faa", "-d", orffile2, "-i", contigfile, "-o", "/dev/null", "-g", args.gcode, "-q"])
 		if (length_contig >= 100000):
 			if genomeshape[record.id]['genomeshape'] == 'linear':
 				subprocess.call(["prodigal", "-a", "pretemp.faa", "-d", orffile2, "-i", contigfile, "-o", "/dev/null", "-g", args.gcode, "-c", "-q"])
@@ -1065,3 +1067,4 @@ eprint("The GFF3 file is %s.gff" % root_output)
 eprint("The table file for GenBank submission is %s.tbl" % root_output)
 eprint("The FASTA file for GenBank submission is %s.fasta" % root_output)
 eprint("The table file with all protein information is %s.csv" % root_output)
+
