@@ -18,9 +18,9 @@ mkdir bin
 # Checking if all required programs are installed
 echo ""
 echo "Installing LASTZ..."
-wget https://github.com/lastz/lastz/archive/1.04.03.tar.gz &>/dev/null
-tar zxvf 1.04.03.tar.gz	&>/dev/null
-cd lastz-1.04.03/src
+wget https://github.com/lastz/lastz/archive/refs/tags/1.04.22.tar.gz &>/dev/null
+tar zxvf 1.04.22.tar.gz	&>/dev/null
+cd lastz-1.04.22/src
 sed 's/definedForAll = -Wall -Wextra -Werror -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE/definedForAll = -Wall -Wextra -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE/' Makefile > Makefile2 # It will remove all warnings as errors(!)
 mv Makefile2 Makefile
 cd ..
@@ -75,9 +75,9 @@ cd ..
 
 echo ""
 echo "Installing Diamond..."
-wget http://github.com/bbuchfink/diamond/archive/v2.0.7.tar.gz &>/dev/null
-tar xzfv v2.0.7.tar.gz &>/dev/null
-cd diamond-2.0.7
+wget https://github.com/bbuchfink/diamond/archive/refs/tags/v2.0.15.tar.gz &>/dev/null
+tar xzfv v2.0.15.tar.gz &>/dev/null
+cd diamond-2.0.15
 mkdir bin
 cd bin
 cmake -DCMAKE_INSTALL_PREFIX=${PWD}/../.. .. &>/dev/null
@@ -113,23 +113,23 @@ make install &>/dev/null
 echo "Done."
 cd ..
 
-echo ""
-echo "Installing HHSuite..."
-git clone https://github.com/soedinglab/hh-suite.git
-mkdir -p hh-suite/build
-cd hh-suite/build
-cmake -DCMAKE_INSTALL_PREFIX=$PWD/../../ .. &>/dev/null
-make -j 4 &>/dev/null
-make install &>/dev/null
-echo "Done."
-cd ..
+#echo ""
+#echo "Installing HHSuite..."
+#git clone https://github.com/soedinglab/hh-suite.git
+#mkdir -p hh-suite/build
+#cd hh-suite/build
+#cmake -DCMAKE_INSTALL_PREFIX=$PWD/../../ .. &>/dev/null
+#make -j 4 &>/dev/null
+#make install &>/dev/null
+#echo "Done."
+#cd ..
 
 # Cleaning the folder to harbour only the binary files and needed libraries
 echo ""
 echo "Cleaning all temporary folders and downloaded tarballs"
 rm *.tar.gz
 rm ncbi-blast-2.13.0+-src.tar.gz.md5
-rm -rf Prodigal/ aragorn/ diamond-2.0.7/ infernal-1.1.4/ lastz-1.04.03/ pilercr1.06/ 
+rm -rf Prodigal/ aragorn/ diamond-2.0.15/ infernal-1.1.4/ lastz-1.04.22/ pilercr1.06/ 
 rm -rf ncbi-blast-2.13.0+-src/ hmmer-3.3.2/ hh-suite/
 
 # Creating the databases
