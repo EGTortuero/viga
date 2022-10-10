@@ -89,9 +89,9 @@ sed 's/NAME  VOG/NAME  PVOG/g' < pvogs_only.hmm > pvogs_only_mod.hmm
 rm -rf AllvogHMMprofiles pvogs_only.hmm
 
 # Downloading RVDB 
-curl -O https://rvdb-prot.pasteur.fr/files/U-RVDBv23.0-prot.hmm.xz
-unxz U-RVDBv23.0-prot.hmm.xz
-mv U-RVDBv23.0-prot.hmm RVDB_23.0_only.hmm
+curl -O https://rvdb-prot.pasteur.fr/files/U-RVDBv24.1-prot.hmm.xz
+unxz U-RVDBv24.1-prot.hmm.xz
+mv U-RVDBv24.1-prot.hmm RVDB_24.1_only.hmm
 
 # Downloading VOGs
 curl -O http://fileshare.csb.univie.ac.at/vog/latest/vog.hmm.tar.gz
@@ -108,7 +108,7 @@ rm -rf AllVOGHMMprofiles
 #
 
 # Formatting the database
-cat pvogs_only_mod.hmm RVDB_23.0_only.hmm vog_only.hmm > pvogs_vogs_RVDB.hmm
+cat pvogs_only_mod.hmm RVDB_24.1_only.hmm vog_only.hmm > pvogs_vogs_RVDB.hmm
 hmmpress -f pvogs_vogs_RVDB.hmm &> /dev/null
 cd ../..
 echo "Done"
