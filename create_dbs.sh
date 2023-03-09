@@ -11,6 +11,10 @@ echo $PWD/databases
 #echo "lines with 'apt' by 'dnf' in this script!"
 
 # Checking if all required programs are installed
+if ! foobar_loc="$(type -p "esl-reformat")" || [[ -z $foobar_loc ]]; then
+	echo "You need to run first the install.sh script to download all databases. You need to install EASEL (HMMER 3)!"
+	exit
+fi
 if ! foobar_loc="$(type -p "cmpress")" || [[ -z $foobar_loc ]]; then
 	echo "You need to run first the install.sh script to download all databases. You need to install INFERNAL!"
 	exit
@@ -21,6 +25,10 @@ if ! foobar_loc="$(type -p "diamond")" || [[ -z $foobar_loc ]]; then
 fi
 if ! foobar_loc="$(type -p "makeblastdb")" || [[ -z $foobar_loc ]]; then
 	echo "You need to run first the install.sh script to download all databases. You need to install BLAST+!"
+	exit
+fi
+if ! foobar_loc="$(type -p "hmmpress")" || [[ -z $foobar_loc ]]; then
+	echo "You need to run first the install.sh script to download all databases. You need to install HMMER 3!"
 	exit
 fi
 
@@ -34,7 +42,7 @@ mkdir rfam
 cd rfam
 curl -O ftp://ftp.ebi.ac.uk/pub/databases/Rfam/CURRENT/Rfam.cm.gz
 gunzip Rfam.cm.gz
-cmpress Rfam.cm &> /dev/null
+cmpress Rfam.cm
 cd ..
 echo "Done"
 echo ""
@@ -42,15 +50,8 @@ echo ""
 # Downloading all RefSeq_Viral_Proteins db
 echo "Downloading RefSeq Viral Proteins"
 curl -O https://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.1.protein.faa.gz
-curl -O https://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.2.protein.faa.gz
-curl -O https://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.3.protein.faa.gz
-curl -O https://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.4.protein.faa.gz
 gunzip viral.1.protein.faa.gz
-gunzip viral.2.protein.faa.gz
-gunzip viral.3.protein.faa.gz
-gunzip viral.4.protein.faa.gz
-cat viral.1.protein.faa viral.2.protein.faa viral.3.protein.faa viral.4.protein.faa > refseq_viral_proteins.faa
-rm viral.1.protein.faa viral.2.protein.faa viral.3.protein.faa viral.4.protein.faa
+mv viral.1.protein.faa refseq_viral_proteins.faa
 echo "Done"
 echo ""
 
@@ -59,7 +60,7 @@ echo "Formatting the database to be used in DIAMOND"
 mkdir RefSeq_Viral_DIAMOND
 cd RefSeq_Viral_DIAMOND
 cp ../refseq_viral_proteins.faa .
-diamond makedb --in refseq_viral_proteins.faa -d refseq_viral_proteins &> /dev/null
+diamond makedb --in refseq_viral_proteins.faa -d refseq_viral_proteins
 rm refseq_viral_proteins.faa
 cd ..
 echo "Done"
@@ -70,45 +71,54 @@ echo "Formatting the database to be used in BLAST"
 mkdir RefSeq_Viral_BLAST
 cd RefSeq_Viral_BLAST
 cp ../refseq_viral_proteins.faa .
-makeblastdb -in refseq_viral_proteins.faa -dbtype prot -out refseq_viral_proteins &> /dev/null
+makeblastdb -in refseq_viral_proteins.faa -dbtype prot -out refseq_viral_proteins
 rm refseq_viral_proteins.faa
 cd ..
 rm refseq_viral_proteins.faa
 echo "Done"
 echo ""
 
-# Downloading PVOGs
-echo "Downloading PVOGs, VOGs and RVDB and formatting for its use in HMMer"
+# Downloading RVDB
+echo "Downloading RVDB and formatting for its use in HMMer"
 mkdir pvogs_rvdb
 cd pvogs_rvdb
-curl -O https://ftp.ncbi.nlm.nih.gov/pub/kristensen/pVOGs/downloads/All/AllvogHMMprofiles.tar.gz
-#curl -O http://dmk-brain.ecn.uiowa.edu/pVOGs/downloads/All/AllvogHMMprofiles.tar.gz
-tar zxvf AllvogHMMprofiles.tar.gz &> /dev/null
-{ echo AllvogHMMprofiles/*.hmm | xargs cat; } > pvogs_only.hmm
-sed 's/NAME  VOG/NAME  PVOG/g' < pvogs_only.hmm > pvogs_only_mod.hmm
-rm -rf AllvogHMMprofiles pvogs_only.hmm
-
-# Downloading RVDB 
-curl -O https://rvdb-prot.pasteur.fr/files/U-RVDBv24.1-prot.hmm.xz
-unxz U-RVDBv24.1-prot.hmm.xz
-mv U-RVDBv24.1-prot.hmm RVDB_24.1_only.hmm
+curl -O https://rvdb-prot.pasteur.fr/files/U-RVDBv25.0-prot.hmm.xz
+curl -O https://rvdb-prot.pasteur.fr/files/U-RVDBv25.0-prot-hmm-txt.tar.xz
+unxz U-RVDBv25.0-prot.hmm.xz
+unxz U-RVDBv25.0-prot-hmm-txt.tar.xz
+tar xvf U-RVDBv25.0-prot-hmm-txt.tar
+#{ echo annot/*.txt | xargs cat; } > U-RVDBv25.0.txt # Pending an script to transform these files into a table with annotation ID and 
+mv U-RVDBv25.0-prot.hmm RVDB_25.0_only.hmm
 
 # Downloading VOGs
-curl -O http://fileshare.csb.univie.ac.at/vog/latest/vog.hmm.tar.gz
+echo "Downloading VOGs and formatting for its use in HMMer"
+curl -O https://fileshare.csb.univie.ac.at/vog/latest/vog.hmm.tar.gz
+curl -O https://fileshare.csb.univie.ac.at/vog/latest/vog.annotations.tsv.gz
 tar zxvf vog.hmm.tar.gz &> /dev/null
+gunzip vog.annotations.tsv.gz
 mkdir AllVOGHMMprofiles
 mv VOG*hmm AllVOGHMMprofiles
 { echo AllVOGHMMprofiles/*.hmm | xargs cat; } > vog_only.hmm
 rm -rf AllVOGHMMprofiles
 
-## Downloading PHROGs
-#curl -O https://phrogs.lmge.uca.fr/downloads_from_website/HMM_phrog.tar.gz
-#tar zxvf HMM_phrog.tar.gz &> /dev/null
-#{ echo HMM_phrog/*.hmm | xargs cat; } > phrogs_only.hmm
-#
+# Downloading PHROGs
+echo "Downloading PHROGs and formatting for its use in HMMer"
+curl -O https://phrogs.lmge.uca.fr/downloads_from_website/MSA_phrogs.tar.gz
+curl -O https://phrogs.lmge.uca.fr/downloads_from_website/phrog_annot_v4.tsv
+tar zxvf MSA_phrogs.tar.gz &> /dev/null
+cd MSA_Phrogs_M50_FASTA/
+for X in $(ls *.fma | sed "s/\.fma//"); 
+	do 
+	esl-reformat -o $X.sto stockholm $X.fma;
+	hmmbuild --cpu 8 $X.hmm $X.sto;
+	done
+cd ..
+{ echo MSA_Phrogs_M50_FASTA/*.hmm | xargs cat; } > phrogs_only.hmm
+rm -rf MSA_Phrogs_M50_FASTA
 
 # Formatting the database
-cat pvogs_only_mod.hmm RVDB_24.1_only.hmm vog_only.hmm > pvogs_vogs_RVDB.hmm
-hmmpress -f pvogs_vogs_RVDB.hmm &> /dev/null
+#cat pvogs_only_mod.hmm RVDB_24.1_only.hmm vog_only.hmm > pvogs_vogs_RVDB.hmm
+cat vog_only.hmm RVDB_25.0_only.hmm phrogs_only.hmm > vogs_RVDB_phrogs.hmm
+hmmpress -f vogs_RVDB_phrogs.hmm
 cd ../..
 echo "Done"
