@@ -82,13 +82,13 @@ echo ""
 echo "Downloading RVDB and formatting for its use in HMMer"
 mkdir pvogs_rvdb
 cd pvogs_rvdb
-curl -O https://rvdb-prot.pasteur.fr/files/U-RVDBv25.0-prot.hmm.xz
-curl -O https://rvdb-prot.pasteur.fr/files/U-RVDBv25.0-prot-hmm-txt.tar.xz
-unxz U-RVDBv25.0-prot.hmm.xz
-unxz U-RVDBv25.0-prot-hmm-txt.tar.xz
-tar xvf U-RVDBv25.0-prot-hmm-txt.tar
-#{ echo annot/*.txt | xargs cat; } > U-RVDBv25.0.txt # Pending an script to transform these files into a table with annotation ID and 
-mv U-RVDBv25.0-prot.hmm RVDB_25.0_only.hmm
+curl -O https://rvdb-prot.pasteur.fr/files/U-RVDBv26.0-prot.hmm.xz
+curl -O https://rvdb-prot.pasteur.fr/files/U-RVDBv26.0-prot-hmm-txt.tar.xz
+unxz U-RVDBv26.0-prot.hmm.xz
+unxz U-RVDBv26.0-prot-hmm-txt.tar.xz
+tar xvf U-RVDBv26.0-prot-hmm-txt.tar
+#{ echo annot/*.txt | xargs cat; } > U-RVDBv26.0.txt # Pending an script to transform these files into a table with annotation ID and 
+mv U-RVDBv26.0-prot.hmm RVDB_26.0_only.hmm
 
 # Downloading VOGs
 echo "Downloading VOGs and formatting for its use in HMMer"
@@ -118,7 +118,7 @@ rm -rf MSA_Phrogs_M50_FASTA
 
 # Formatting the database
 #cat pvogs_only_mod.hmm RVDB_24.1_only.hmm vog_only.hmm > pvogs_vogs_RVDB.hmm
-cat vog_only.hmm RVDB_25.0_only.hmm phrogs_only.hmm > vogs_RVDB_phrogs.hmm
-hmmpress -f vogs_RVDB_phrogs.hmm
-cd ../..
+#cat vog_only.hmm RVDB_26.0_only.hmm phrogs_only.hmm > vogs_RVDB_phrogs.hmm
+#hmmpress -f vogs_RVDB_phrogs.hmm
+#cd ../..
 echo "Done"
