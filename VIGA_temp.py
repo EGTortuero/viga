@@ -251,15 +251,15 @@ def check_and_set_default_databases(args):
             try:
                 my_abs_path = vogs_path.resolve(strict=True)
             except FileNotFoundError:
-                sys.exit()
+                sys.exit('You do not have installed VOGS database')
             else:
                 args.vogsdb = vogs_path
         if args.norvdb == False and args.rvdbdb == None:
-            rvdb_path = Path(os.path.dirname(os.path.abspath(__file__)) + '/databases/rvdb/RVDB_25.0.hmm')
+            rvdb_path = Path(os.path.dirname(os.path.abspath(__file__)) + '/databases/rvdb/RVDB_26.0.hmm')
             try:
                 my_abs_path = rvdb_path.resolve(strict=True)
             except FileNotFoundError:
-                sys.exit()
+                sys.exit('You do not have installed RVDB database')
             else:
                 args.rvdbdb = rvdb_path
         if args.nophrogs == False and args.phrogsdb == None:
@@ -267,7 +267,7 @@ def check_and_set_default_databases(args):
             try:
                 args.phrogsdb = phrogs_path.resolve(strict=True)
             except FileNotFoundError:
-                sys.exit()
+                sys.exit('You do not have installed PHROGS database')
             else:
                 args.phrogsdb = phrogs_path
 
@@ -368,10 +368,6 @@ def circularize_sequence(newfile, genomeshape, record, args, IUPAC):
             os.rename("temp2.fasta", newfile)
     os.remove("temp2.fasta") if os.path.isfile("temp2.fasta") else None
 
-#def get_sequence(newfile):
-#    with open(newfile, "r") as targetfile:
-#        return SeqIO.parse(targetfile, "fasta")
-        
 def get_sequence(newfile):
     with open(newfile, "r") as targetfile:
         seq_string = targetfile.read()
@@ -394,51 +390,42 @@ def run_lastz(combined_seqs):
 def parse_lastz_output(outputlastz):
     return outputlastz.decode().split("\n")
 
-def process_lastz_results(resultslastz, record, genomeshape, args):
-    for resultlastz in resultslastz:
-        fields = resultlastz.split()
-        if not fields:
-            continue
-        start1, end1, start2, end2, _, strand1, strand2, identity, _, length = fields
+def process_resultlastz(resultlastz, record, genomeshape, args):
+    if isinstance(resultlastz, str) and resultlastz != '':
+        start1, end1, start2, end2, _, strand1, strand2, identity, _, length = resultlastz.split()
         length = int(length)
         identity = float(fractions.Fraction(identity))
-        
-        if strand1 == strand2 and length > 0.4 * args.read_length and identity > 0.95 and int(start1) < 5 and int(start2) > args.read_length and int(end1) < args.read_length and int(end2) > args.read_length * 2 * 0.9:
-            genomeshape[record.id]['genomeshape'] = "circular"
-            if record.id in genomeshape:
-                if 'identity' in genomeshape[record.id] and genomeshape[record.id]['identity'] >= identity:
-                    genomeshape[record.id]['identity'] = identity
-                    genomeshape[record.id]['length'] = length
-                else:
-                    genomeshape[record.id]['identity'] = identity
-                    genomeshape[record.id]['length'] = length
-            else:
-                genomeshape[record.id] = {'identity': identity, 'length': length}
+        if (strand1 == strand2 and length > 0.4 * args.read_length and identity > 0.95 and int(start1) < 5 and int(start2) > args.read_length and int(end1) < args.read_length and int(end2) > args.read_length * 2 * 0.9):
+            genomeshape.setdefault(record.id, {})  # Initialize the dictionary if it doesn't exist
+            genomeshape[record.id]["genomeshape"] = "circular"
+            genomeshape[record.id]["identity"] = min(identity, genomeshape[record.id].get("identity", identity))
+            genomeshape[record.id]["length"] = max(length, genomeshape[record.id].get("length", length))
         else:
-            continue
-
+            genomeshape.setdefault(record.id, {})  # Initialize the dictionary if it doesn't exist
+            genomeshape[record.id]["genomeshape"] = "linear"
+            genomeshape[record.id]["identity"] = identity
+            genomeshape[record.id]["length"] = length
+            
 def determine_genome_shape(record, genomeshape, args):
-    if genomeshape.get(record.id, {}).get('genomeshape') == "":
-        genomeshape[record.id]['genomeshape'] = "linear"
-    else:
-        genomeshape[record.id]['genomeshape'] = "circular"
-        length = genomeshape[record.id].get('length')
-        if length is None:
-            # handle case where length is not set
-            print(f"Warning: length not set for record {record.id}")
-            return
-        Corrseq = str(record.seq[int(length)//2:-int(length)//2])
-        SeqType = IUPAC.ambiguous_dna if IUPAC else None
-        Newseq = SeqRecord(Seq(Corrseq, SeqType), id=record.description)
+    genomeshape.setdefault(record.id, {})  # Initialize the dictionary if it doesn't exist
+    if "genomeshape" not in genomeshape[record.id]:
+        genomeshape[record.id]["genomeshape"] = "linear"
+
+    if genomeshape[record.id]["genomeshape"] == "circular":
         with open("temp.fasta", "w") as correctedcircular:
-            SeqIO.write(Newseq, correctedcircular, "fasta")
+            corr_seq = str(record.seq[: int(genomeshape[record.id]["length"]) // 2:-int(genomeshape[record.id]["length"]) // 2])
+            if IUPAC:
+                new_seq = SeqRecord(Seq(corr_seq, IUPAC.ambiguous_dna), id=record.description)
+            else:
+                new_seq = SeqRecord(Seq(corr_seq), id=record.description)
+            SeqIO.write(new_seq, correctedcircular, "fasta")
+        os.rename("temp.fasta", "temp2.fasta")
 
 def log_genome_shape(record, genomeshape, logfile):
     eprint("%s seems to be a %s contig according to LASTZ" % (record.id, genomeshape[record.id]['genomeshape']))
     logfile.write("%s\t%s\n" % (record.id, genomeshape[record.id]['genomeshape']))
 
 def predict_shape(newfile, args, IUPAC, logfile):
-    genomeshape = {}
     Sequence = get_sequence(newfile)
     for record in Sequence:
         genomeshape[record.id] = {}
@@ -446,7 +433,7 @@ def predict_shape(newfile, args, IUPAC, logfile):
         write_temp_file(combined_seqs)
         outputlastz = run_lastz(combined_seqs)
         resultslastz = parse_lastz_output(outputlastz)
-        process_lastz_results(resultslastz, record, genomeshape, args)
+        process_resultlastz(resultslastz, record, genomeshape, args)
         determine_genome_shape(record, genomeshape, args)
         log_genome_shape(record, genomeshape, logfile)
     return Sequence, genomeshape
@@ -647,17 +634,36 @@ def parse_hmmer_file(tbl_file, hmmercovthreshold, hmmerevalue, hmmeridthreshold,
                         protarea = protarea + length
                     covprot = (protarea / length) * 100
                     if pident >= hmmeridthreshold and covprot >= hmmercovthreshold and float(evaluehh) <= hmmerevalue:
-                        infoprot_hmmer['name'] = matchname
+                        infoprot_hmmer['db_name'] = db_name
                         infoprot_hmmer['idhmm'] = lociname
+                        infoprot_hmmer['name'] = matchname
                         infoprot_hmmer['pident'] = pident
                         infoprot_hmmer['pcover'] = covprot
                         infoprot_hmmer['evalue'] = evaluehh
                         infoprot_hmmer['description'] = description
-                        infoprot_hmmer['db_name'] = db_name
                         if matchname not in information_proteins_hmmer:
                             information_proteins_hmmer[matchname] = {}
                         information_proteins_hmmer[matchname][db_name] = infoprot_hmmer
     return {k: v for k, v in information_proteins_hmmer.items() if len(v) == 1}
+
+#def translate_PHROGS_idhmm(idhmm):
+#    # Read the PHROGS table into a dictionary mapping IDHMMs to descriptions
+#    idhmm_to_desc = {}
+#    phrogstable = Path(os.path.dirname(os.path.abspath(__file__)) + '/databases/phrogs/phrog_annot_v4.tsv')
+#    with open(phrogstable) as f:
+#        for i, line in enumerate(f):
+#            if i == 0:
+#                continue # skip first line
+#            fields = line.strip().split('\t')
+#            idhmm = int(fields[0])
+#            desc = fields[3] if fields[2] == 'NA' else fields[2]
+#            idhmm_to_desc[idhmm] = desc
+#    
+#    # Look up the description for the given IDHMM
+#    if idhmm in idhmm_to_desc and idhmm_to_desc[idhmm] != 'NA':
+#        return f"{idhmm_to_desc[idhmm]} ({idhmm})"
+#    else:
+#        return 'unknown function ({idhmm})'
 
 def add_hmmer_info(protsdict, information_proteins_hmmer, hmmer_databases):
     for contig in sorted(protsdict):
@@ -963,6 +969,7 @@ if __name__ == "__main__":
     # First step: predicting the contig shape
     starttime1 = time.time()
     eprint("\nPredicting the shape for all contigs using LASTZ")
+    genomeshape = {}  # Initialize genomeshape for each new file
     with open("logfile.txt", "a") as logfile:
         logfile.write("\n#Contig\tShape\n")
         for newfile in sorted(glob.glob("LOC_*.fna")):
