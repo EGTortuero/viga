@@ -43,9 +43,9 @@ cd ..
 
 echo ""
 echo "Installing Infernal..."
-wget http://eddylab.org/infernal/infernal-1.1.4.tar.gz &>/dev/null
-tar xvfz infernal-1.1.4.tar.gz &>/dev/null
-cd infernal-1.1.4
+wget http://eddylab.org/infernal/infernal-1.1.5.tar.gz &>/dev/null
+tar xvfz infernal-1.1.5.tar.gz &>/dev/null
+cd infernal-1.1.5
 ./configure --prefix $PWD/../ &>/dev/null
 make &>/dev/null
 make check &>/dev/null
@@ -75,9 +75,9 @@ cd ..
 
 echo ""
 echo "Installing Diamond..."
-wget https://github.com/bbuchfink/diamond/archive/refs/tags/v2.0.15.tar.gz &>/dev/null
-tar xzfv v2.0.15.tar.gz &>/dev/null
-cd diamond-2.0.15
+wget https://github.com/bbuchfink/diamond/archive/refs/tags/v2.1.8.tar.gz &>/dev/null
+tar xzfv v2.1.8.tar.gz &>/dev/null
+cd diamond-2.1.8
 mkdir bin
 cd bin
 cmake -DCMAKE_INSTALL_PREFIX=${PWD}/../.. .. &>/dev/null
@@ -88,11 +88,11 @@ cd ../..
 
 echo ""
 echo "Installing BLAST (It will take time)..."
-wget https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/ncbi-blast-2.13.0+-src.tar.gz.md5 &>/dev/null
-wget https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/ncbi-blast-2.13.0+-src.tar.gz &>/dev/null
-md5sum --quiet --check ncbi-blast-2.13.0+-src.tar.gz.md5
-tar xvfz ncbi-blast-2.13.0+-src.tar.gz &>/dev/null
-cd ncbi-blast-2.13.0+-src/c++
+wget https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/ncbi-blast-2.14.1+-src.tar.gz.md5 &>/dev/null
+wget https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/ncbi-blast-2.14.1+-src.tar.gz &>/dev/null
+md5sum --quiet --check ncbi-blast-2.14.1+-src.tar.gz.md5
+tar xvfz ncbi-blast-2.14.1+-src.tar.gz &>/dev/null
+cd ncbi-blast-2.14.1+-src/c++
 ./configure &>/dev/null
 cd ReleaseMT/build
 make all_r &>/dev/null
@@ -103,9 +103,9 @@ cd ../../../..
 
 echo ""
 echo "Installing HMMER 3..."
-wget http://eddylab.org/software/hmmer/hmmer-3.3.2.tar.gz &>/dev/null
-tar zxf hmmer-3.3.2.tar.gz &>/dev/null
-cd hmmer-3.3.2
+wget http://eddylab.org/software/hmmer/hmmer-3.4.tar.gz &>/dev/null
+tar zxf hmmer-3.4.tar.gz &>/dev/null
+cd hmmer-3.4
 ./configure --prefix $PWD/../ &>/dev/null
 make &>/dev/null
 make check &>/dev/null
@@ -128,9 +128,10 @@ cd ..
 echo ""
 echo "Cleaning all temporary folders and downloaded tarballs"
 rm *.tar.gz
-rm ncbi-blast-2.13.0+-src.tar.gz.md5
-rm -rf Prodigal/ aragorn/ diamond-2.0.15/ infernal-1.1.4/ lastz-1.04.22/ pilercr1.06/ 
-rm -rf ncbi-blast-2.13.0+-src/ hmmer-3.3.2/ hh-suite/
+rm ncbi-blast-2.14.1+-src.tar.gz.md5
+rm -rf Prodigal/ aragorn/ diamond-2.1.8/ infernal-1.1.5/ lastz-1.04.22/ pilercr1.06/ 
+rm -rf ncbi-blast-2.14.1+-src/ hmmer-3.4/ 
+#rm hh-suite/
 
 # Creating the databases
 #echo ""
