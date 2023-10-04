@@ -110,6 +110,8 @@ cd hmmer-3.4
 make &>/dev/null
 make check &>/dev/null
 make install &>/dev/null
+cd easel
+make install &>/dev/null
 echo "Done."
 cd ..
 
