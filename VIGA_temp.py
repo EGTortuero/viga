@@ -1084,6 +1084,8 @@ if __name__ == "__main__":
     eprint("\nCreating all output files")
     write_protein_properties_table(protsdict, root_output) # Creating the CSV table with all protein statistics
     for newfile in sorted(glob.glob("LOC_*.fna")):
+        if args.norfam == True:
+            elementsncRNA = ""
         write_genbank_file(newfile, protsdict, tRNAdict, tmRNAdict, elementsncRNA, information_CRISPR, args, IUPAC)
         write_ptt_file(newfile)
     cat_all(sorted(glob.glob('LOC_*.fna.gbk')), "%s.gbk" % root_output) # Preparing the Genbank files
