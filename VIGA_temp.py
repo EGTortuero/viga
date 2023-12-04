@@ -309,7 +309,7 @@ def rename_sequences(args, record_iter):
                 record.description = record.description
                 counter += 1
                 newnamessequences[record.id] = original_name
-                print("WARNING: %s was renamed as %s" % (original_name, record.id))
+                eprint("WARNING: %s was renamed as %s" % (original_name, record.id))
             SeqIO.write(record, corrected, "fasta")
         with open("logfile.txt", "w") as logfile:
             logfile.write("#Original\tNew\n")
@@ -572,10 +572,10 @@ def run_blast(file_name, blast_database, blast_evalue, ncpus, blastexh=False):
         first_line = input_file.readline()
         if first_line.startswith(">"):
             if blastexh:
-                print("\nRunning BLAST to predict the genes according to homology inference using exhaustive mode (see Fozo et al. (2010) Nucleic Acids Res for details)")
+                eprint("\nRunning BLAST to predict the genes according to homology inference using exhaustive mode (see Fozo et al. (2010) Nucleic Acids Res for details)")
                 subprocess.call(['blastp', '-query', file_name, '-db', blast_database, '-evalue', str(blast_evalue), '-outfmt', '6 qseqid sseqid pident length qlen slen qstart qend evalue bitscore stitle', '-out', file_name + ".csv", '-word_size', '2', '-gapopen', '8', '-gapextend', '2', '-matrix', 'PAM70', '-comp_based_stats', '"0"', "-num_threads", str(ncpus)])
             else:
-                print("\nRunning BLAST to predict the genes according to homology inference using default parameters")
+                eprint("\nRunning BLAST to predict the genes according to homology inference using default parameters")
                 subprocess.call(['blastp', '-query', file_name, '-db', blast_database, '-evalue', str(blast_evalue), '-outfmt', '6 qseqid sseqid pident length qlen slen qstart qend evalue bitscore stitle', '-out', file_name + ".csv", "-num_threads", str(ncpus)])
         else:
             open(file_name + ".csv", 'a').close()
