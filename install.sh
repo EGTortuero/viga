@@ -88,18 +88,12 @@ cd ../..
 
 echo ""
 echo "Installing BLAST (It will take time)..."
-wget https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/ncbi-blast-2.14.1+-src.tar.gz.md5 &>/dev/null
-wget https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/ncbi-blast-2.14.1+-src.tar.gz &>/dev/null
-md5sum --quiet --check ncbi-blast-2.14.1+-src.tar.gz.md5
-tar xvfz ncbi-blast-2.14.1+-src.tar.gz &>/dev/null
-cd ncbi-blast-2.14.1+-src/c++
-./configure &>/dev/null
-cd ReleaseMT/build
-make all_r &>/dev/null
-cd ../bin
-cp * ../../../../bin
+wget https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/2.15.0/ncbi-blast-2.15.0+-x64-linux.tar.gz.md5 &>/dev/null
+wget https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/2.15.0/ncbi-blast-2.15.0+-x64-linux.tar.gz &>/dev/null
+md5sum --quiet --check ncbi-blast-2.15.0+-x64-linux.tar.gz.md5
+tar xvfz ncbi-blast-2.15.0+-x64-linux.tar.gz &>/dev/null
+cp -r ncbi-blast-2.15.0+-x64-linux/bin/* bin/
 echo "Done."
-cd ../../../..
 
 echo ""
 echo "Installing HMMER 3..."
