@@ -513,10 +513,20 @@ def parse_and_read_ncrnafile(filename):
                         else:
                             elementsncRNA[contig_id]['Other'][count] = {'type': item_type, 'product': line_splitted[15].replace("\n", ""), 'begin': int(line_splitted[8]), 'end': int(line_splitted[7]), 'score': float(line_splitted[14].replace(" !", "")), 'rfamcode': line_splitted[1], 'strand': -1}
                     elif len(line_splitted) == 15:
-                        if line_splitted[9] == "+":
-                            elementsncRNA[contig_id]['Other'][count] = {'type': item_type, 'product': line_splitted[14].replace("\n", ""), 'begin': int(line_splitted[7]), 'end': int(line_splitted[8]), 'score': float(line_splitted[13].replace(" !", "")), 'rfamcode': line_splitted[1], 'strand': 1}
+                        if line_splitted[8] == "+":
+                            elementsncRNA[contig_id]['Other'][count] = {'type': item_type, 'product': line_splitted[14].replace("\n", ""), 'begin': int(line_splitted[6]), 'end': int(line_splitted[7]), 'score': float(line_splitted[13].replace(" !", "")), 'rfamcode': line_splitted[0].split()[-1], 'strand': 1}
                         else:
-                            elementsncRNA[contig_id]['Other'][count] = {'type': item_type, 'product': line_splitted[14].replace("\n", ""), 'begin': int(line_splitted[8]), 'end': int(line_splitted[7]), 'score': float(line_splitted[13].replace(" !", "")), 'rfamcode': line_splitted[1], 'strand': -1}
+                            elementsncRNA[contig_id]['Other'][count] = {'type': item_type, 'product': line_splitted[14].replace("\n", ""), 'begin': int(line_splitted[7]), 'end': int(line_splitted[6]), 'score': float(line_splitted[13].replace(" !", "")), 'rfamcode': line_splitted[0].split()[-1], 'strand': -1}
+                    elif len(line_splitted) == 17:
+                        if line_splitted[9] == "+":
+                            elementsncRNA[contig_id]['Other'][count] = {'type': item_type, 'product': line_splitted[16].replace("\n", ""), 'begin': int(line_splitted[7]), 'end': int(line_splitted[8]), 'score': float(line_splitted[14].replace(" !", "")), 'rfamcode': line_splitted[2], 'strand': 1}
+                        else:
+                            elementsncRNA[contig_id]['Other'][count] = {'type': item_type, 'product': line_splitted[16].replace("\n", ""), 'begin': int(line_splitted[8]), 'end': int(line_splitted[7]), 'score': float(line_splitted[14].replace(" !", "")), 'rfamcode': line_splitted[2], 'strand': -1}
+                    elif len(line_splitted) == 18:
+                        if line_splitted[9] == "+":
+                            elementsncRNA[contig_id]['Other'][count] = {'type': item_type, 'product': line_splitted[17].replace("\n", ""), 'begin': int(line_splitted[7]), 'end': int(line_splitted[8]), 'score': float(line_splitted[14].replace(" !", "")), 'rfamcode': line_splitted[2], 'strand': 1}
+                        else:
+                            elementsncRNA[contig_id]['Other'][count] = {'type': item_type, 'product': line_splitted[17].replace("\n", ""), 'begin': int(line_splitted[8]), 'end': int(line_splitted[7]), 'score': float(line_splitted[14].replace(" !", "")), 'rfamcode': line_splitted[2], 'strand': -1}  
     return elementsncRNA
 
 def extract_crispr_data(filename):
