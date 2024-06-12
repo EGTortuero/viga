@@ -53,7 +53,7 @@ from time import strftime
 from typing import Dict
 
 ## Defining the program version
-version = "0.11.2"
+version = "0.11.3"
 
 ## Preparing functions
 # A batch iterator
