@@ -53,7 +53,7 @@ from time import strftime
 from typing import Dict
 
 ## Defining the program version
-version = "0.11.3"
+version = "0.11.4"
 
 ## Preparing functions
 # A batch iterator
@@ -203,9 +203,11 @@ def add_advanced_hmm_group(parser):
     advanced_hmm_group.add_argument("--novogs", dest="novogs", action='store_true', default=False, help='HMMer analyses will not consider the VOGs database. (Default: False)')
     advanced_hmm_group.add_argument("--norvdb", dest="norvdb", action='store_true', default=False, help='HMMer analyses will not consider the RVDB database. (Default: False)')
     advanced_hmm_group.add_argument("--nophrogs", dest="nophrogs", action='store_true', default=False, help='HMMer analyses will not consider the PHROGs database (Default: False)')
+    advanced_hmm_group.add_argument("--novfam", dest="novfam", action='store_true', default=False, help='HMMer analyses will not consider the VFAM database (Default: False)')
     advanced_hmm_group.add_argument("--vogsdb", dest="vogsdb", type=str, help='VOG Database that will be used to refine the protein function prediction in hypothetical proteins. By default, the program will try to search the Viral Orthologous Genes DB formatted for its use in HMMer inside the folder database/ only if --nohmmer parameter is disabled and after running the Create_databases.sh script.')
     advanced_hmm_group.add_argument("--rvdbdb", dest="rvdbdb", type=str, help='RVDB Database that will be used to refine the protein function prediction in hypothetical proteins. By default, the program will try to search the Reference Virus DataBase formatted for its use in HMMer inside the folder database/ only if --nohmmer parameter is disabled and after running the Create_databases.sh script.')
     advanced_hmm_group.add_argument("--phrogsdb", dest="phrogsdb", type=str, help='PHROGs Database that will be used to refine the protein function prediction in hypothetical proteins. By default, the program will try to search the Prokaryotic Virus Remote Homologous Groups formatted for its use in HMMer inside the folder database/ only if --nohmmer parameter is disabled and after running the Create_databases.sh script.')
+    advanced_hmm_group.add_argument("--vfamdb", dest="vfamdb", type=str, help='VFAM Database that will be used to refine the protein function prediction in hypothetical proteins. By default, the program will try to search the Viral Families DB formatted for its use in HMMer inside the folder database/ only if --nohmmer parameter is disabled and after running the Create_databases.sh script.')
     advanced_hmm_group.add_argument("--hmmerevalue", dest="hmmerevalue", default=0.001, help='HMMER e-value threshold (Default: 0.001)', metavar="FLOAT")
     advanced_hmm_group.add_argument("--hmmeridthr", dest="hmmeridthreshold", default=50.00, help='HMMER ID threshold (Default: 50.0)', metavar="FLOAT")
     advanced_hmm_group.add_argument("--hmmercoverthr", dest="hmmercovthreshold", default=50.00, help='HMMER Coverage threshold (Default: 50.0)', metavar="FLOAT")
@@ -255,7 +257,7 @@ def check_and_set_default_databases(args):
             else:
                 args.vogsdb = vogs_path
         if args.norvdb == False and args.rvdbdb == None:
-            rvdb_path = Path(os.path.dirname(os.path.abspath(__file__)) + '/databases/rvdb/RVDB_26.0.hmm')
+            rvdb_path = Path(os.path.dirname(os.path.abspath(__file__)) + '/databases/rvdb/RVDB_28.0.hmm')
             try:
                 my_abs_path = rvdb_path.resolve(strict=True)
             except FileNotFoundError:
@@ -270,6 +272,14 @@ def check_and_set_default_databases(args):
                 sys.exit('You do not have installed PHROGS database')
             else:
                 args.phrogsdb = phrogs_path
+        if args.novfam == False and args.vfamdb == None:
+            vfam_path = Path(os.path.dirname(os.path.abspath(__file__)) + '/databases/vfam/vfam_latest.hmm')
+            try:
+                args.vfamdb = vfam_path.resolve(strict=True)
+            except FileNotFoundError:
+                sys.exit('You do not have installed VFAM database')
+            else:
+                args.vfamdb = vfam_path
 
     return root_output
 
@@ -498,7 +508,10 @@ def parse_and_read_ncrnafile(filename):
                 InfoLINE = re.sub("\s{2,}", ",", line)
                 line_splitted = InfoLINE.split(",")
                 item_type = line_splitted[0]
-                contig_id = line_splitted[2]
+                if len(line_splitted) == 15:
+                    contig_id = line_splitted[1]
+                else:
+                    contig_id = line_splitted[2]
                 if contig_id not in elementsncRNA:
                     elementsncRNA[contig_id] = {'Other': {}}
                 if item_type.startswith(('LSU', 'SSU', '5S', '5_8S', 'tRNA')):
@@ -526,7 +539,7 @@ def parse_and_read_ncrnafile(filename):
                         if line_splitted[9] == "+":
                             elementsncRNA[contig_id]['Other'][count] = {'type': item_type, 'product': line_splitted[17].replace("\n", ""), 'begin': int(line_splitted[7]), 'end': int(line_splitted[8]), 'score': float(line_splitted[14].replace(" !", "")), 'rfamcode': line_splitted[2], 'strand': 1}
                         else:
-                            elementsncRNA[contig_id]['Other'][count] = {'type': item_type, 'product': line_splitted[17].replace("\n", ""), 'begin': int(line_splitted[8]), 'end': int(line_splitted[7]), 'score': float(line_splitted[14].replace(" !", "")), 'rfamcode': line_splitted[2], 'strand': -1}  
+                            elementsncRNA[contig_id]['Other'][count] = {'type': item_type, 'product': line_splitted[17].replace("\n", ""), 'begin': int(line_splitted[8]), 'end': int(line_splitted[7]), 'score': float(line_splitted[14].replace(" !", "")), 'rfamcode': line_splitted[2], 'strand': -1}                            
     return elementsncRNA
 
 def extract_crispr_data(filename):
@@ -1068,6 +1081,8 @@ if __name__ == "__main__":
             hmmer_dbs.append(('VOGS', args.vogsdb, 'PROTS_VOGS.tbl'))
         if not args.nophrogs:
             hmmer_dbs.append(('PHROGS', args.phrogsdb, 'PROTS_PHROGS.tbl'))
+        if not args.novfam:
+            hmmer_dbs.append(('VFAM', args.vfamdb, 'PROTS_VFAM.tbl'))
 
         # Run HMMER and parse output files
         information_proteins_hmmer = {}
