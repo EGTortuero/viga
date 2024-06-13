@@ -82,24 +82,30 @@ echo ""
 echo "Downloading RVDB and formatting for its use in HMMer"
 mkdir pvogs_rvdb
 cd pvogs_rvdb
-curl -O https://rvdb-prot.pasteur.fr/files/U-RVDBv26.0-prot.hmm.xz
-curl -O https://rvdb-prot.pasteur.fr/files/U-RVDBv26.0-prot-hmm-txt.tar.xz
-unxz U-RVDBv26.0-prot.hmm.xz
-unxz U-RVDBv26.0-prot-hmm-txt.tar.xz
-tar xvf U-RVDBv26.0-prot-hmm-txt.tar
+curl -O https://rvdb-prot.pasteur.fr/files/U-RVDBv28.0-prot.hmm.xz
+curl -O https://rvdb-prot.pasteur.fr/files/U-RVDBv28.0-prot-hmm-txt.tar.xz
+unxz U-RVDBv28.0-prot.hmm.xz
+unxz U-RVDBv28.0-prot-hmm-txt.tar.xz
+tar xvf U-RVDBv28.0-prot-hmm-txt.tar
 #{ echo annot/*.txt | xargs cat; } > U-RVDBv26.0.txt # Pending an script to transform these files into a table with annotation ID and 
-mv U-RVDBv26.0-prot.hmm RVDB_26.0_only.hmm
+mv U-RVDBv28.0-prot.hmm RVDB_28.0_only.hmm
 
-# Downloading VOGs
+# Downloading VOGs and VFAM
 echo "Downloading VOGs and formatting for its use in HMMer"
-curl -O https://fileshare.csb.univie.ac.at/vog/latest/vog.hmm.tar.gz
-curl -O https://fileshare.csb.univie.ac.at/vog/latest/vog.annotations.tsv.gz
+curl -O https://fileshare.lisc.univie.ac.at/vog/vog224/vog.hmm.tar.gz
+curl -O https://fileshare.lisc.univie.ac.at/vog/vog224/vog.annotations.tsv.gz
 tar zxvf vog.hmm.tar.gz &> /dev/null
 gunzip vog.annotations.tsv.gz
-mkdir AllVOGHMMprofiles
-mv VOG*hmm AllVOGHMMprofiles
-{ echo AllVOGHMMprofiles/*.hmm | xargs cat; } > vog_only.hmm
-rm -rf AllVOGHMMprofiles
+{ echo hmm/*.hmm | xargs cat; } > vog_only.hmm
+rm -rf hmm/
+
+echo "Downloading VFAM and formatting for its use in HMMer"
+curl -O https://fileshare.lisc.univie.ac.at/vog/vog224/vfam.hmm.tar.gz
+curl -O https://fileshare.lisc.univie.ac.at/vog/vog224/vfam.annotations.tsv.gz
+tar zxvf vfam.hmm.tar.gz &> /dev/null
+gunzip vfam.annotations.tsv.gz
+{ echo hmm/*.hmm | xargs cat; } > vfam_only.hmm
+rm -rf hmm/
 
 # Downloading PHROGs
 echo "Downloading PHROGs and formatting for its use in HMMer"
