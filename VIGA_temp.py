@@ -53,7 +53,7 @@ from time import strftime
 from typing import Dict
 
 ## Defining the program version
-version = "0.11.4"
+version = "0.11.2"
 
 ## Preparing functions
 # A batch iterator
@@ -164,7 +164,8 @@ def add_advanced_repeats_group(parser):
     return advanced_repeats_group
 
 def add_gcode_group(parser):
-    advanced_gcode_group = parser.add_argument_group('Advanced options for genetic code in VIGA [OPTIONAL]')
+    advanced_gcode_group = parser.add_argument_group('Advanced options for ORf prediction and genetic code in VIGA [OPTIONAL]')
+    advanced_gcode_group.add_argument("--prodigal-gv", dest="prodigalgv", action='store_true', default=False, help='Running Prodigal-GV instead of Prodigal for gene prediction. (Default: False)')
     gcode_choices = {'1': 'Standard genetic code [Eukaryotic]', '2': 'Vertebrate mitochondrial code', '3': 'Yeast mitochondrial code', '4': 'Mycoplasma/Spiroplasma and Protozoan/mold/coelenterate mitochondrial code', '5': 'Invertebrate mitochondrial code', '6': 'Ciliate, dasycladacean and hexamita nuclear code', '9': 'Echinoderm/flatworm mitochondrial code', '10': 'Euplotid nuclear code', '11': 'Bacteria/Archaea/Phages/Plant plastid', '12': 'Alternative yeast nuclear code', '13': 'Ascidian mitochondrial code', '14': 'Alternative flatworm mitochondrial code', '16': 'Chlorophycean mitochondrial code', '21': 'Trematode mitochondrial code', '22': 'Scedenesmus obliquus mitochondrial code', '23': 'Thraustochytrium mitochondrial code', '24': 'Pterobranquia mitochondrial code', '25': 'Gracilibacteria & Candidate division SR1', '26': 'Pachysolen tannophilus nuclear code', '27': 'Karyorelict nuclear code', '28': 'Condylostoma nuclear code', '29': 'Mesodinium nuclear code', '30': 'Peritrich nuclear code', '31': 'Blastocrithidia nuclear code', '33': 'Cephalodiscidae mitochondrial code'}
     gcode_help = ('Number of GenBank translation table. At this moment, the available options are {0}. (Default: %(default)s)'.format('{}'.format(', '.join('{0} ({1})'.format(k, v) for k, v in sorted(gcode_choices.items())))))
     advanced_gcode_group.add_argument("--gcode", dest="gcode", type=str, default='11', help=gcode_help, metavar="NUMBER")
@@ -284,7 +285,10 @@ def check_and_set_default_databases(args):
     return root_output
 
 def check_required_cmds(args):
-    required_cmds = ["lastz", "aragorn", "pilercr", "prodigal", "diamond"]
+    required_cmds = ["lastz", "aragorn", "pilercr", "prodigal", "prodigal-gv", "diamond"]
+
+    if args.prodigalgv == True:
+        required_cmds.append("prodigal-gv")
 
     if args.norfam == False:
         required_cmds.append("cmscan")
@@ -573,14 +577,19 @@ def extract_crispr_data(filename):
     return information_CRISPR
 
 def predict_genes(contigfile, record, orffile, orffile2, length_contig, genomeshape, args):
-    cmd = ["prodigal", "-a", "pretemp.faa", "-d", orffile2, "-i", contigfile, "-o", "/dev/null", "-g", args.gcode, "-q"]
-    if length_contig >= 100000:
+    if (args.prodigalgv == "True"):
+        cmd = ["prodigal-gv", "-p", "meta", "-i", contigfile, "-a", "pretemp.faa", "-d", orffile2, "-o", "/dev/null", "-g", args.gcode, "-q"]
         if genomeshape[record.id]['genomeshape'] == 'linear':
             cmd += ["-c"]
     else:
-        cmd += ["-p", "meta"]
-        if genomeshape[record.id]['genomeshape'] == 'linear':
-            cmd += ["-c"]
+        cmd = ["prodigal", "-a", "pretemp.faa", "-d", orffile2, "-i", contigfile, "-o", "/dev/null", "-g", args.gcode, "-q"]
+        if length_contig >= 100000:
+            if genomeshape[record.id]['genomeshape'] == 'linear':
+                cmd += ["-c"]
+        else:
+            cmd += ["-p", "meta"]
+            if genomeshape[record.id]['genomeshape'] == 'linear':
+                cmd += ["-c"]
     subprocess.call(cmd)
     with open("pretemp.faa", "r") as originalfaa, open(orffile, "w") as correctedfaa:
         sequences = SeqIO.parse(originalfaa, "fasta")
@@ -921,8 +930,8 @@ def create_genbank_submission_files(args, root_output):
             SeqIO.write([record], fasta_fh, 'fasta')
             print(f'>Feature {record.name}', file=feature_fh)
             for line in record.features:
-                start, end = line.location.nofuzzy_start + 1, line.location.nofuzzy_end
-                if line.strand == -1:
+                start, end = line.location.start + 1, line.location.end
+                if line.location.strand == -1:
                     start, end = end, start + 1
                 print(f'{start}\t{end}\t{line.type}', file=feature_fh)
                 for key, values in line.qualifiers.items():
@@ -1043,9 +1052,12 @@ if __name__ == "__main__":
     durationtime4 = endtime4 - starttime4
     eprint("Done: CRISPR repeats detection took %s seconds" % str(durationtime4))
 
-    # Fifth step: Predicting genes using PRODIGAL (Future step: adding Pyrodigal as an alternative)
+    # Fifth step: Predicting genes using PRODIGAL (Future step: adding Pyrodigal and Pyrodigal-GV as an alternative)
     starttime5 = time.time()
-    eprint("\nRunning Prodigal to predict the ORFs in all contigs")
+    if not args.prodigalgv:
+        eprint("\nRunning Prodigal to predict the ORFs in all contigs")
+    else:
+        eprint("\nRunning Prodigal-GV to predict the ORFs in all contigs")
     for contigfile in sorted(glob.glob("LOC_*.fna")):
         for record in SeqIO.parse(contigfile, "fasta"):
             orffile = "orffile_%s.faa" % record.id
