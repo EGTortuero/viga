@@ -802,17 +802,17 @@ def add_CDS_features(whole_sequence, protsdict, record, args):
                 end_pos = ExactPosition(protsdict[locus_protein][protein]['end'])
                 feature_location = FeatureLocation(start_pos, end_pos, strand=protsdict[locus_protein][protein]['strand'])
                 qualifiersgene = OrderedDict([('locus_tag', protsdict[locus_protein][protein]['protein_id'])])
-                new_data_gene = SeqFeature(feature_location, type="gene", strand=protsdict[locus_protein][protein]['strand'], qualifiers=qualifiersgene)
+                new_data_gene = SeqFeature(feature_location, type="gene", qualifiers=qualifiersgene)
                 whole_sequence.features.append(new_data_gene)
                 if not args.nohmmer:
                     if protsdict[locus_protein][protein]['identifier'] == "NA":
-                        qualifiers = [('locus_tag', protsdict[locus_protein][protein]['descr']), ('product', protsdict[locus_protein][protein]['descr']), ('protein_id', protsdict[locus_protein][protein]['protein_id']), ('translation', protsdict[locus_protein][protein]['translation'])]
+                        qualifiers = [('locus_tag', protsdict[locus_protein][protein]['descr']), ('product', protsdict[locus_protein][protein]['descr']), ('protein_id', protsdict[locus_protein][protein]['protein_id']), ('translation', protsdict[locus_protein][protein]['translation']), ('strand', protsdict[locus_protein][protein]['strand'])]
                     else:
-                        qualifiers = [('locus_tag', protsdict[locus_protein][protein]['descr']), ('product', protsdict[locus_protein][protein]['descr']), ('protein_id', protsdict[locus_protein][protein]['protein_id']), ('note', '%s' % protsdict[locus_protein][protein]['hmm_id']), ('translation', protsdict[locus_protein][protein]['translation'])]
+                        qualifiers = [('locus_tag', protsdict[locus_protein][protein]['descr']), ('product', protsdict[locus_protein][protein]['descr']), ('protein_id', protsdict[locus_protein][protein]['protein_id']), ('note', '%s' % protsdict[locus_protein][protein]['hmm_id']), ('translation', protsdict[locus_protein][protein]['translation']), ('strand', protsdict[locus_protein][protein]['strand'])]
                 else:
-                    qualifiers = [('locus_tag', protsdict[locus_protein][protein]['descr']), ('product', protsdict[locus_protein][protein]['descr']), ('protein_id', protsdict[locus_protein][protein]['protein_id']), ('translation', protsdict[locus_protein][protein]['translation'])]
+                    qualifiers = [('locus_tag', protsdict[locus_protein][protein]['descr']), ('product', protsdict[locus_protein][protein]['descr']), ('protein_id', protsdict[locus_protein][protein]['protein_id']), ('translation', protsdict[locus_protein][protein]['translation']), ('strand', protsdict[locus_protein][protein]['strand'])]
                 feature_qualifiers = OrderedDict(qualifiers)
-                new_data_cds = SeqFeature(feature_location, type="CDS", strand=protsdict[locus_protein][protein]['strand'], qualifiers=feature_qualifiers)
+                new_data_cds = SeqFeature(feature_location, type="CDS", qualifiers=feature_qualifiers)
                 whole_sequence.features.append(new_data_cds)
 
 def add_tRNA_features(whole_sequence, tRNAdict, record):
@@ -822,11 +822,11 @@ def add_tRNA_features(whole_sequence, tRNAdict, record):
                 start_pos = ExactPosition(tRNAdict[locus_tRNA][tRNA]['begin'])
                 end_pos = ExactPosition(tRNAdict[locus_tRNA][tRNA]['end'])
                 feature_location = FeatureLocation(start_pos, end_pos, strand=tRNAdict[locus_tRNA][tRNA]['strand'])
-                new_data_gene = SeqFeature(feature_location, type="gene", strand=tRNAdict[locus_tRNA][tRNA]['strand'])
+                new_data_gene = SeqFeature(feature_location, type="gene")
                 whole_sequence.features.append(new_data_gene)
-                qualifiers = [('product', tRNAdict[locus_tRNA][tRNA]['product'])]
+                qualifiers = [('product', tRNAdict[locus_tRNA][tRNA]['product']), ('strand', tRNAdict[locus_tRNA][tRNA]['strand'])]
                 feature_qualifiers = OrderedDict(qualifiers)
-                new_data_tRNA = SeqFeature(feature_location, type="tRNA", strand=tRNAdict[locus_tRNA][tRNA]['strand'], qualifiers=feature_qualifiers)
+                new_data_tRNA = SeqFeature(feature_location, type="tRNA", qualifiers=feature_qualifiers)
                 whole_sequence.features.append(new_data_tRNA)
 
 def add_tmRNA_features(whole_sequence, tmRNAdict, record):
@@ -836,11 +836,11 @@ def add_tmRNA_features(whole_sequence, tmRNAdict, record):
                 start_pos = ExactPosition(tmRNAdict[locus_tmRNA][tmRNA]['begin'])
                 end_pos = ExactPosition(tmRNAdict[locus_tmRNA][tmRNA]['end'])
                 feature_location = FeatureLocation(start_pos, end_pos, strand=tmRNAdict[locus_tmRNA][tmRNA]['strand'])
-                new_data_gene = SeqFeature(feature_location, type="gene", strand=tmRNAdict[locus_tmRNA][tmRNA]['strand'])
+                new_data_gene = SeqFeature(feature_location, type="gene")
                 whole_sequence.features.append(new_data_gene)
-                qualifiers = [('product', tmRNAdict[locus_tmRNA][tmRNA]['product'])]
+                qualifiers = [('product', tmRNAdict[locus_tmRNA][tmRNA]['product']), ('strand', tmRNAdict[locus_tmRNA][tmRNA]['strand'])]
                 feature_qualifiers = OrderedDict(qualifiers)
-                new_data_tmRNA = SeqFeature(feature_location, type="tmRNA", strand=tmRNAdict[locus_tmRNA][tmRNA]['strand'], qualifiers=feature_qualifiers)
+                new_data_tmRNA = SeqFeature(feature_location, type="tmRNA", qualifiers=feature_qualifiers)
                 whole_sequence.features.append(new_data_tmRNA)
 
 def add_ncRNA_features(whole_sequence, elementsncRNA, record):
@@ -852,11 +852,11 @@ def add_ncRNA_features(whole_sequence, elementsncRNA, record):
                     start_pos = ExactPosition(int(putative_start))
                     end_pos = ExactPosition(data['end'])
                     feature_location = FeatureLocation(start_pos, end_pos, strand=data['strand'])
-                    new_data_gene = SeqFeature(feature_location, type="gene", strand=data['strand'])
+                    new_data_gene = SeqFeature(feature_location, type="gene")
                     whole_sequence.features.append(new_data_gene)
-                    qualifiers = [('product', data['product']), ('note', 'RFAM: %s' % data['rfamcode'])]
+                    qualifiers = [('product', data['product']), ('note', 'RFAM: %s' % data['rfamcode']), ('strand', data['strand'])]
                     feature_qualifiers = OrderedDict(qualifiers)
-                    new_data_ncRNA = SeqFeature(feature_location, type="ncRNA", strand=data['strand'], qualifiers=feature_qualifiers)
+                    new_data_ncRNA = SeqFeature(feature_location, type="ncRNA", qualifiers=feature_qualifiers)
                     whole_sequence.features.append(new_data_ncRNA)
 
 def add_CRISPR_features(whole_sequence, information_CRISPR, record):
