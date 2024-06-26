@@ -578,7 +578,7 @@ def extract_crispr_data(filename):
 
 def predict_genes(contigfile, record, orffile, orffile2, length_contig, genomeshape, args):
     if (args.prodigalgv == "True"):
-        cmd = ["prodigal-gv", "-p", "meta", "-i", contigfile, "-a", "pretemp.faa", "-d", orffile2, "-o", "/dev/null", "-g", args.gcode, "-q"]
+        cmd = ["prodigal-gv", "-p", "meta", "-i", contigfile, "-a", "pretemp.faa", "-d", orffile2, "-o", "/dev/null", "-q"]
         if genomeshape[record.id]['genomeshape'] == 'linear':
             cmd += ["-c"]
     else:
