@@ -74,6 +74,15 @@ echo "Done."
 cd ..
 
 echo ""
+echo "Installing Prodigal-GV..."
+git clone https://github.com/apcamargo/prodigal-gv.git &>/dev/null
+cd prodigal-gv
+make &>/dev/null
+cp prodigal-gv ../bin
+echo "Done."
+cd ..
+
+echo ""
 echo "Installing Diamond..."
 wget https://github.com/bbuchfink/diamond/archive/refs/tags/v2.1.8.tar.gz &>/dev/null
 tar xzfv v2.1.8.tar.gz &>/dev/null
