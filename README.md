@@ -19,6 +19,7 @@ Before using this script, the following Python modules and programs should be in
 	- ARAGORN (Laslett and Canback 2004): it is used to predict tRNA sequences in the contig. This program is publicly available at http://mbio-serv2.mbioekol.lu.se/ARAGORN/ under the GPLv2 licence.
 	- PILERCR (Edgar 2007): it is used to predict CRISPR repeats in your contig. This program is freely available at http://drive5.com/pilercr/ under a public licence.
 	- Prodigal (Hyatt et al. 2010): it is used to predict the ORFs. When the contig is smaller than 100,000 bp, MetaProdigal (Hyatt et al. 2012) is automatically activated instead of normal Prodigal. This program is publicly available at https://github.com/hyattpd/prodigal/releases/ under the GPLv3 licence.
+        - Prodigal-GV (Camargo et al. 2023): this variant of Prodigal contains updated models for ORF detection in giant viruses and bacteriophages with alternate stop codons ("genetic code 15"). This approach is recommended for the annotation of bacteriophages, especially crAss-like phages (Cook et al. 2023). This program is available at https://github.com/apcamargo/prodigal-gv under the GPLv3 licence.  
 	- DIAMOND (Buchfink et al. 2015): it is used to predict the function of proteins according to homology. This program is publicly available at https://github.com/bbuchfink/diamond under the GPLv3 licence. Databases must be created from FASTA files according to their instructions before running.
 	- BLAST+ (Camacho et al. 2008): it is used to predict the function of the predicted proteins according to homology when DIAMOND is not able to retrieve any hit or such hit is a 'hypothetical protein'. This suite is publicly available at ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/ under the GPLv2 licence. Databases are available at ftp://ftp.ncbi.nlm.nih.gov/blast/db/ or created using makeblastdb command.
 	- HMMER (Finn et al. 2011): it is used to add more information of the predicted proteins according to Hidden Markov Models. This suite is publicly available at http://hmmer.org/ under the GPLv3 licence. Databases must be in HMM format and an example of potential database is PVOGs (http://dmk-brain.ecn.uiowa.edu/VOG/downloads/All/AllvogHMMprofiles.tar.gz).
@@ -69,6 +70,7 @@ The program has the following two types of arguments:
 ### Advanced parameters for genetic code:
 
 <table>
+<tr><td>--prodigal-gv</td><td>Use Prodigal-GV for viral ORF prediction instead of Prodigal. In this case, there is no need to use the --gcode option, as this program includes all special genetic codes automatically. Recommended for some phages like crAss-like phages and in cases where there is a low gene density and no ncRNA elements where found (Default: False)</td></tr>
 <tr><td>--gcode NUMBER</td><td>Number of GenBank translation table. At this moment, the available options are:
 <table>
 <tr><td>1</td><td>Standard genetic code [Eukaryotic]</td></tr>
@@ -165,6 +167,7 @@ Finally, in case that you need to run the pipeline in a server, computer cluster
 
 In this branch, there will be program versions with proposed changes. After being tested multiple times, these changes might (or not) be considered to update the main source code in the master branch. 
 
+* v.0.12.1 - Added the option of running Prodigal-GV instead of Prodigal as well as fixed some issues related with the generation of output files as a consequence of several changes in the Features in Biopython.
 * v.0.12.0 - Uploaded developer version of the source code. In this case, the idea is to automate the process of installation, creation of databases and minimising the number of required parameters to be used. In future versions, it will be also implemented the automation of the PVOGs and RVDB output interpretation (based on Moura de Sousa et al. 2021)
 
 ## REFERENCES:
@@ -174,6 +177,8 @@ In this branch, there will be program versions with proposed changes. After bein
 	- Brown CT, Olm MR, Thomas BC, Banfield JF (2016) Measurement of bacterial replication rates in microbial communities. Nature Biotechnology 34: 1256-63.
 	- Buchfink B, Xie C, Huson DH (2015) Fast and sensitive protein alignment using DIAMOND. Nature Methods 12: 59-60.
 	- Camacho C, Coulouris G, Avagyan V, Ma N, Papadopoulos J, Bealer K, Madden TL (2008) BLAST+: architecture and applications. BMC Bioinformatics 10: 421.
+        - Camargo AP, Roux S, Schulz F, Babinski M, Xu Y, Hu B, Chain PSG, Nayfach S, Kyrpides NC (2023) Identification of mobile genetic elements with geNomad. Nature Biotechnology: 1-10
+	- Cook R, Telatin A, Bouras G, Camargo AP, Larralde M, Edwards RA, Adriaenssens EM (2023) Predicting stop codon reassignment improves functional annotation of bacteriophages. bioRxiv 19: 2023.12.19.572299.
 	- Edgar RC (2007) PILER-CR: fast and accurate identification of CRISPR repeats. BMC Bioinformatics 8:18.
 	- Finn RD, Clements J, Eddy SR (2011) HMMER web server: interactive sequence similarity searching. Nucleic Acids Research 39: W29-37.
 	- Fozo EM, Makarova KS, Shabalina SA, Yutin N, Koonin EV, Storz G (2010) Abundance of type I toxin-antitoxin systems in bacteria: searches for new candidates and discovery of novel families. Nucleic Acids Research 38: 3743-59.
