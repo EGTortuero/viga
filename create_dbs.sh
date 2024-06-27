@@ -80,35 +80,51 @@ echo ""
 
 # Downloading RVDB
 echo "Downloading RVDB and formatting for its use in HMMer"
-mkdir pvogs_rvdb
-cd pvogs_rvdb
+mkdir rvdb
+cd rvdb
 curl -O https://rvdb-prot.pasteur.fr/files/U-RVDBv28.0-prot.hmm.xz
 curl -O https://rvdb-prot.pasteur.fr/files/U-RVDBv28.0-prot-hmm-txt.tar.xz
 unxz U-RVDBv28.0-prot.hmm.xz
 unxz U-RVDBv28.0-prot-hmm-txt.tar.xz
 tar xvf U-RVDBv28.0-prot-hmm-txt.tar
 #{ echo annot/*.txt | xargs cat; } > U-RVDBv26.0.txt # Pending an script to transform these files into a table with annotation ID and 
-mv U-RVDBv28.0-prot.hmm RVDB_28.0_only.hmm
+mv U-RVDBv28.0-prot.hmm RVDB_28.0.hmm
+cd ..
+echo "Done"
+echo ""
 
-# Downloading VOGs and VFAM
+# Downloading VOGs
 echo "Downloading VOGs and formatting for its use in HMMer"
+mkdir vogs
+cd vogs
 curl -O https://fileshare.lisc.univie.ac.at/vog/vog224/vog.hmm.tar.gz
 curl -O https://fileshare.lisc.univie.ac.at/vog/vog224/vog.annotations.tsv.gz
 tar zxvf vog.hmm.tar.gz &> /dev/null
 gunzip vog.annotations.tsv.gz
-{ echo hmm/*.hmm | xargs cat; } > vog_only.hmm
+{ echo hmm/*.hmm | xargs cat; } > vog_latest.hmm
 rm -rf hmm/
+cd ..
+echo "Done"
+echo ""
 
+# Downloading VFAM
 echo "Downloading VFAM and formatting for its use in HMMer"
+mkdir vfam
+cd vfam
 curl -O https://fileshare.lisc.univie.ac.at/vog/vog224/vfam.hmm.tar.gz
 curl -O https://fileshare.lisc.univie.ac.at/vog/vog224/vfam.annotations.tsv.gz
 tar zxvf vfam.hmm.tar.gz &> /dev/null
 gunzip vfam.annotations.tsv.gz
-{ echo hmm/*.hmm | xargs cat; } > vfam_only.hmm
+{ echo hmm/*.hmm | xargs cat; } > vfam_latest.hmm
 rm -rf hmm/
+cd ..
+echo "Done"
+echo ""
 
 # Downloading PHROGs
 echo "Downloading PHROGs and formatting for its use in HMMer"
+mkdir phrogs
+cd phrogs
 curl -O https://phrogs.lmge.uca.fr/downloads_from_website/MSA_phrogs.tar.gz
 curl -O https://phrogs.lmge.uca.fr/downloads_from_website/phrog_annot_v4.tsv
 tar zxvf MSA_phrogs.tar.gz &> /dev/null
@@ -119,12 +135,8 @@ for X in $(ls *.fma | sed "s/\.fma//");
 	hmmbuild --cpu 8 $X.hmm $X.sto;
 	done
 cd ..
-{ echo MSA_Phrogs_M50_FASTA/*.hmm | xargs cat; } > phrogs_only.hmm
+{ echo MSA_Phrogs_M50_FASTA/*.hmm | xargs cat; } > phrogs_v4.hmm
 rm -rf MSA_Phrogs_M50_FASTA
-
-# Formatting the database
-#cat pvogs_only_mod.hmm RVDB_24.1_only.hmm vog_only.hmm > pvogs_vogs_RVDB.hmm
-#cat vog_only.hmm RVDB_26.0_only.hmm phrogs_only.hmm > vogs_RVDB_phrogs.hmm
-#hmmpress -f vogs_RVDB_phrogs.hmm
-#cd ../..
+cd ..
 echo "Done"
+echo ""
