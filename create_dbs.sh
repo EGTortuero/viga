@@ -97,8 +97,8 @@ echo ""
 echo "Downloading VOGs and formatting for its use in HMMer"
 mkdir vogs
 cd vogs
-curl -O https://fileshare.lisc.univie.ac.at/vog/vog224/vog.hmm.tar.gz
-curl -O https://fileshare.lisc.univie.ac.at/vog/vog224/vog.annotations.tsv.gz
+curl -O https://fileshare.lisc.univie.ac.at/vog/vog225/vog.hmm.tar.gz
+curl -O https://fileshare.lisc.univie.ac.at/vog/vog225/vog.annotations.tsv.gz
 tar zxvf vog.hmm.tar.gz &> /dev/null
 gunzip vog.annotations.tsv.gz
 { echo hmm/*.hmm | xargs cat; } > vog_latest.hmm
@@ -111,8 +111,8 @@ echo ""
 echo "Downloading VFAM and formatting for its use in HMMer"
 mkdir vfam
 cd vfam
-curl -O https://fileshare.lisc.univie.ac.at/vog/vog224/vfam.hmm.tar.gz
-curl -O https://fileshare.lisc.univie.ac.at/vog/vog224/vfam.annotations.tsv.gz
+curl -O https://fileshare.lisc.univie.ac.at/vog/vog225/vfam.hmm.tar.gz
+curl -O https://fileshare.lisc.univie.ac.at/vog/vog225/vfam.annotations.tsv.gz
 tar zxvf vfam.hmm.tar.gz &> /dev/null
 gunzip vfam.annotations.tsv.gz
 { echo hmm/*.hmm | xargs cat; } > vfam_latest.hmm
