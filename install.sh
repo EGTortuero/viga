@@ -35,7 +35,7 @@ echo ""
 echo "Installing Aragorn..."
 mkdir aragorn
 cd aragorn
-wget http://www.ansikte.se/ARAGORN/Downloads/aragorn1.2.41.c &>/dev/null
+wget http://www.trna.se/ARAGORN/Downloads/aragorn1.2.41.c &>/dev/null
 gcc -O3 -ffast-math -finline-functions -o aragorn aragorn1.2.41.c &>/dev/null
 cp aragorn ../bin/
 echo "Done."
