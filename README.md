@@ -12,6 +12,7 @@ Before using this script, the following Python modules and programs should be in
 	- Biopython (Bio module; Cock et al. 2009)
 	- Numpy (https://github.com/numpy/numpy)
 	- Scipy (https://github.com/scipy/scipy)
+        - pyHMMer (Larralde and Zeller, 2023; https://github.com/althonos/pyhmmer): especially from 0.10.15 towards
 
 * Programs:
 	- LASTZ (Harris 2007): it is used to predict the circularity of the contigs. The program is publicly available at https://github.com/lastz/lastz under the MIT licence.
@@ -167,8 +168,9 @@ Finally, in case that you need to run the pipeline in a server, computer cluster
 
 In this branch, there will be program versions with proposed changes. After being tested multiple times, these changes might (or not) be considered to update the main source code in the master branch. 
 
-* v.0.12.1 - Added the option of running Prodigal-GV instead of Prodigal as well as fixed some issues related with the generation of output files as a consequence of several changes in the Features in Biopython.
-* v.0.12.0 - Uploaded developer version of the source code. In this case, the idea is to automate the process of installation, creation of databases and minimising the number of required parameters to be used. In future versions, it will be also implemented the automation of the PVOGs and RVDB output interpretation (based on Moura de Sousa et al. 2021)
+* v.0.12.0 - Replaced HMMER by PyHMMER for the search using HMM models as found to be a much faster implementation than the original program.
+* v.0.11.1 - Added the option of running Prodigal-GV instead of Prodigal as well as fixed some issues related with the generation of output files as a consequence of several changes in the Features in Biopython.
+* v.0.11.0 - Uploaded developer version of the source code. In this case, the idea is to automate the process of installation, creation of databases and minimising the number of required parameters to be used. In future versions, it will be also implemented the automation of the PVOGs and RVDB output interpretation (based on Moura de Sousa et al. 2021)
 
 ## REFERENCES:
 
@@ -186,7 +188,8 @@ In this branch, there will be program versions with proposed changes. After bein
 	- Harris RS (2007) Improved pairwise alignment of genomic DNA. Ph.D. Thesis, The Pennsylvania State University. 
 	- Hyatt D, Chen GL, Locascio PF, Land ML, Larimer FW, Hauser LJ (2010) Prodigal: prokaryotic gene recognition and translation initiation site identification. BMC Bioinformatics 11: 119.
 	- Hyatt D, Locascio PF, Hauser LJ, Uberbacher EC (2012) Gene and translation initiation site prediction in metagenomic sequences. Bioinformatics 28: 2223-30.
-	- Laslett D, Canback B (2004) ARAGORN, a program to detect tRNA genes and tmRNA genes in nucleotide sequences. Nucleic Acids Research 32: 11–16.
+	- Larralde M, Zeller G (2023) PyHMMER: a Python library binding to HMMER for efficient sequence analysis. Bioinformatics 39: btad214.
+        - Laslett D, Canback B (2004) ARAGORN, a program to detect tRNA genes and tmRNA genes in nucleotide sequences. Nucleic Acids Research 32: 11–16.
 	- Marz M, Beerenwinkel N, Drosten C, Fricke M, Frishman D, Hofacker IL, Hoffmann D, Middendorf M, Rattei T, Stadler PF, Töpfer A (2014) Challenges in RNA virus bioinformatics. Bioinformatics 30: 1793-9.
 	- Moura de Sousa JA, Pfeifer E, Touchon M, Rocha EPC (2021) Causes and consequences of bacteriophage diversification via genetic exchanges across lifestyles and bacterial taxa. Molecular Biology and Evolution, msab044: https://doi.org/10.1093/molbev/msab044
 	- Nawrocki EP, Eddy SR (2013) Infernal 1.1: 100-fold faster RNA homology searches. Bioinformatics 29: 2933-35.
