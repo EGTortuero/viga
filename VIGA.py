@@ -22,9 +22,12 @@
 ## Importing python libraries
 from __future__ import print_function
 import argparse
+import collections
+import contextlib
 import csv
 import fractions
 import glob
+import itertools
 import multiprocessing
 import numpy
 import os
@@ -34,6 +37,8 @@ import shutil
 import sys
 import subprocess
 import time
+import typing
+import pyhmmer
 from BCBio import GFF
 from Bio import SeqIO, SeqFeature
 try:
@@ -44,16 +49,31 @@ from Bio.Seq import Seq
 from Bio.SeqFeature import SeqFeature, ExactPosition, FeatureLocation
 from Bio.SeqRecord import SeqRecord
 from Bio.SeqUtils.ProtParam import ProteinAnalysis
-from collections import OrderedDict, defaultdict
+#from biocode import annotation, things, utils
+from collections import namedtuple, OrderedDict, defaultdict
 from io import StringIO
 from itertools import product
 from pathlib import Path
+from pyhmmer.easel import SequenceFile
+from pyhmmer.plan7 import HMMFile, HMM
 import scipy.signal as signal
 from time import strftime
 from typing import Dict
 
 ## Defining the program version
-version = "0.11.2"
+version = "0.12.0"
+
+## Defining the class HMM
+class HMMFiles(typing.Iterable[HMM]):
+    def __init__(self, *files: typing.Union[str, bytes, os.PathLike]):
+        self.files = files
+
+    def __iter__(self):
+        for file in self.files:
+            with HMMFile(file) as hmm_file:
+                yield from hmm_file
+
+Result = namedtuple('Result', ['protein', 'query_name', 'database', 'pcoverage', 'evalue'])
 
 ## Preparing functions
 # A batch iterator
@@ -199,18 +219,17 @@ def add_advanced_blast_group(parser):
     advanced_blast_group.add_argument("--blastcoverthr", dest="blastcovthreshold", default=50.00, help='BLAST Coverage threshold (Default: 50.0)', metavar="FLOAT")
 
 def add_advanced_hmm_group(parser):
-    advanced_hmm_group = parser.add_argument_group('Advanced options for the third protein function prediction based on HMM in VIGA [OPTIONAL]')
+    advanced_hmm_group = parser.add_argument_group('Advanced options for the third protein function prediction based on PyHMMER in VIGA [OPTIONAL]')
     advanced_hmm_group.add_argument("--nohmmer", dest="nohmmer", action='store_true', default=False, help='Running only BLAST to predict protein function. (Default: False)')
-    advanced_hmm_group.add_argument("--novogs", dest="novogs", action='store_true', default=False, help='HMMer analyses will not consider the VOGs database. (Default: False)')
-    advanced_hmm_group.add_argument("--norvdb", dest="norvdb", action='store_true', default=False, help='HMMer analyses will not consider the RVDB database. (Default: False)')
-    advanced_hmm_group.add_argument("--nophrogs", dest="nophrogs", action='store_true', default=False, help='HMMer analyses will not consider the PHROGs database (Default: False)')
-    advanced_hmm_group.add_argument("--novfam", dest="novfam", action='store_true', default=False, help='HMMer analyses will not consider the VFAM database (Default: False)')
-    advanced_hmm_group.add_argument("--vogsdb", dest="vogsdb", type=str, help='VOG Database that will be used to refine the protein function prediction in hypothetical proteins. By default, the program will try to search the Viral Orthologous Genes DB formatted for its use in HMMer inside the folder database/ only if --nohmmer parameter is disabled and after running the Create_databases.sh script.')
-    advanced_hmm_group.add_argument("--rvdbdb", dest="rvdbdb", type=str, help='RVDB Database that will be used to refine the protein function prediction in hypothetical proteins. By default, the program will try to search the Reference Virus DataBase formatted for its use in HMMer inside the folder database/ only if --nohmmer parameter is disabled and after running the Create_databases.sh script.')
-    advanced_hmm_group.add_argument("--phrogsdb", dest="phrogsdb", type=str, help='PHROGs Database that will be used to refine the protein function prediction in hypothetical proteins. By default, the program will try to search the Prokaryotic Virus Remote Homologous Groups formatted for its use in HMMer inside the folder database/ only if --nohmmer parameter is disabled and after running the Create_databases.sh script.')
-    advanced_hmm_group.add_argument("--vfamdb", dest="vfamdb", type=str, help='VFAM Database that will be used to refine the protein function prediction in hypothetical proteins. By default, the program will try to search the Viral Families DB formatted for its use in HMMer inside the folder database/ only if --nohmmer parameter is disabled and after running the Create_databases.sh script.')
+    advanced_hmm_group.add_argument("--novogs", dest="novogs", action='store_true', default=False, help='PyHMMer analyses will not consider the VOGs database. (Default: False)')
+    advanced_hmm_group.add_argument("--norvdb", dest="norvdb", action='store_true', default=False, help='PyHMMer analyses will not consider the RVDB database. (Default: False)')
+    advanced_hmm_group.add_argument("--nophrogs", dest="nophrogs", action='store_true', default=False, help='PyHMMer analyses will not consider the PHROGs database (Default: False)')
+    advanced_hmm_group.add_argument("--novfam", dest="novfam", action='store_true', default=False, help='PyHMMer analyses will not consider the VFAM database (Default: False)')
+    advanced_hmm_group.add_argument("--vogsdb", dest="vogsdb", type=str, help='VOG Database that will be used to refine the protein function prediction in hypothetical proteins. By default, the program will try to search the Viral Orthologous Genes DB formatted for its use in PyHMMer inside the folder database/ only if --nohmmer parameter is disabled and after running the Create_databases.sh script.')
+    advanced_hmm_group.add_argument("--rvdbdb", dest="rvdbdb", type=str, help='RVDB Database that will be used to refine the protein function prediction in hypothetical proteins. By default, the program will try to search the Reference Virus DataBase formatted for its use in PyHMMer inside the folder database/ only if --nohmmer parameter is disabled and after running the Create_databases.sh script.')
+    advanced_hmm_group.add_argument("--phrogsdb", dest="phrogsdb", type=str, help='PHROGs Database that will be used to refine the protein function prediction in hypothetical proteins. By default, the program will try to search the Prokaryotic Virus Remote Homologous Groups formatted for its use in PyHMMer inside the folder database/ only if --nohmmer parameter is disabled and after running the Create_databases.sh script.')
+    advanced_hmm_group.add_argument("--vfamdb", dest="vfamdb", type=str, help='VFAM Database that will be used to refine the protein function prediction in hypothetical proteins. By default, the program will try to search the Viral Families DB formatted for its use in PyHMMer inside the folder database/ only if --nohmmer parameter is disabled and after running the Create_databases.sh script.')
     advanced_hmm_group.add_argument("--hmmerevalue", dest="hmmerevalue", default=0.001, help='HMMER e-value threshold (Default: 0.001)', metavar="FLOAT")
-    advanced_hmm_group.add_argument("--hmmeridthr", dest="hmmeridthreshold", default=50.00, help='HMMER ID threshold (Default: 50.0)', metavar="FLOAT")
     advanced_hmm_group.add_argument("--hmmercoverthr", dest="hmmercovthreshold", default=50.00, help='HMMER Coverage threshold (Default: 50.0)', metavar="FLOAT")
 
 # Interpreting the parameters
@@ -296,8 +315,8 @@ def check_required_cmds(args):
     if args.blastswitch == True:
         required_cmds.append("blastp")
 
-    if args.nohmmer == False:
-        required_cmds.extend(["hmmsearch", "hmmbuild"])
+    #if args.nohmmer == False:
+    #    required_cmds.extend(["hmmsearch", "hmmbuild"])
 
     missing_cmds = [cmd for cmd in required_cmds if not cmd_exists(cmd)]
 
@@ -650,33 +669,58 @@ def parse_blast_diamond_results(file_path, threshold_width, threshold_cov, thres
                         information_proteins[row['qseqid']] = infoprot
     return information_proteins
 
-def parse_hmmer_file(tbl_file, hmmercovthreshold, hmmerevalue, hmmeridthreshold, db_name):
+def process_hmmsearch(db_path, targets, ncpus, hmmerevalue, hmmercovthreshold, db_name):
+    results = []
     information_proteins_hmmer = {}
-    with open(tbl_file, "r") as tblfile:
-        for line in tblfile:
-            if not line.startswith("#"):
-                infoprot_hmmer = {}
-                match = re.match("^(\S+)\s+\S\s+\d+\s+(\S+)\s+\S\s+(\d+)\s+((?:0|[1-9]\d*)(?:\.\d*)?(?:[eE][+\-]?\d+)?)\s+\S+\s+\S+\s+\S+\s+\S+\s+(?:0|[1-9]\d*)(?:\.\d*)?(?:[eE][+\-]?\d+)?\s+\S+\s+\S+\s+\S+\s+(\d+)\s+(\d+)\s+\d+\s+\d+\s+\S+\s+\S+\s+(\S+)\s+(.*)", line)
-                if match:
-                    matchname, lociname, length, evaluehh, start, end, pident, description = match.groups()
-                    length = float(length)
-                    pident = 100.00 * float(pident)
-                    protarea = float(end) - float(start)
-                    if protarea < 0:
-                        protarea = protarea + length
-                    covprot = (protarea / length) * 100
-                    if pident >= hmmeridthreshold and covprot >= hmmercovthreshold and float(evaluehh) <= hmmerevalue:
-                        infoprot_hmmer['db_name'] = db_name
-                        infoprot_hmmer['idhmm'] = lociname
-                        infoprot_hmmer['name'] = matchname
-                        infoprot_hmmer['pident'] = pident
-                        infoprot_hmmer['pcover'] = covprot
-                        infoprot_hmmer['evalue'] = evaluehh
-                        infoprot_hmmer['description'] = description
-                        if matchname not in information_proteins_hmmer:
-                            information_proteins_hmmer[matchname] = {}
-                        information_proteins_hmmer[matchname][db_name] = infoprot_hmmer
-    return {k: v for k, v in information_proteins_hmmer.items() if len(v) == 1}
+    threshold = float(hmmercovthreshold)
+    for all_hits in pyhmmer.hmmsearch(HMMFiles(db_path), targets, cpus=int(ncpus), E=float(hmmerevalue)):
+        ohit = all_hits.query_name.decode()
+        for hit in filter(lambda h: h.included, all_hits):
+            for domain in hit.domains:
+                pcoverage = 100.0 * (domain.alignment.target_to - domain.alignment.target_from) / domain.alignment.target_length
+                if pcoverage >= threshold:
+                    results.append(Result(hit.name.decode(), ohit, db_name, pcoverage, hit.evalue))
+    for result in results:
+        current = information_proteins_hmmer.get(result.protein)
+        if current is None or (result.evalue < current.evalue and db_name == result.database):
+            information_proteins_hmmer[result.protein] = result
+    return information_proteins_hmmer
+
+def process_hmmer_results(protsdict, information):
+    all_results = defaultdict(lambda: defaultdict(list))
+    for contig in sorted(protsdict):
+        for protein in sorted(protsdict[contig]):
+            hmmer_info_dict = {db_name: info for db_name in sorted(information) for identity, info in sorted(information[db_name].items()) if identity == protein}
+            for db_name, hmmer_info in hmmer_info_dict.items():
+                if protein == hmmer_info.protein:
+                    all_results[hmmer_info.protein][hmmer_info.database].append({'hmm_id': hmmer_info.hit_found, 'hmm_pcover': hmmer_info.pcoverage, 'hmm_evalue': hmmer_info.evalue})
+    for contig in sorted(protsdict):
+        for protein in sorted(protsdict[contig]):
+            identifiers = []
+            refinements = []
+            hmm_ids = []
+            hmm_pcovers = []
+            hmm_evalues = []
+            if protein in all_results:
+                for db, results in all_results[protein].items():
+                    for hmm_info in results:
+                        identifiers.append(protein)
+                        refinements.append(db)
+                        hmm_ids.append(f"{db}: {hmm_info['hmm_id']}")
+                        hmm_pcovers.append(str(hmm_info['hmm_pcover']))
+                        hmm_evalues.append(str(hmm_info['hmm_evalue']))
+            identifier = "|".join(identifiers) if identifiers else "NA"
+            refinement = "|".join(refinements) if refinements else "NO_REFINEMENT"
+            hmm_id = "|".join(hmm_ids) if hmm_ids else "NA"
+            hmm_pcover = "|".join(hmm_pcovers) if hmm_pcovers else "NA"
+            hmm_evalue = "|".join(hmm_evalues) if hmm_evalues else "NA"
+            protsdict.setdefault(contig, {}).setdefault(protein, {})
+            protsdict[contig][protein]['identifier'] = identifier
+            protsdict[contig][protein]['refinement'] = refinement
+            protsdict[contig][protein]['hmm_id'] = hmm_id
+            protsdict[contig][protein]['hmm_pcover'] = hmm_pcover
+            protsdict[contig][protein]['hmm_evalue'] = hmm_evalue
+    return protsdict
 
 #def translate_PHROGS_idhmm(idhmm):
 #    # Read the PHROGS table into a dictionary mapping IDHMMs to descriptions
@@ -696,35 +740,6 @@ def parse_hmmer_file(tbl_file, hmmercovthreshold, hmmerevalue, hmmeridthreshold,
 #        return f"{idhmm_to_desc[idhmm]} ({idhmm})"
 #    else:
 #        return 'unknown function ({idhmm})'
-
-def add_hmmer_info(protsdict, information_proteins_hmmer, hmmer_databases):
-    for contig in sorted(protsdict):
-        for protein in sorted(protsdict[contig]):
-            identifier = "NA"
-            refinement = "NO_REFINEMENT"
-            hmm_id     = "NA"
-            hmm_pident = "NA"
-            hmm_pcover = "NA"
-            hmm_evalue = "NA"
-            hmmer_info_dict = {}
-            for database in information_proteins_hmmer:
-                for identity in information_proteins_hmmer[database]:
-                    if information_proteins_hmmer[database][identity][database]['name'] == protein:
-                        hmmer_info_dict[database] = information_proteins_hmmer[database][identity][database]
-            if len(hmmer_info_dict) > 0:
-                identifier = "|".join([hmmer_info_dict[db]['name'] for db in hmmer_info_dict])
-                refinement = "|".join([hmmer_info_dict[db]['db_name'] for db in hmmer_info_dict])
-                hmm_id = "|".join("%s: %s" % (hmmer_info_dict[db]['db_name'], hmmer_info_dict[db]['idhmm']) for db in hmmer_info_dict)
-                hmm_pident = "|".join([str(hmmer_info_dict[db]['pident']) for db in hmmer_info_dict])
-                hmm_pcover = "|".join([str(hmmer_info_dict[db]['pcover']) for db in hmmer_info_dict])
-                hmm_evalue = "|".join([str(hmmer_info_dict[db]['evalue']) for db in hmmer_info_dict])
-            protsdict[contig][protein]['identifier'] = identifier
-            protsdict[contig][protein]['refinement'] = refinement
-            protsdict[contig][protein]['hmm_id'] = hmm_id
-            protsdict[contig][protein]['hmm_pident'] = hmm_pident
-            protsdict[contig][protein]['hmm_pcover'] = hmm_pcover
-            protsdict[contig][protein]['hmm_evalue'] = hmm_evalue
-    return protsdict
 
 def create_protsdict(records_in_memory):
     protsdict = {}
@@ -789,7 +804,7 @@ def update_protsdict(protsdict, records_in_memory, information_proteins):
     return protsdict
 
 def write_protein_properties_table(protsdict, root_output):
-    header = ["Contig", "Protein ID", "Start", "Stop", "Strand", "size_aa", "pI", "Mol_weight_kDa", "Instability_index", "Description", "Source", "Perc_ID", "Perc_Cov", "E-value", "HMMer", "Perc_ID", "Perc_Cov", "E-value"]
+    header = ["Contig", "Protein ID", "Start", "Stop", "Strand", "size_aa", "pI", "Mol_weight_kDa", "Instability_index", "Description", "Source", "Perc_ID", "Perc_Cov", "E-value", "HMMer", "Perc_Cov", "E-value"]
     with open(f"{root_output}.csv", "w") as tablefile:
         print("\t".join(header), file=tablefile)
         for contig, loci in sorted(protsdict.items()):
@@ -797,7 +812,7 @@ def write_protein_properties_table(protsdict, root_output):
                 refinement = protsdict[contig][locus].get('refinement', 'NO_REFINEMENT')
                 data = [contig, locus, str(protsdict[contig][locus]['begin']), str(protsdict[contig][locus]['end']), str(protsdict[contig][locus]['strand']), str(protsdict[contig][locus]['length']), str(protsdict[contig][locus]['isoelectricpoint']), str(protsdict[contig][locus]['molweightkda']), str(protsdict[contig][locus]['instability']), protsdict[contig][locus]['descr'], protsdict[contig][locus]['source'], str(protsdict[contig][locus]['pident']), str(protsdict[contig][locus]['pcover']), str(protsdict[contig][locus]['evalue'])]
                 if refinement != "NO_REFINEMENT":
-                    data += [str(protsdict[contig][locus]['hmm_id']), str(protsdict[contig][locus]['hmm_pident']), str(protsdict[contig][locus]['hmm_pcover']), str(protsdict[contig][locus]['hmm_evalue'])]
+                    data += [str(protsdict[contig][locus]['hmm_id']), str(protsdict[contig][locus]['hmm_pcover']), str(protsdict[contig][locus]['hmm_evalue'])]
                 else:
                     data += ["NA", "NA", "NA", "NA"]
                 print("\t".join(data), file=tablefile)
@@ -963,6 +978,9 @@ def remove_files():
     for tempgbk in glob.glob("LOC_*.gbk"):
         files_to_remove.append(tempgbk)
 
+    for tempgff in glob.glob("LOC_*.gff"):
+        files_to_remove.append(tempgff)
+
     for tempptt in glob.glob("LOC_*.ptt"):
         files_to_remove.append(tempptt)
 
@@ -1080,52 +1098,52 @@ if __name__ == "__main__":
         eprint("\nRunning DIAMOND to predict the protein function according to homology inference using default parameters")
         run_diamond_blastp("PROTS_FIRST_ROUND.faa", "PROTS_FIRST_ROUND.faa.csv", args.diamonddatabase, args.diamondevalue, args.ncpus)
         information_proteins = parse_blast_diamond_results("PROTS_FIRST_ROUND.faa.csv", args.diamondwidthreshold, args.diamondcovthreshold, args.diamondevalue, "diamond")
+    records_in_memory = list(SeqIO.parse(open("PROTS_FIRST_ROUND.faa", "r"), "fasta"))
+    protsdict = create_protsdict(records_in_memory)
+    protsdict = update_protsdict(protsdict, records_in_memory, information_proteins)
     endtime6 = time.time()
     durationtime6 = endtime6 - starttime6
     eprint("Done: function prediction based on homology took %s seconds" % str(durationtime6))    
 
-    # Sixth-extra step: Predicting the function of the proteins based on HMM predictions using HMMer 3.0 (Optional: SLOW step)
+    # Sixth-extra step: Predicting the function of the proteins based on HMM predictions using PyHMMer (Optional step)
     if not args.nohmmer:
+        hmmer_databases = {}
         hmmer_dbs = []
         if not args.norvdb:
-            hmmer_dbs.append(('RVDB', args.rvdbdb, 'PROTS_RVDB.tbl'))
+            hmmer_dbs.append(('RVDB', args.rvdbdb))
         if not args.novogs:
-            hmmer_dbs.append(('VOGS', args.vogsdb, 'PROTS_VOGS.tbl'))
+            hmmer_dbs.append(('VOGS', args.vogsdb))
         if not args.nophrogs:
-            hmmer_dbs.append(('PHROGS', args.phrogsdb, 'PROTS_PHROGS.tbl'))
+            hmmer_dbs.append(('PHROGS', args.phrogsdb))
         if not args.novfam:
-            hmmer_dbs.append(('VFAM', args.vfamdb, 'PROTS_VFAM.tbl'))
+            hmmer_dbs.append(('VFAM', args.vfamdb))
 
-        # Run HMMER and parse output files
-        information_proteins_hmmer = {}
-        for db_name, db_path, tbl_file in hmmer_dbs:
+        # Run PyHMMER to add extra information on the protein function
+        information = {}
+        results = []
+        with SequenceFile("PROTS_FIRST_ROUND.faa", digital=True) as seq_file:
+            targets = seq_file.read_block()
+        for db_name, db_path in hmmer_dbs:
             starttime6a = time.time()
-            eprint(f"\nRunning HMMER to enrich the annotations for all viral proteins using {db_name}")
-            subprocess.call(['hmmsearch', '--cpu', str(args.ncpus), '--domtblout', tbl_file, '-E', str(args.hmmerevalue), '-o', '/dev/null', db_path, 'PROTS_FIRST_ROUND.faa'])
-            information_proteins_hmmer[db_name] = parse_hmmer_file(tbl_file, args.hmmercovthreshold, args.hmmerevalue, args.hmmeridthreshold, db_name)
+            Result = collections.namedtuple("Result", ["protein", "hit_found", "database", "pcoverage", "evalue"])
+            eprint(f"\nRunning PyHMMER to enrich the annotations for all viral proteins using {db_name}")
+            information[db_name] = process_hmmsearch(db_path, targets, args.ncpus, args.hmmerevalue, args.hmmercovthreshold, db_name)
             endtime6a = time.time()
             durationtime6a = endtime6a - starttime6a
             eprint(f"Done: {db_name} prediction based on HMMER took {durationtime6a:.2f} seconds")
-
-    # Seven step: Retrieving all the information for every protein
-    records_in_memory = list(SeqIO.parse(open("PROTS_FIRST_ROUND.faa", "r"), "fasta"))
-    protsdict = create_protsdict(records_in_memory)
-    protsdict = update_protsdict(protsdict, records_in_memory, information_proteins)
-    if args.nohmmer == False:
-        hmmer_databases = {}
-        for db_name, _, tbl_file in hmmer_dbs:
-            hmmer_databases[db_name] = tbl_file
-            protsdict = add_hmmer_info(protsdict, information_proteins_hmmer, hmmer_databases)
-
-    # Eight step: Creating output files
+        protsdict = process_hmmer_results(protsdict, information)
+        
+    # Seven step: Creating output files
     eprint("\nCreating all output files")
     write_protein_properties_table(protsdict, root_output) # Creating the CSV table with all protein statistics
     for newfile in sorted(glob.glob("LOC_*.fna")):
         if args.norfam == True:
             elementsncRNA = ""
         write_genbank_file(newfile, protsdict, tRNAdict, tmRNAdict, elementsncRNA, information_CRISPR, args, IUPAC)
+        #converting_genbank_2_GFF3(newfile)
         write_ptt_file(newfile)
     cat_all(sorted(glob.glob('LOC_*.fna.gbk')), "%s.gbk" % root_output) # Preparing the Genbank files
+    #cat_all(sorted(glob.glob('LOC_*.fna.gff')), "%s.gff" % root_output) # Preparing the GFF files
     cat_all(sorted(glob.glob('LOC_*ptt')), "%s.ptt" % root_output)      # Preparing the Protein Table (ppt table)
     with open(("%s.gff" % root_output), "w") as outgff, open("%s.gbk" % root_output, "r") as ingbk:
         GFF.write(SeqIO.parse(ingbk, "genbank"), outgff)                # Printing the GFF output
