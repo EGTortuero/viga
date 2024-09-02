@@ -471,37 +471,55 @@ def predict_shape(newfile, args, IUPAC, logfile):
         log_genome_shape(record, genomeshape, logfile)
     return Sequence, genomeshape
 
-def process_trna_file(newrecord, putativetrnafile, tRNAdict, tmRNAdict):
+def get_sequence_length_from_fasta(contig_id, fasta_file):
+    for record in SeqIO.parse(fasta_file, "fasta"):
+        if record.id == contig_id:
+            return len(record.seq)
+    raise ValueError(f"Contig {contig_id} not found in FASTA file.")
+
+def process_trna_file(newrecord, putativetrnafile, fasta_file_path, tRNAdict, tmRNAdict):
     with open(putativetrnafile, "r") as trnafile:
         tRNAdict[newrecord.id] = {}
         tmRNAdict[newrecord.id] = {}
         for tRNAseq in SeqIO.parse(trnafile, "fasta"):
             tRNA_information = tRNAseq.description.split(" ")
             if tRNA_information[1] == "tmRNA":
-                indtmRNA = process_tmRNA(tRNA_information)
+                indtmRNA = process_tmRNA(tRNA_information, fasta_file_path)
                 tmRNAdict[newrecord.id][tRNAseq.id] = indtmRNA
             elif re.match("^tRNA-", tRNA_information[1]):
-                indtRNA = process_tRNA(tRNA_information)
+                indtRNA = process_tRNA(tRNA_information, fasta_file_path)
                 tRNAdict[newrecord.id][tRNAseq.id] = indtRNA
 
-def process_tmRNA(tRNA_information):
+def process_tmRNA(tRNA_information, fasta_file):
     indtmRNA = {}
+    contig_id = os.path.splitext(os.path.basename(fasta_file_path))[0]
+    seq_length = get_sequence_length_from_fasta(contig_id, fasta_file_path)
     indtmRNA['product'] = "tmRNA"
     tmRNA_coords = str(tRNA_information[2] if tRNA_information[2] != "(Permuted)" else tRNA_information[3])
     indtmRNA['strand'] = -1 if re.match("^c", tmRNA_coords) else 1
     tmRNA_coords = tmRNA_coords.replace("c[","").replace("[","").replace("]","").split(",")
-    indtmRNA['begin'] = int(tmRNA_coords[0])
-    indtmRNA['end'] = int(tmRNA_coords[1])
+    begin = int(tmRNA_coords[0])
+    end = int(tmRNA_coords[1])
+    indtmRNA['begin'] = max(begin, 1)  
+    indtmRNA['end'] = min(end, seq_length)  
+    if indtmRNA['begin'] > indtmRNA['end']:
+        indtmRNA['begin'], indtmRNA['end'] = indtmRNA['end'], indtmRNA['begin']
     return indtmRNA
 
-def process_tRNA(tRNA_information):
+def process_tRNA(tRNA_information, fasta_file_path):
     indtRNA = {}
+    contig_id = os.path.splitext(os.path.basename(fasta_file_path))[0]
+    seq_length = get_sequence_length_from_fasta(contig_id, fasta_file_path)
     indtRNA['product'] = re.sub("\(\w{3}\)", "", tRNA_information[1])
     tRNA_coords = tRNA_information[2]
     indtRNA['strand'] = -1 if re.match("^c", tRNA_coords) else 1
     tRNA_coords = tRNA_coords.replace("c[","").replace("[","").replace("]","").split(",")
-    indtRNA['begin'] = int(tRNA_coords[0])
-    indtRNA['end'] = int(tRNA_coords[1])
+    begin = int(tRNA_coords[0])
+    end = int(tRNA_coords[1])
+    indtRNA['begin'] = max(begin, 1)  
+    indtRNA['end'] = min(end, seq_length)  
+    if indtRNA['begin'] > indtRNA['end']:
+        indtRNA['begin'], indtRNA['end'] = indtRNA['end'], indtRNA['begin']
     return indtRNA
 
 def process_contig_for_tRNAs(contigfile, tRNAdict, tmRNAdict, genetictable):
@@ -514,7 +532,7 @@ def process_contig_for_tRNAs(contigfile, tRNAdict, tmRNAdict, genetictable):
                 else:
                     subprocess.call(["aragorn", "-l", "-fon", genetictable, contigfile], stdout=trnafile)
             num_tRNA = len(list(SeqIO.parse(putativetrnafile, "fasta")))
-            process_trna_file(newrecord, putativetrnafile, tRNAdict, tmRNAdict)
+            process_trna_file(newrecord, putativetrnafile, contigfile, tRNAdict, tmRNAdict)
     return num_tRNA
 
 def run_cmscan(rfamdatabase, ncpus, fasta_file, output_file):
