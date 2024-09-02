@@ -490,7 +490,7 @@ def process_trna_file(newrecord, putativetrnafile, fasta_file_path, tRNAdict, tm
                 indtRNA = process_tRNA(tRNA_information, fasta_file_path)
                 tRNAdict[newrecord.id][tRNAseq.id] = indtRNA
 
-def process_tmRNA(tRNA_information, fasta_file):
+def process_tmRNA(tRNA_information, fasta_file_path):
     indtmRNA = {}
     contig_id = os.path.splitext(os.path.basename(fasta_file_path))[0]
     seq_length = get_sequence_length_from_fasta(contig_id, fasta_file_path)
