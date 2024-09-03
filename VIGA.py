@@ -304,22 +304,18 @@ def check_and_set_default_databases(args):
     return root_output
 
 def check_required_cmds(args):
-    required_cmds = ["lastz", "aragorn", "pilercr", "prodigal", "prodigal-gv", "diamond"]
-
+    required_cmds = ["lastz", "aragorn", "pilercr"]
     if args.prodigalgv == True:
         required_cmds.append("prodigal-gv")
-
+    else:
+        required_cmds.append("prodigal")
     if args.norfam == False:
         required_cmds.append("cmscan")
-
     if args.blastswitch == True:
         required_cmds.append("blastp")
-
-    #if args.nohmmer == False:
-    #    required_cmds.extend(["hmmsearch", "hmmbuild"])
-
+    else:
+        required_cmds.append("diamond")
     missing_cmds = [cmd for cmd in required_cmds if not cmd_exists(cmd)]
-
     if missing_cmds:
         sys.exit(f"The following commands are missing: {', '.join(missing_cmds)}. You need to run the installer.sh script before running this pipeline")
 
@@ -559,34 +555,29 @@ def parse_and_read_ncrnafile(filename):
                     contig_id = line_splitted[1]
                 else:
                     contig_id = line_splitted[2]
+
                 if contig_id not in elementsncRNA:
                     elementsncRNA[contig_id] = {'Other': {}}
-                if item_type.startswith(('LSU', 'SSU', '5S', '5_8S', 'tRNA')):
-                    next
-                elif item_type.endswith('tmRNA'):
-                    next
-                else:
-                    count += 1
-                    if len(line_splitted) == 16:
-                        if line_splitted[9] == "+":
-                            elementsncRNA[contig_id]['Other'][count] = {'type': item_type, 'product': line_splitted[15].replace("\n", ""), 'begin': int(line_splitted[7]), 'end': int(line_splitted[8]), 'score': float(line_splitted[14].replace(" !", "")), 'rfamcode': line_splitted[1], 'strand': 1}
-                        else:
-                            elementsncRNA[contig_id]['Other'][count] = {'type': item_type, 'product': line_splitted[15].replace("\n", ""), 'begin': int(line_splitted[8]), 'end': int(line_splitted[7]), 'score': float(line_splitted[14].replace(" !", "")), 'rfamcode': line_splitted[1], 'strand': -1}
-                    elif len(line_splitted) == 15:
-                        if line_splitted[8] == "+":
-                            elementsncRNA[contig_id]['Other'][count] = {'type': item_type, 'product': line_splitted[14].replace("\n", ""), 'begin': int(line_splitted[6]), 'end': int(line_splitted[7]), 'score': float(line_splitted[13].replace(" !", "")), 'rfamcode': line_splitted[0].split()[-1], 'strand': 1}
-                        else:
-                            elementsncRNA[contig_id]['Other'][count] = {'type': item_type, 'product': line_splitted[14].replace("\n", ""), 'begin': int(line_splitted[7]), 'end': int(line_splitted[6]), 'score': float(line_splitted[13].replace(" !", "")), 'rfamcode': line_splitted[0].split()[-1], 'strand': -1}
-                    elif len(line_splitted) == 17:
-                        if line_splitted[9] == "+":
-                            elementsncRNA[contig_id]['Other'][count] = {'type': item_type, 'product': line_splitted[16].replace("\n", ""), 'begin': int(line_splitted[7]), 'end': int(line_splitted[8]), 'score': float(line_splitted[14].replace(" !", "")), 'rfamcode': line_splitted[2], 'strand': 1}
-                        else:
-                            elementsncRNA[contig_id]['Other'][count] = {'type': item_type, 'product': line_splitted[16].replace("\n", ""), 'begin': int(line_splitted[8]), 'end': int(line_splitted[7]), 'score': float(line_splitted[14].replace(" !", "")), 'rfamcode': line_splitted[2], 'strand': -1}
-                    elif len(line_splitted) == 18:
-                        if line_splitted[9] == "+":
-                            elementsncRNA[contig_id]['Other'][count] = {'type': item_type, 'product': line_splitted[17].replace("\n", ""), 'begin': int(line_splitted[7]), 'end': int(line_splitted[8]), 'score': float(line_splitted[14].replace(" !", "")), 'rfamcode': line_splitted[2], 'strand': 1}
-                        else:
-                            elementsncRNA[contig_id]['Other'][count] = {'type': item_type, 'product': line_splitted[17].replace("\n", ""), 'begin': int(line_splitted[8]), 'end': int(line_splitted[7]), 'score': float(line_splitted[14].replace(" !", "")), 'rfamcode': line_splitted[2], 'strand': -1}                            
+                if item_type.startswith(('LSU', 'SSU', '5S', '5_8S', 'tRNA')) or item_type.endswith('tmRNA'):
+                    continue
+                count += 1
+                locus_tag = f"{contig_id}_nc{count}"  # Generate the locus tag
+                if len(line_splitted) == 16:
+                    strand = 1 if line_splitted[9] == "+" else -1
+                    begin, end = (int(line_splitted[7]), int(line_splitted[8])) if strand == 1 else (int(line_splitted[8]), int(line_splitted[7]))
+                    elementsncRNA[contig_id]['Other'][count] = {'type': item_type, 'product': line_splitted[15].strip(), 'begin': begin, 'end': end, 'score': float(line_splitted[14].replace(" !", "")), 'rfamcode': line_splitted[1], 'strand': strand, 'locus_tag': locus_tag}
+                elif len(line_splitted) == 15:
+                    strand = 1 if line_splitted[8] == "+" else -1
+                    begin, end = (int(line_splitted[6]), int(line_splitted[7])) if strand == 1 else (int(line_splitted[7]), int(line_splitted[6]))
+                    elementsncRNA[contig_id]['Other'][count] = {'type': item_type, 'product': line_splitted[14].strip(), 'begin': begin, 'end': end, 'score': float(line_splitted[13].replace(" !", "")), 'rfamcode': line_splitted[0].split()[-1], 'strand': strand, 'locus_tag': locus_tag}
+                elif len(line_splitted) == 17:
+                    strand = 1 if line_splitted[9] == "+" else -1
+                    begin, end = (int(line_splitted[7]), int(line_splitted[8])) if strand == 1 else (int(line_splitted[8]), int(line_splitted[7]))
+                    elementsncRNA[contig_id]['Other'][count] = {'type': item_type, 'product': line_splitted[16].strip(), 'begin': begin, 'end': end, 'score': float(line_splitted[14].replace(" !", "")), 'rfamcode': line_splitted[2], 'strand': strand, 'locus_tag': locus_tag}
+                elif len(line_splitted) == 18:
+                    strand = 1 if line_splitted[9] == "+" else -1
+                    begin, end = (int(line_splitted[7]), int(line_splitted[8])) if strand == 1 else (int(line_splitted[8]), int(line_splitted[7]))
+                    elementsncRNA[contig_id]['Other'][count] = {'type': item_type, 'product': line_splitted[17].strip(), 'begin': begin, 'end': end, 'score': float(line_splitted[14].replace(" !", "")), 'rfamcode': line_splitted[2], 'strand': strand, 'locus_tag': locus_tag }
     return elementsncRNA
 
 def extract_crispr_data(filename):
@@ -914,11 +905,12 @@ def add_ncRNA_features(whole_sequence, elementsncRNA, record):
                     start_pos = ExactPosition(int(putative_start))
                     end_pos = ExactPosition(data['end'])
                     feature_location = FeatureLocation(start_pos, end_pos, strand=data['strand'])
-                    new_data_gene = SeqFeature(feature_location, type="gene")
+                    locus_tag = data.get('locus_tag', 'unknown')
+                    gene_qualifiers = OrderedDict([('locus_tag', locus_tag)])
+                    new_data_gene = SeqFeature(feature_location, type="gene", qualifiers=gene_qualifiers)
                     whole_sequence.features.append(new_data_gene)
-                    qualifiers = [('product', data['product']), ('note', 'RFAM: %s' % data['rfamcode']), ('strand', data['strand'])]
-                    feature_qualifiers = OrderedDict(qualifiers)
-                    new_data_ncRNA = SeqFeature(feature_location, type="ncRNA", qualifiers=feature_qualifiers)
+                    ncRNA_qualifiers = OrderedDict([('locus_tag', locus_tag), ('product', data['product']), ('note', f'RFAM: {data["rfamcode"]}'), ('strand', str(data['strand']))])
+                    new_data_ncRNA = SeqFeature(feature_location, type="ncRNA", qualifiers=ncRNA_qualifiers)
                     whole_sequence.features.append(new_data_ncRNA)
 
 def add_CRISPR_features(whole_sequence, information_CRISPR, record):
