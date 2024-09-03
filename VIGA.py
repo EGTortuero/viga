@@ -490,7 +490,7 @@ def process_tmRNA(tRNA_data, fasta_file_path):
     results = []
     contig_id = os.path.splitext(os.path.basename(fasta_file_path))[0]
     seq_length = get_sequence_length_from_fasta(contig_id, fasta_file_path)
-    indtRNA = {}
+    indtmRNA = {}
     indtmRNA['product'] = re.sub(r"\(\w{3}\)", "", tRNA_data[1])
     tmRNA_coords = tRNA_data[2]
     indtmRNA['strand'] = -1 if re.match(r"^c", tmRNA_coords) else 1
