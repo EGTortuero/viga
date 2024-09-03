@@ -305,21 +305,13 @@ def check_and_set_default_databases(args):
 
 def check_required_cmds(args):
     required_cmds = ["lastz", "aragorn", "pilercr", "prodigal", "prodigal-gv", "diamond"]
-
     if args.prodigalgv == True:
         required_cmds.append("prodigal-gv")
-
     if args.norfam == False:
         required_cmds.append("cmscan")
-
     if args.blastswitch == True:
         required_cmds.append("blastp")
-
-    #if args.nohmmer == False:
-    #    required_cmds.extend(["hmmsearch", "hmmbuild"])
-
     missing_cmds = [cmd for cmd in required_cmds if not cmd_exists(cmd)]
-
     if missing_cmds:
         sys.exit(f"The following commands are missing: {', '.join(missing_cmds)}. You need to run the installer.sh script before running this pipeline")
 
@@ -490,38 +482,50 @@ def process_trna_file(newrecord, putativetrnafile, fasta_file_path, tRNAdict, tm
                 indtRNA = process_tRNA(tRNA_information, fasta_file_path)
                 tRNAdict[newrecord.id][tRNAseq.id] = indtRNA
 
-def process_tmRNA(tRNA_information, fasta_file_path):
-    indtmRNA = {}
+def process_tmRNA(tRNA_data, fasta_file_path):
+    results = []
     contig_id = os.path.splitext(os.path.basename(fasta_file_path))[0]
     seq_length = get_sequence_length_from_fasta(contig_id, fasta_file_path)
-    indtmRNA['product'] = "tmRNA"
-    tmRNA_coords = str(tRNA_information[2] if tRNA_information[2] != "(Permuted)" else tRNA_information[3])
-    indtmRNA['strand'] = -1 if re.match("^c", tmRNA_coords) else 1
-    tmRNA_coords = tmRNA_coords.replace("c[","").replace("[","").replace("]","").split(",")
-    begin = int(tmRNA_coords[0])
-    end = int(tmRNA_coords[1])
-    indtmRNA['begin'] = max(begin, 1)  
-    indtmRNA['end'] = min(end, seq_length)  
-    if indtmRNA['begin'] > indtmRNA['end']:
-        indtmRNA['begin'], indtmRNA['end'] = indtmRNA['end'], indtmRNA['begin']
-    return indtmRNA
+    element_number = 0
+    for tRNA_information in tRNA_data:
+        element_number += 1  
+        indtmRNA = {}
+        indtmRNA['product'] = re.sub(r"\(\w{3}\)", "", tRNA_data[1])
+        tmRNA_coords = tRNA_data[2]
+        indtmRNA['strand'] = -1 if re.match(r"^c", tmRNA_coords) else 1
+        tmRNA_coords = tmRNA_coords.replace("c[", "").replace("[", "").replace("]", "").split(",")
+        begin = int(tmRNA_coords[0])
+        end = int(tmRNA_coords[1])
+        indtmRNA['begin'] = max(begin, 1)
+        indtmRNA['end'] = min(end, seq_length)
+        if indtmRNA['begin'] > indtmRNA['end']:
+            indtmRNA['begin'], indtmRNA['end'] = indtmRNA['end'], indtmRNA['begin']
+        indtmRNA['locus_tag'] = f"{contig_id}_tm{element_number}"
+        results.append(indtmRNA)
+    return results    
 
-def process_tRNA(tRNA_information, fasta_file_path):
-    indtRNA = {}
+def process_tRNA(tRNA_data, fasta_file_path):
+    results = []
     contig_id = os.path.splitext(os.path.basename(fasta_file_path))[0]
     seq_length = get_sequence_length_from_fasta(contig_id, fasta_file_path)
-    indtRNA['product'] = re.sub("\(\w{3}\)", "", tRNA_information[1])
-    tRNA_coords = tRNA_information[2]
-    indtRNA['strand'] = -1 if re.match("^c", tRNA_coords) else 1
-    tRNA_coords = tRNA_coords.replace("c[","").replace("[","").replace("]","").split(",")
-    begin = int(tRNA_coords[0])
-    end = int(tRNA_coords[1])
-    indtRNA['begin'] = max(begin, 1)  
-    indtRNA['end'] = min(end, seq_length)  
-    if indtRNA['begin'] > indtRNA['end']:
-        indtRNA['begin'], indtRNA['end'] = indtRNA['end'], indtRNA['begin']
-    return indtRNA
-
+    element_number = 0
+    for tRNA_information in tRNA_data:
+        element_number += 1  
+        indtRNA = {}
+        indtRNA['product'] = re.sub(r"\(\w{3}\)", "", tRNA_data[1])
+        tRNA_coords = tRNA_data[2]
+        indtRNA['strand'] = -1 if re.match(r"^c", tRNA_coords) else 1
+        tRNA_coords = tRNA_coords.replace("c[", "").replace("[", "").replace("]", "").split(",")
+        begin = int(tRNA_coords[0])
+        end = int(tRNA_coords[1])
+        indtRNA['begin'] = max(begin, 1)
+        indtRNA['end'] = min(end, seq_length)
+        if indtRNA['begin'] > indtRNA['end']:
+            indtRNA['begin'], indtRNA['end'] = indtRNA['end'], indtRNA['begin']
+        indtRNA['locus_tag'] = f"{contig_id}_t{element_number}"
+        results.append(indtRNA)
+    return results    
+    
 def process_contig_for_tRNAs(contigfile, tRNAdict, tmRNAdict, genetictable):
     with open(contigfile, "r") as targetfasta:
         for newrecord in SeqIO.parse(targetfasta, "fasta"):
@@ -864,9 +868,10 @@ def add_tRNA_features(whole_sequence, tRNAdict, record):
                 start_pos = ExactPosition(tRNAdict[locus_tRNA][tRNA]['begin'])
                 end_pos = ExactPosition(tRNAdict[locus_tRNA][tRNA]['end'])
                 feature_location = FeatureLocation(start_pos, end_pos, strand=tRNAdict[locus_tRNA][tRNA]['strand'])
-                new_data_gene = SeqFeature(feature_location, type="gene")
+                qualifiers = [('locus_tag', tRNAdict[locus_tRNA][tRNA]['locus_tag'])]
+                new_data_gene = SeqFeature(feature_location, type="gene", qualifiers=feature_qualifiers)
                 whole_sequence.features.append(new_data_gene)
-                qualifiers = [('product', tRNAdict[locus_tRNA][tRNA]['product']), ('strand', tRNAdict[locus_tRNA][tRNA]['strand'])]
+                qualifiers = [('locus_tag', tRNAdict[locus_tRNA][tRNA]['locus_tag']), ('product', tRNAdict[locus_tRNA][tRNA]['product']), ('strand', tRNAdict[locus_tRNA][tRNA]['strand'])]
                 feature_qualifiers = OrderedDict(qualifiers)
                 new_data_tRNA = SeqFeature(feature_location, type="tRNA", qualifiers=feature_qualifiers)
                 whole_sequence.features.append(new_data_tRNA)
@@ -878,9 +883,10 @@ def add_tmRNA_features(whole_sequence, tmRNAdict, record):
                 start_pos = ExactPosition(tmRNAdict[locus_tmRNA][tmRNA]['begin'])
                 end_pos = ExactPosition(tmRNAdict[locus_tmRNA][tmRNA]['end'])
                 feature_location = FeatureLocation(start_pos, end_pos, strand=tmRNAdict[locus_tmRNA][tmRNA]['strand'])
-                new_data_gene = SeqFeature(feature_location, type="gene")
+                qualifiers = [('locus_tag', tmRNAdict[locus_tmRNA][tmRNA]['locus_tag'])]
+                new_data_gene = SeqFeature(feature_location, type="gene", qualifiers=feature_qualifiers)
                 whole_sequence.features.append(new_data_gene)
-                qualifiers = [('product', tmRNAdict[locus_tmRNA][tmRNA]['product']), ('strand', tmRNAdict[locus_tmRNA][tmRNA]['strand'])]
+                qualifiers = [('locus_tag', tmRNAdict[locus_tmRNA][tmRNA]['locus_tag']), ('product', tmRNAdict[locus_tmRNA][tmRNA]['product']), ('strand', tmRNAdict[locus_tmRNA][tmRNA]['strand'])]
                 feature_qualifiers = OrderedDict(qualifiers)
                 new_data_tmRNA = SeqFeature(feature_location, type="tmRNA", qualifiers=feature_qualifiers)
                 whole_sequence.features.append(new_data_tmRNA)
