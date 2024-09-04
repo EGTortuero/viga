@@ -492,7 +492,10 @@ def process_tmRNA(tRNA_data, fasta_file_path):
     seq_length = get_sequence_length_from_fasta(contig_id, fasta_file_path)
     indtmRNA = {}
     indtmRNA['product'] = re.sub(r"\(\w{3}\)", "", tRNA_data[1])
-    tmRNA_coords = tRNA_data[2]
+    if tRNA_data[2] == "(Permuted)":
+        tmRNA_coords = tRNA_data[3]
+    else:
+        tmRNA_coords = tRNA_data[2]
     indtmRNA['strand'] = -1 if re.match(r"^c", tmRNA_coords) else 1
     tmRNA_coords = tmRNA_coords.replace("c[", "").replace("[", "").replace("]", "").split(",")
     begin = int(tmRNA_coords[0])
@@ -511,7 +514,10 @@ def process_tRNA(tRNA_data, fasta_file_path):
     seq_length = get_sequence_length_from_fasta(contig_id, fasta_file_path)
     indtRNA = {}
     indtRNA['product'] = re.sub(r"\(\w{3}\)", "", tRNA_data[1])
-    tRNA_coords = tRNA_data[2]
+    if tRNA_data[2] == "(Permuted)":
+        tRNA_coords = tRNA_data[3]
+    else:
+        tRNA_coords = tRNA_data[2]
     indtRNA['strand'] = -1 if re.match(r"^c", tRNA_coords) else 1
     tRNA_coords = tRNA_coords.replace("c[", "").replace("[", "").replace("]", "").split(",")
     begin = int(tRNA_coords[0])
