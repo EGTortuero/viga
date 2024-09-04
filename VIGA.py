@@ -841,21 +841,17 @@ def write_protein_properties_table(protsdict, root_output):
 def add_CDS_features(whole_sequence, protsdict, record, args):
     for locus_protein in sorted(protsdict):
         if locus_protein == record.id:
-            for protein in sorted(protsdict[locus_protein], key=stringSplitByNumbers):
-                putative_start = int(protsdict[locus_protein][protein]['begin'])
-                start_pos = ExactPosition(putative_start)
-                end_pos = ExactPosition(protsdict[locus_protein][protein]['end'])
-                feature_location = FeatureLocation(start_pos, end_pos, strand=protsdict[locus_protein][protein]['strand'])
-                qualifiersgene = OrderedDict([('locus_tag', protsdict[locus_protein][protein]['protein_id'])])
-                new_data_gene = SeqFeature(feature_location, type="gene", qualifiers=qualifiersgene)
+            sorted_proteins = sorted(protsdict[locus_protein].items(), key=lambda x: stringSplitByNumbers(x[0]))
+            for protein_key, protein_data in sorted_proteins:
+                start_pos = ExactPosition(int(protein_data['begin']))
+                end_pos = ExactPosition(protein_data['end'])
+                feature_location = FeatureLocation(start_pos, end_pos, strand=protein_data['strand'])
+                gene_qualifiers = OrderedDict([('locus_tag', protein_data['protein_id'])])
+                new_data_gene = SeqFeature(feature_location, type="gene", qualifiers=gene_qualifiers)
                 whole_sequence.features.append(new_data_gene)
-                if not args.nohmmer:
-                    if protsdict[locus_protein][protein]['identifier'] == "NA":
-                        qualifiers = [('locus_tag', protsdict[locus_protein][protein]['descr']), ('product', protsdict[locus_protein][protein]['descr']), ('protein_id', protsdict[locus_protein][protein]['protein_id']), ('translation', protsdict[locus_protein][protein]['translation']), ('strand', protsdict[locus_protein][protein]['strand'])]
-                    else:
-                        qualifiers = [('locus_tag', protsdict[locus_protein][protein]['descr']), ('product', protsdict[locus_protein][protein]['descr']), ('protein_id', protsdict[locus_protein][protein]['protein_id']), ('note', '%s' % protsdict[locus_protein][protein]['hmm_id']), ('translation', protsdict[locus_protein][protein]['translation']), ('strand', protsdict[locus_protein][protein]['strand'])]
-                else:
-                    qualifiers = [('locus_tag', protsdict[locus_protein][protein]['descr']), ('product', protsdict[locus_protein][protein]['descr']), ('protein_id', protsdict[locus_protein][protein]['protein_id']), ('translation', protsdict[locus_protein][protein]['translation']), ('strand', protsdict[locus_protein][protein]['strand'])]
+                qualifiers = [('locus_tag', protein_data['protein_id']),('product', protein_data['descr']),('protein_id', protein_data['protein_id']),('translation', protein_data['translation']),('strand', str(protein_data['strand']))]
+                if not args.nohmmer and protein_data['identifier'] != "NA":
+                    qualifiers.append(('note', protein_data['hmm_id']))
                 feature_qualifiers = OrderedDict(qualifiers)
                 new_data_cds = SeqFeature(feature_location, type="CDS", qualifiers=feature_qualifiers)
                 whole_sequence.features.append(new_data_cds)
