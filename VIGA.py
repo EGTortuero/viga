@@ -50,7 +50,7 @@ from Bio.SeqFeature import SeqFeature, ExactPosition, FeatureLocation
 from Bio.SeqRecord import SeqRecord
 from Bio.SeqUtils.ProtParam import ProteinAnalysis
 #from biocode import annotation, things, utils
-from collections import namedtuple, OrderedDict, defaultdict
+from collections import namedtuple, OrderedDict, defaultdict, Counter
 from io import StringIO
 from itertools import product
 from pathlib import Path
@@ -707,60 +707,117 @@ def process_hmmsearch(db_path, targets, ncpus, hmmerevalue, hmmercovthreshold, d
             information_proteins_hmmer[result.protein] = result
     return information_proteins_hmmer
 
-def process_hmmer_results(protsdict, information):
+def load_phrogs_annotations():
+    idhmm_to_desc = {}
+    phrogstable = Path(os.path.dirname(os.path.abspath(__file__)) + '/databases/phrogs/phrog_annot_v4.tsv')
+    with open(phrogstable) as f:
+        for i, line in enumerate(f):
+            if i == 0:
+                continue  
+            fields = line.strip().split('\t')
+            phrog_id = int(fields[0])
+            annot = fields[2] 
+            idhmm_to_desc[phrog_id] = annot
+    return idhmm_to_desc
+
+def translate_phrogs_output(phrogs_output):
+    idhmm_to_desc = load_phrogs_annotations()
+    parts = phrogs_output.split('|')
+    translated_parts = []
+    for part in parts:
+        if part.startswith('PHROGS: phrog_'):
+            phrog_id_str = part.split('_')[1]
+            phrog_id = int(phrog_id_str)
+            desc = idhmm_to_desc.get(phrog_id, 'unknown function')
+            translated_parts.append(f'PHROGS: {desc} (phrog_{phrog_id})')
+        else:
+            translated_parts.append(part)
+    return '|'.join(translated_parts)
+
+def load_vog_vfam_annotations(file_path):
+    annotations_to_desc = {}
+    with open(file_path) as f:
+        for line in f:
+            if line.startswith("#"):
+                continue  
+            fields = line.strip().split('\t')
+            group_name = fields[0]  
+            desc = fields[4]  
+            annotations_to_desc[group_name] = desc
+    return annotations_to_desc
+
+def translate_annotations_output(output, prefix, annotations_dict):
+    parts = output.split('|')
+    translated_parts = []
+    for part in parts:
+        if part.startswith(f'{prefix}:'):
+            id_str = part.split(': ')[1]
+            desc = annotations_dict.get(id_str, 'unknown function')
+            translated_parts.append(f'{prefix}: {desc} ({id_str})')
+        else:
+            translated_parts.append(part)
+    return '|'.join(translated_parts)
+
+def load_rvdb_annotation(fam_id, rvdb_path):
+    fam_number = int(fam_id.replace("FAM", ""))
+    file_path = os.path.join(rvdb_path, f"{fam_number}.txt")
+    if not os.path.exists(file_path):
+        return 'unknown function'
+    hypotheticalpat = re.compile(r'(?i)(((hypothetical|uncharacteri[z|s]ed|predicted)( phage)?( membrane)? protein)|(ORF|(unnamed protein product|gp\d+|protein of unknown function|phage protein)))')
+    descriptions = []
+    with open(file_path, 'r') as f:
+        lines = f.readlines()
+        sequences_section = False
+        for line in lines:
+            if line.startswith("SEQUENCES:"):
+                sequences_section = True
+                continue
+            if sequences_section and line.strip():
+                parts = line.split('|')
+                if len(parts) > 4:
+                    description = parts[-1].strip()  
+                    if not hypotheticalpat.search(description):
+                        descriptions.append(description)
+    if descriptions:
+        most_common_description = Counter(descriptions).most_common(1)[0][0]
+        return most_common_description
+    else:
+        return 'unknown function'
+
+def process_hmmer_results(protsdict, information, args):
     all_results = defaultdict(lambda: defaultdict(list))
-    for contig in sorted(protsdict):
-        for protein in sorted(protsdict[contig]):
-            hmmer_info_dict = {db_name: info for db_name in sorted(information) for identity, info in sorted(information[db_name].items()) if identity == protein}
-            for db_name, hmmer_info in hmmer_info_dict.items():
-                if protein == hmmer_info.protein:
+    vogs_annotations = load_annotations(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'databases/vogs/vog.annotations.tsv')) if not args.novogs else {}
+    vfam_annotations = load_annotations(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'databases/vfam/vfam.annotations.tsv')) if not args.novfam else {}
+    rvdb_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'databases/rvdb/annot') if not args.norvdb else None
+    for contig, proteins in protsdict.items():
+        for protein in proteins:
+            for db_name, db_info in information.items():
+                hmmer_info = db_info.get(protein)
+                if hmmer_info and protein == hmmer_info.protein:
                     all_results[hmmer_info.protein][hmmer_info.database].append({'hmm_id': hmmer_info.hit_found, 'hmm_pcover': hmmer_info.pcoverage, 'hmm_evalue': hmmer_info.evalue})
-    for contig in sorted(protsdict):
-        for protein in sorted(protsdict[contig]):
-            identifiers = []
-            refinements = []
-            hmm_ids = []
-            hmm_pcovers = []
-            hmm_evalues = []
-            if protein in all_results:
-                for db, results in all_results[protein].items():
-                    for hmm_info in results:
-                        identifiers.append(protein)
-                        refinements.append(db)
-                        hmm_ids.append(f"{db}: {hmm_info['hmm_id']}")
-                        hmm_pcovers.append(str(hmm_info['hmm_pcover']))
-                        hmm_evalues.append(str(hmm_info['hmm_evalue']))
+    for contig, proteins in protsdict.items():
+        for protein, data in proteins.items():
+            results = all_results.get(protein, {})
+            identifiers = [protein] * len(results)
+            refinements = list(results.keys())
+            hmm_ids = [f"{db}: {info['hmm_id']}" for db, infos in results.items() for info in infos]
+            hmm_pcovers = [str(info['hmm_pcover']) for infos in results.values() for info in infos]
+            hmm_evalues = [str(info['hmm_evalue']) for infos in results.values() for info in infos]
             identifier = "|".join(identifiers) if identifiers else "NA"
             refinement = "|".join(refinements) if refinements else "NO_REFINEMENT"
             hmm_id = "|".join(hmm_ids) if hmm_ids else "NA"
             hmm_pcover = "|".join(hmm_pcovers) if hmm_pcovers else "NA"
             hmm_evalue = "|".join(hmm_evalues) if hmm_evalues else "NA"
-            protsdict.setdefault(contig, {}).setdefault(protein, {})
-            protsdict[contig][protein]['identifier'] = identifier
-            protsdict[contig][protein]['refinement'] = refinement
-            protsdict[contig][protein]['hmm_id'] = hmm_id
-            protsdict[contig][protein]['hmm_pcover'] = hmm_pcover
-            protsdict[contig][protein]['hmm_evalue'] = hmm_evalue
+            if not args.nophrogs:
+                hmm_id = translate_phrogs_output(hmm_id)
+            if not args.novogs:
+                hmm_id = translate_annotations_output(hmm_id, 'VOGS', vogs_annotations)
+            if not args.novfam:
+                hmm_id = translate_annotations_output(hmm_id, 'VFAM', vfam_annotations)
+            if not args.norvdb:
+                hmm_id = "|".join([f"RVDB: {load_rvdb_annotation(info.split(' ')[1], rvdb_path)} ({info.split(' ')[1]})" if info.startswith("RVDB:") else info for info in hmm_id.split("|")])
+            data.update({'identifier': identifier, 'refinement': refinement, 'hmm_id': hmm_id, 'hmm_pcover': hmm_pcover, 'hmm_evalue': hmm_evalue})
     return protsdict
-
-#def translate_PHROGS_idhmm(idhmm):
-#    # Read the PHROGS table into a dictionary mapping IDHMMs to descriptions
-#    idhmm_to_desc = {}
-#    phrogstable = Path(os.path.dirname(os.path.abspath(__file__)) + '/databases/phrogs/phrog_annot_v4.tsv')
-#    with open(phrogstable) as f:
-#        for i, line in enumerate(f):
-#            if i == 0:
-#                continue # skip first line
-#            fields = line.strip().split('\t')
-#            idhmm = int(fields[0])
-#            desc = fields[3] if fields[2] == 'NA' else fields[2]
-#            idhmm_to_desc[idhmm] = desc
-#    
-#    # Look up the description for the given IDHMM
-#    if idhmm in idhmm_to_desc and idhmm_to_desc[idhmm] != 'NA':
-#        return f"{idhmm_to_desc[idhmm]} ({idhmm})"
-#    else:
-#        return 'unknown function ({idhmm})'
 
 def create_protsdict(records_in_memory):
     protsdict = {}
@@ -994,28 +1051,20 @@ def remove_files():
     if not args.nohmmer:
         for tblfiles in sorted(glob.glob('PROTS_*.tbl')):
             files_to_remove.append(tblfiles)
-
     for splittedtrnafiles in sorted(glob.glob('trnafile_*.fasta')):
         files_to_remove.append(splittedtrnafiles)
-
     for splittedorffiles in sorted(glob.glob('orffile_*.faa')):
         files_to_remove.append(splittedorffiles)
-
     for splittedorf2files in sorted(glob.glob('orffile_*.fna')):
         files_to_remove.append(splittedorf2files)
-
     for tempfna in glob.glob("LOC_*.fna"):
         files_to_remove.append(tempfna)
-
     for tempgbk in glob.glob("LOC_*.gbk"):
         files_to_remove.append(tempgbk)
-
     for tempgff in glob.glob("LOC_*.gff"):
         files_to_remove.append(tempgff)
-
     for tempptt in glob.glob("LOC_*.ptt"):
         files_to_remove.append(tempptt)
-
     for file in files_to_remove:
         if os.path.isfile(file):
             os.remove(file)
@@ -1163,7 +1212,7 @@ if __name__ == "__main__":
             endtime6a = time.time()
             durationtime6a = endtime6a - starttime6a
             eprint(f"Done: {db_name} prediction based on HMMER took {durationtime6a:.2f} seconds")
-        protsdict = process_hmmer_results(protsdict, information)
+        protsdict = process_hmmer_results(protsdict, information, args)
         
     # Seven step: Creating output files
     eprint("\nCreating all output files")
