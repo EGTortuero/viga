@@ -786,8 +786,8 @@ def load_rvdb_annotation(fam_id, rvdb_path):
 
 def process_hmmer_results(protsdict, information, args):
     all_results = defaultdict(lambda: defaultdict(list))
-    vogs_annotations = load_annotations(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'databases/vogs/vog.annotations.tsv')) if not args.novogs else {}
-    vfam_annotations = load_annotations(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'databases/vfam/vfam.annotations.tsv')) if not args.novfam else {}
+    vogs_annotations = load_vog_vfam_annotations(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'databases/vogs/vog.annotations.tsv')) if not args.novogs else {}
+    vfam_annotations = load_vog_vfam_annotations(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'databases/vfam/vfam.annotations.tsv')) if not args.novfam else {}
     rvdb_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'databases/rvdb/annot') if not args.norvdb else None
     for contig, proteins in protsdict.items():
         for protein in proteins:
