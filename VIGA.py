@@ -198,8 +198,9 @@ def add_type_group(parser):
 
 def add_rfam_group(parser):
     advanced_rfam_group = parser.add_argument_group('Advanced options for the ncRNA prediction based on Covariance Models in VIGA [OPTIONAL]')
-    advanced_rfam_group.add_argument("--norfam", dest="norfam", action='store_true', default=False, help="Don't run RFAM to predict other ncRNAs, apart of rRNAs and tRNAs. (Default: False)")
-    advanced_rfam_group.add_argument("--hmmonly", dest="hmmonly", action='store_true', default=True, help="If True, use --hmmonly instead of --nohmmonly to speed up the scan (less accurate but faster) (Default: False)")
+    advanced_rfam_group.add_argument("--noncrna", dest="noncrna", action='store_true', default=False, help="Don't run RFAM to predict other ncRNAs, apart of rRNAs and tRNAs. (Default: False)")
+    advanced_rfam_group.add_argument("--norfam", dest="norfam", action='store_false', default=True, help="If True, do not use --rfam option in Infernal (optimised for sequence databases larger than 20 Gb) (Default: Disabled)")
+    advanced_rfam_group.add_argument("--hmmonly", dest="hmmonly", action='store_true', default=False, help="If True, use --hmmonly instead of --nohmmonly to speed up the scan. Only available if --use_rfam is disables (less accurate but faster) (Default: False)")
     advanced_rfam_group.add_argument("--rfamdb", dest="rfamdatabase", type=str, help='RFAM Database that will be used for the ncRNA prediction. RFAMDB should be in the format "/full/path/to/rfamdb/Rfam.cm" and must be compressed accordingly (see INFERNAL manual) before running the script. By default, the program will try to search Rfam inside the folder database/ (after running the Create_databases.sh script)', metavar="RFAMDB")
     return parser
 
@@ -239,12 +240,12 @@ def check_and_set_default_databases(args):
     if not root_output:
         root_output = '{}_annotated'.format(os.path.splitext(args.inputfile)[0])
 
-    if args.norfam == False and args.rfamdatabase == None:
+    if args.noncrna == False and args.rfamdatabase == None:
         my_file = Path(os.path.dirname(os.path.abspath(__file__)) + '/databases/rfam/Rfam.cm')
         try:
             my_abs_path = my_file.resolve(strict=True)
         except FileNotFoundError:
-            sys.exit('You MUST specify RFAM database using the parameter --rfamdb if you are not using --norfam option')
+            sys.exit('You MUST specify RFAM database using the parameter --rfamdb if you are not using --noncrna option')
         else:
             args.rfamdatabase = my_file
 
@@ -310,7 +311,7 @@ def check_required_cmds(args):
         required_cmds.append("prodigal-gv")
     else:
         required_cmds.append("prodigal")
-    if args.norfam == False:
+    if args.noncrna == False:
         required_cmds.append("cmscan")
     if args.blastswitch == True:
         required_cmds.append("blastp")
@@ -544,10 +545,14 @@ def process_contig_for_tRNAs(contigfile, tRNAdict, tmRNAdict, genetictable):
             process_trna_file(newrecord, putativetrnafile, contigfile, tRNAdict, tmRNAdict)
     return num_tRNA
 
-def run_cmscan(rfamdatabase, ncpus, fasta_file, output_file, hmmonly=False):
-    mode = "--hmmonly" if hmmonly else "--nohmmonly"
+def run_cmscan(rfamdatabase, ncpus, fasta_file, output_file, norfam=False, hmmonly=False):
+    cmd = ["cmscan", "--cut_ga", "--tblout", output_file, "--cpu", str(ncpus), rfamdatabase, fasta_file]
+    if not norfam:
+        cmd.insert(1, "--rfam")
+    elif hmmonly:
+        cmd.insert(1, "--hmmonly")
     with open("/dev/null", "w") as stderr:
-        subprocess.call(["cmscan", "--rfam", "--cut_ga", mode, "--tblout", output_file, "--cpu", str(ncpus), rfamdatabase, fasta_file], stdout=stderr)
+        subprocess.call(cmd, stdout=stderr)
     return output_file
 
 def parse_and_read_ncrnafile(filename):
@@ -696,16 +701,13 @@ def process_hmmsearch(db_path, targets, ncpus, hmmerevalue, hmmercovthreshold, d
     results = []
     information_proteins_hmmer = {}
     threshold = float(hmmercovthreshold)
-    for all_hits in pyhmmer.hmmsearch(HMMFiles(db_path), targets, cpus=int(ncpus), E=float(hmmerevalue)):
-        ohit = all_hits.query_name.decode()
+    hits_generator = pyhmmer.hmmsearch(HMMFile(db_path), targets, cpus=int(ncpus), E=float(hmmerevalue))
+    for all_hits in hits_generator:
+        query_name = all_hits.query_name.decode()
         for hit in filter(lambda h: h.included, all_hits):
-            for domain in hit.domains:
-                pcoverage = 100.0 * (domain.alignment.target_to - domain.alignment.target_from) / domain.alignment.target_length
-                if pcoverage >= threshold:
-                    results.append(Result(hit.name.decode(), ohit, db_name, pcoverage, hit.evalue))
+            results.extend(Result(hit.name.decode(), query_name, db_name, 100.0 * (domain.alignment.target_to - domain.alignment.target_from) / domain.alignment.target_length, hit.evalue) for domain in hit.domains if 100.0 * (domain.alignment.target_to - domain.alignment.target_from) / domain.alignment.target_length >= threshold)
     for result in results:
-        current = information_proteins_hmmer.get(result.protein)
-        if current is None or (result.evalue < current.evalue and db_name == result.database):
+        if result.protein not in information_proteins_hmmer or (result.evalue < information_proteins_hmmer[result.protein].evalue and db_name == result.database):
             information_proteins_hmmer[result.protein] = result
     return information_proteins_hmmer
 
@@ -1004,7 +1006,7 @@ def write_genbank_file(filename, protsdict, tRNAdict, tmRNAdict, elementsncRNA, 
             add_CDS_features(whole_sequence, protsdict, record, args)
             add_tRNA_features(whole_sequence, tRNAdict, record)
             add_tmRNA_features(whole_sequence, tmRNAdict, record)
-            if args.norfam == False:
+            if args.noncrna == False:
                 add_ncRNA_features(whole_sequence, elementsncRNA, record)      
             add_CRISPR_features(whole_sequence, information_CRISPR, record)
             SeqIO.write(whole_sequence, outfile, "genbank")
@@ -1048,7 +1050,7 @@ def create_genbank_submission_files(args, root_output):
 
 def remove_files():
     files_to_remove = ["temp.fasta", "CONTIGS_ALL.fasta", "temporal_circular.fasta", "crisprfile.txt", "pretemp.faa", "PROTS_FIRST_ROUND.faa", "PROTS_FIRST_ROUND.faa.csv"]
-    if not args.norfam:
+    if not args.noncrna:
         files_to_remove.append("ncrnafile.csv")
     if not args.nohmmer:
         for tblfiles in sorted(glob.glob('PROTS_*.tbl')):
@@ -1131,10 +1133,10 @@ if __name__ == "__main__":
     eprint("Done: tRNA and tmRNA detection took %s seconds" % str(durationtime2))
 
     # Third step: Predicting all ncRNA sequences (except rRNAs and tRNAs) (OPTIONAL: very SLOW step for genomic data) - Needed some optimisation?
-    if args.norfam == False:
+    if args.noncrna == False:
         starttime3 = time.time()
         eprint("\nIdentifying all other ncRNA (except rRNAs and tRNAs) for all contigs")
-        output_file = run_cmscan(args.rfamdatabase, args.ncpus, "CONTIGS_ALL.fasta", "ncrnafile.csv", args.hmmonly)
+        output_file = run_cmscan(args.rfamdatabase, args.ncpus, "CONTIGS_ALL.fasta", "ncrnafile.csv", args.norfam, args.hmmonly)
         elementsncRNA = parse_and_read_ncrnafile("ncrnafile.csv")
         endtime3 = time.time()
         durationtime3 = endtime3 - starttime3
@@ -1220,7 +1222,7 @@ if __name__ == "__main__":
     eprint("\nCreating all output files")
     write_protein_properties_table(protsdict, root_output) # Creating the CSV table with all protein statistics
     for newfile in sorted(glob.glob("LOC_*.fna")):
-        if args.norfam == True:
+        if args.noncrna == True:
             elementsncRNA = ""
         write_genbank_file(newfile, protsdict, tRNAdict, tmRNAdict, elementsncRNA, information_CRISPR, args, IUPAC)
         #converting_genbank_2_GFF3(newfile)
