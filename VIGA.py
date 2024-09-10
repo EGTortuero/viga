@@ -199,6 +199,7 @@ def add_type_group(parser):
 def add_rfam_group(parser):
     advanced_rfam_group = parser.add_argument_group('Advanced options for the ncRNA prediction based on Covariance Models in VIGA [OPTIONAL]')
     advanced_rfam_group.add_argument("--norfam", dest="norfam", action='store_true', default=False, help="Don't run RFAM to predict other ncRNAs, apart of rRNAs and tRNAs. (Default: False)")
+    advanced_rfam_group.add_argument("--hmmonly", dest="hmmonly", action='store_true', default=True, help="If True, use --hmmonly instead of --nohmmonly to speed up the scan (less accurate but faster) (Default: False)")
     advanced_rfam_group.add_argument("--rfamdb", dest="rfamdatabase", type=str, help='RFAM Database that will be used for the ncRNA prediction. RFAMDB should be in the format "/full/path/to/rfamdb/Rfam.cm" and must be compressed accordingly (see INFERNAL manual) before running the script. By default, the program will try to search Rfam inside the folder database/ (after running the Create_databases.sh script)', metavar="RFAMDB")
     return parser
 
@@ -543,9 +544,10 @@ def process_contig_for_tRNAs(contigfile, tRNAdict, tmRNAdict, genetictable):
             process_trna_file(newrecord, putativetrnafile, contigfile, tRNAdict, tmRNAdict)
     return num_tRNA
 
-def run_cmscan(rfamdatabase, ncpus, fasta_file, output_file):
+def run_cmscan(rfamdatabase, ncpus, fasta_file, output_file, hmmonly=False):
+    mode = "--hmmonly" if hmmonly else "--nohmmonly"
     with open("/dev/null", "w") as stderr:
-        subprocess.call(["cmscan", "--rfam", "--cut_ga", "--nohmmonly", "--tblout", output_file, "--cpu", str(ncpus), rfamdatabase, fasta_file], stdout=stderr)
+        subprocess.call(["cmscan", "--rfam", "--cut_ga", mode, "--tblout", output_file, "--cpu", str(ncpus), rfamdatabase, fasta_file], stdout=stderr)
     return output_file
 
 def parse_and_read_ncrnafile(filename):
@@ -1132,7 +1134,7 @@ if __name__ == "__main__":
     if args.norfam == False:
         starttime3 = time.time()
         eprint("\nIdentifying all other ncRNA (except rRNAs and tRNAs) for all contigs")
-        output_file = run_cmscan(args.rfamdatabase, args.ncpus, "CONTIGS_ALL.fasta", "ncrnafile.csv")
+        output_file = run_cmscan(args.rfamdatabase, args.ncpus, "CONTIGS_ALL.fasta", "ncrnafile.csv", args.hmmonly)
         elementsncRNA = parse_and_read_ncrnafile("ncrnafile.csv")
         endtime3 = time.time()
         durationtime3 = endtime3 - starttime3
