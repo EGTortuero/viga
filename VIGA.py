@@ -19,46 +19,48 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-## Importing python libraries
+# Python Standard Library Imports
 from __future__ import print_function
 import argparse
 import collections
+from collections import namedtuple, OrderedDict, defaultdict, Counter
 import contextlib
 import csv
 import fractions
 import glob
 import itertools
+from itertools import product
 import multiprocessing
-import numpy
 import os
-import os.path
 import re
 import shutil
 import sys
 import subprocess
 import time
+from time import strftime
 import typing
+from typing import Dict
+from io import StringIO
+from pathlib import Path
+
+# Third-Party Library Imports
+import numpy as np
 import pyhmmer
+from pyhmmer.easel import SequenceFile
+from pyhmmer.plan7 import HMMFile, HMM
+import scipy.signal as signal
 from BCBio import GFF
-from Bio import SeqIO, SeqFeature
-try:
-	from Bio.Alphabet import IUPAC
-except ImportError:
-	IUPAC = None
+from Bio import SeqIO
 from Bio.Seq import Seq
 from Bio.SeqFeature import SeqFeature, ExactPosition, FeatureLocation
 from Bio.SeqRecord import SeqRecord
 from Bio.SeqUtils.ProtParam import ProteinAnalysis
-#from biocode import annotation, things, utils
-from collections import namedtuple, OrderedDict, defaultdict, Counter
-from io import StringIO
-from itertools import product
-from pathlib import Path
-from pyhmmer.easel import SequenceFile
-from pyhmmer.plan7 import HMMFile, HMM
-import scipy.signal as signal
-from time import strftime
-from typing import Dict
+
+# Try-Except Block for Compatibility
+try:
+    from Bio.Alphabet import IUPAC
+except ImportError:
+    IUPAC = None
 
 ## Defining the program version
 version = "0.12.0"
@@ -546,11 +548,12 @@ def process_contig_for_tRNAs(contigfile, tRNAdict, tmRNAdict, genetictable):
     return num_tRNA
 
 def run_cmscan(rfamdatabase, ncpus, fasta_file, output_file, norfam=False, hmmonly=False):
-    cmd = ["cmscan", "--cut_ga", "--tblout", output_file, "--cpu", str(ncpus), rfamdatabase, fasta_file]
+    cmd = ["cmscan"]
     if not norfam:
-        cmd.insert(1, "--rfam")
+        cmd.append("--rfam")
     elif hmmonly:
-        cmd.insert(1, "--hmmonly")
+        cmd.append("--hmmonly")
+    cmd.extend(["--cut_ga", "--tblout", output_file, "--cpu", str(ncpus), rfamdatabase, fasta_file])
     with open("/dev/null", "w") as stderr:
         subprocess.call(cmd, stdout=stderr)
     return output_file
