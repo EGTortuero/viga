@@ -12,15 +12,15 @@ Before using this script, the following Python modules and programs should be in
 	- Biopython (Bio module; Cock et al. 2009)
 	- Numpy (https://github.com/numpy/numpy)
 	- Scipy (https://github.com/scipy/scipy)
-        - pyHMMer (Larralde and Zeller, 2023; https://github.com/althonos/pyhmmer): especially from 0.10.15 towards
+    - pyHMMer (Larralde and Zeller, 2023; https://github.com/althonos/pyhmmer): especially from 0.10.15 towards
+    - pyrodigal (Larralde, 2022; https://github.com/althonos/pyrodigal/): especially from 0.14.0 towards
+    - pyrodigal-gv (Camargo et al. 2023; https://github.com/althonos/pyrodigal-gv): especially from 0.14.0 towards
 
 * Programs:
 	- LASTZ (Harris 2007): it is used to predict the circularity of the contigs. The program is publicly available at https://github.com/lastz/lastz under the MIT licence.
 	- INFERNAL (Nawrocki and Eddy 2013): it is used to predict ribosomal RNA in the contigs when using the RFAM database (Nawrocki et al. 2015). This program is publicly available at http://eddylab.org/infernal/ under the BSD licence and RFAM database is available at ftp://ftp.ebi.ac.uk/pub/databases/Rfam/
 	- ARAGORN (Laslett and Canback 2004): it is used to predict tRNA sequences in the contig. This program is publicly available at http://mbio-serv2.mbioekol.lu.se/ARAGORN/ under the GPLv2 licence.
 	- PILERCR (Edgar 2007): it is used to predict CRISPR repeats in your contig. This program is freely available at http://drive5.com/pilercr/ under a public licence.
-	- Prodigal (Hyatt et al. 2010): it is used to predict the ORFs. When the contig is smaller than 100,000 bp, MetaProdigal (Hyatt et al. 2012) is automatically activated instead of normal Prodigal. This program is publicly available at https://github.com/hyattpd/prodigal/releases/ under the GPLv3 licence.
-  - Prodigal-GV (Camargo et al. 2023): this variant of Prodigal contains updated models for ORF detection in giant viruses and bacteriophages with alternate stop codons ("genetic code 15"). This approach is recommended for the annotation of bacteriophages, especially crAss-like phages (Cook et al. 2023). This program is available at https://github.com/apcamargo/prodigal-gv under the GPLv3 licence.  
 	- DIAMOND (Buchfink et al. 2015): it is used to predict the function of proteins according to homology. This program is publicly available at https://github.com/bbuchfink/diamond under the GPLv3 licence. Databases must be created from FASTA files according to their instructions before running.
 	- BLAST+ (Camacho et al. 2008): it is used to predict the function of the predicted proteins according to homology when DIAMOND is not able to retrieve any hit or such hit is a 'hypothetical protein'. This suite is publicly available at ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/ under the GPLv2 licence. Databases are available at ftp://ftp.ncbi.nlm.nih.gov/blast/db/ or created using makeblastdb command.
 	- HMMER (Finn et al. 2011): it is used to add more information of the predicted proteins according to Hidden Markov Models. This suite is publicly available at http://hmmer.org/ under the GPLv3 licence. Databases must be in HMM format and an example of potential database is PVOGs (http://dmk-brain.ecn.uiowa.edu/VOG/downloads/All/AllvogHMMprofiles.tar.gz).
@@ -179,17 +179,15 @@ In this branch, there will be program versions with proposed changes. After bein
 	- Brown CT, Olm MR, Thomas BC, Banfield JF (2016) Measurement of bacterial replication rates in microbial communities. Nature Biotechnology 34: 1256-63.
 	- Buchfink B, Xie C, Huson DH (2015) Fast and sensitive protein alignment using DIAMOND. Nature Methods 12: 59-60.
 	- Camacho C, Coulouris G, Avagyan V, Ma N, Papadopoulos J, Bealer K, Madden TL (2008) BLAST+: architecture and applications. BMC Bioinformatics 10: 421.
-        - Camargo AP, Roux S, Schulz F, Babinski M, Xu Y, Hu B, Chain PSG, Nayfach S, Kyrpides NC (2023) Identification of mobile genetic elements with geNomad. Nature Biotechnology: 1-10
-	- Cook R, Telatin A, Bouras G, Camargo AP, Larralde M, Edwards RA, Adriaenssens EM (2023) Predicting stop codon reassignment improves functional annotation of bacteriophages. bioRxiv 19: 2023.12.19.572299.
+    - Camargo AP, Roux S, Schulz F, Babinski M, Xu Y, Hu B, Chain PSG, Nayfach S, Kyrpides NC (2023) Identification of mobile genetic elements with geNomad. Nature Biotechnology: 1-10
 	- Edgar RC (2007) PILER-CR: fast and accurate identification of CRISPR repeats. BMC Bioinformatics 8:18.
 	- Finn RD, Clements J, Eddy SR (2011) HMMER web server: interactive sequence similarity searching. Nucleic Acids Research 39: W29-37.
 	- Fozo EM, Makarova KS, Shabalina SA, Yutin N, Koonin EV, Storz G (2010) Abundance of type I toxin-antitoxin systems in bacteria: searches for new candidates and discovery of novel families. Nucleic Acids Research 38: 3743-59.
 	- Grazziotin AL, Koonin EV, Kristensen DM (2017) Prokaryotic Virus Orthologous Groups (pVOGs): a resource for comparative genomics and protein family annotation. Nucleic Acids Research 45: D491–8.
 	- Harris RS (2007) Improved pairwise alignment of genomic DNA. Ph.D. Thesis, The Pennsylvania State University. 
-	- Hyatt D, Chen GL, Locascio PF, Land ML, Larimer FW, Hauser LJ (2010) Prodigal: prokaryotic gene recognition and translation initiation site identification. BMC Bioinformatics 11: 119.
-	- Hyatt D, Locascio PF, Hauser LJ, Uberbacher EC (2012) Gene and translation initiation site prediction in metagenomic sequences. Bioinformatics 28: 2223-30.
+	- Larralde M (2022) Pyrodigal: Python bindings and interface to Prodigal, an efficient method for gene prediction in prokaryotes. Journal of Open Source Software, 7(72), 4296. doi:10.21105/joss.04296.
 	- Larralde M, Zeller G (2023) PyHMMER: a Python library binding to HMMER for efficient sequence analysis. Bioinformatics 39: btad214.
-        - Laslett D, Canback B (2004) ARAGORN, a program to detect tRNA genes and tmRNA genes in nucleotide sequences. Nucleic Acids Research 32: 11–16.
+    - Laslett D, Canback B (2004) ARAGORN, a program to detect tRNA genes and tmRNA genes in nucleotide sequences. Nucleic Acids Research 32: 11–16.
 	- Marz M, Beerenwinkel N, Drosten C, Fricke M, Frishman D, Hofacker IL, Hoffmann D, Middendorf M, Rattei T, Stadler PF, Töpfer A (2014) Challenges in RNA virus bioinformatics. Bioinformatics 30: 1793-9.
 	- Moura de Sousa JA, Pfeifer E, Touchon M, Rocha EPC (2021) Causes and consequences of bacteriophage diversification via genetic exchanges across lifestyles and bacterial taxa. Molecular Biology and Evolution, msab044: https://doi.org/10.1093/molbev/msab044
 	- Nawrocki EP, Eddy SR (2013) Infernal 1.1: 100-fold faster RNA homology searches. Bioinformatics 29: 2933-35.
